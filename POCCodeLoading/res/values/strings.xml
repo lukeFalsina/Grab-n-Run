@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">POC Code Loading</string>
+    <string name="app_aim">The aim of this simple application
+        is showing a couple of techniques which could be used
+        to load external code from a remote or a local path
+        dynamically.</string>
+
+</resources>
