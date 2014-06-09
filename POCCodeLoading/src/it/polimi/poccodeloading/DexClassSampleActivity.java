@@ -12,7 +12,8 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ProgressBar;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -47,9 +48,8 @@ public class DexClassSampleActivity extends Activity {
 	
 	// Components of the layout
 	private TextView textView;
-	private Button firstBtn, secondBtn;
+	private Button firstBtn, secondBtn, thirdBtn;
 	private Switch switchSlider;
-	private ProgressBar progBar;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -64,8 +64,19 @@ public class DexClassSampleActivity extends Activity {
 		textView = (TextView) findViewById(R.id.exp_text_dex_load_jar);
 		firstBtn = (Button) findViewById(R.id.button1_dex_load_jar);
 		secondBtn = (Button) findViewById(R.id.button2_dex_load_jar);
+		thirdBtn = (Button) findViewById(R.id.button3_dex_load_jar);
 		switchSlider = (Switch) findViewById(R.id.switch_dex_load_jar);
-		progBar = (ProgressBar) findViewById(R.id.progress_bar_dex_load_jar);
+		switchSlider.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+
+			   @Override
+			   public void onCheckedChanged(CompoundButton buttonView,
+			     boolean isChecked) {
+
+			    if(isChecked){
+			     onBtnClickExit(buttonView);
+			    }
+			   }
+		});
 		
 	}
 	
@@ -86,12 +97,33 @@ public class DexClassSampleActivity extends Activity {
 		List<Button> buttonList = new ArrayList<Button>();
 		buttonList.add(firstBtn);
 		buttonList.add(secondBtn);
+		buttonList.add(thirdBtn);
 		
 		// The dynamic loaded class customizes all the components..
 		mComponentModifier.customizeButtons(buttonList);
-		mComponentModifier.customizeProgressBar(progBar);
 		mComponentModifier.customizeSwitch(switchSlider);
 		mComponentModifier.customizeTextView(textView);
+	}
+	
+	/**
+	 * This effect is used to end the activity.
+	 * 
+	 * @param view
+	 */
+	public void onBtnClickExit(View view) {
+		
+		toastHandler.post(new Runnable() {
+
+			@Override
+			public void run() {
+				Toast.makeText(DexClassSampleActivity.this,
+						"Activity completed..",
+						Toast.LENGTH_SHORT).show();
+			}
+			
+		});
+		
+		finish();
 	}
 	
 	private ComponentModifier retrieveComponentModifier(String assetSuffix, final String className) {

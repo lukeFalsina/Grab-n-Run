@@ -20,13 +20,6 @@
         android:text="@string/explanation_dex_load_jar"
         android:gravity="center"
         android:textSize="20sp" />
-
-    <ProgressBar
-        android:id="@+id/progress_bar_dex_load_jar"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:visibility="gone"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
     
     <LinearLayout
         android:layout_width="fill_parent"
@@ -47,6 +40,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="onBtnClick"
+        android:text="@string/btn_dex_load_jar" />
+        
+        <Button
+        android:id="@+id/button3_dex_load_jar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="onBtnClickExit"
+        android:visibility="gone"
         android:text="@string/btn_dex_load_jar" />
         
     </LinearLayout>

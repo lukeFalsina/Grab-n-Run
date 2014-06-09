@@ -3,7 +3,6 @@ package it.polimi.poccodeloading;
 import java.util.List;
 
 import android.widget.Button;
-import android.widget.ProgressBar;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -17,8 +16,6 @@ import android.widget.TextView;
 public interface ComponentModifier {
 	
 	public void customizeButtons(List<Button> buttonList);
-	
-	public void customizeProgressBar(ProgressBar progressBar);
 	
 	public void customizeSwitch(Switch switchSlider);
 
