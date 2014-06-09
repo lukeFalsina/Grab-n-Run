@@ -36,9 +36,11 @@ public class DexClassSampleActivity extends Activity {
 	// retrieved from the external jar..
 	private ComponentModifier mComponentModifier;
 	
+	private String assetSuffix = "/exampleJar/componentModifier.jar";
+	
 	// Used to pick different classes dynamically at run time
-	private String firstSuffix = "/exampleJar/firstModifier.jar";
-	private String secondSuffix = "/exampleJar/secondModifier.jar";
+	private final String firstClassName = "FirstComponentModifierImpl";
+	private final String secondClassName = "SecondComponentModifierImpl";
 	
 	// Used to visualize helper toast messages..
 	private Handler toastHandler;
@@ -77,9 +79,9 @@ public class DexClassSampleActivity extends Activity {
 	public void onBtnClick(View view) {
 		
 		if (view.getId() == firstBtn.getId()) 
-			mComponentModifier = retrieveComponentModifier(firstSuffix);
+			mComponentModifier = retrieveComponentModifier(assetSuffix, firstClassName);
 		else
-			mComponentModifier = retrieveComponentModifier(secondSuffix);
+			mComponentModifier = retrieveComponentModifier(assetSuffix, secondClassName);
 		
 		List<Button> buttonList = new ArrayList<Button>();
 		buttonList.add(firstBtn);
@@ -92,13 +94,13 @@ public class DexClassSampleActivity extends Activity {
 		mComponentModifier.customizeTextView(textView);
 	}
 	
-	private ComponentModifier retrieveComponentModifier(String assetsSuffix) {
+	private ComponentModifier retrieveComponentModifier(String assetSuffix, final String className) {
 
 		Log.i(TAG_DEX_SAMPLE, "Setting up Dex Class Loader..");
 		
 		ComponentModifier retComponentModifier = null;
 		
-		final String jarContainerPath = getAssets() + assetsSuffix;
+		final String jarContainerPath = getAssets() + assetSuffix;
 		File dexOutputDir = getDir("dex", MODE_PRIVATE);
 		
 		DexClassLoader mDexClassLoader = new DexClassLoader(	jarContainerPath, 
@@ -108,7 +110,7 @@ public class DexClassSampleActivity extends Activity {
 		
 		try {
 			
-			Class<?> loadedClass = mDexClassLoader.loadClass("ComponentModifierImpl");
+			Class<?> loadedClass = mDexClassLoader.loadClass(className);
 			
 			retComponentModifier = (ComponentModifier) loadedClass.newInstance();
 			
@@ -130,7 +132,7 @@ public class DexClassSampleActivity extends Activity {
 				@Override
 				public void run() {
 					Toast.makeText(DexClassSampleActivity.this,
-							"DexClassLoader was successful!\nLoaded class path:" + jarContainerPath,
+							"DexClassLoader was successful!\nLoaded class name:" + className + ";\nPath: " + jarContainerPath,
 							Toast.LENGTH_SHORT).show();
 				}
 				
