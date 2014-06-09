@@ -147,6 +147,8 @@ public class MainActivity extends Activity {
 			Class<?> loadedClass = mDexClassLoader.loadClass("headfirstlab.nasadailyimage.NasaDailyImage");
 			//Activity NasaDailyActivity = (Activity) loadedClass.newInstance();
 			
+			Log.i(TAG_MAIN, "Found class: " + loadedClass.getSimpleName() + "; APK path: " + exampleAPKPath.toString());
+			
 			toastHandler.post(new Runnable() {
 
 				@Override
