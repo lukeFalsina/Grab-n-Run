@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">POC Code Loading</string>
+    <string name="app_name">Dynamic Code Loading Techniques</string>
     <string name="app_aim">The aim of this simple application
         is showing a couple of techniques which could be used
         to load external code from a remote or a local path
         dynamically.</string>
+    <string name="title_activity_dex_class_sample">DexClassLoader for .JAR</string>
+    <string name="explanation_dex_load_jar">Here it is shown a small example
+        of a Java class, loaded dynamically through DexClassLoader from a jar.
+        Its methods are used to change the components in this screen..
+        \nGuess what you should do now..</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="btn_dex_load_jar">Click me!</string>
+    <string name="switch_dex_load_jar">Switch</string>
 
 </resources>
