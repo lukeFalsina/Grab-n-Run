@@ -5,6 +5,7 @@ import java.io.File;
 import dalvik.system.DexClassLoader;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
@@ -30,12 +31,13 @@ public class MainActivity extends Activity {
 
 	// This array of strings contains the list of all the implemented
 	// techniques for external code loading that should be visualized.
-	public static final String techinquesToExecute[] = {"DexClassLoader", "PathClassLoader", "CreatePackageContext"};
+	public static final String techinquesToExecute[] = {"DexClassLoader (.apk)", "DexClassLoader (.jar)", "PathClassLoader", "CreatePackageContext"};
 	
 	// Auxiliary constants used for readability..
-	private static final int DEX_CLASS_LOADER = 0;
-	private static final int PATH_CLASS_LOADER = 1;
-	private static final int CREATE_PACK_CTX = 2;
+	private static final int DEX_CLASS_LOADER_APK = 0;
+	private static final int DEX_CLASS_LOADER_JAR = 1;
+	private static final int PATH_CLASS_LOADER = 2;
+	private static final int CREATE_PACK_CTX = 3;
 	
 	// Unique identifier used for Log entries
 	private static final String TAG_MAIN = MainActivity.class.getSimpleName();
@@ -71,13 +73,17 @@ public class MainActivity extends Activity {
 			// is used..
 			switch(position) {
 			
-				case DEX_CLASS_LOADER:
+				case DEX_CLASS_LOADER_APK:
 					effectiveDexClassLoader = true;
 					setUpDexClassLoader();
 					effectiveDexClassLoader = false;
 					Log.i(TAG_MAIN, "DexClassLoader case should be finished.");
 					break;
 				
+				case DEX_CLASS_LOADER_JAR:
+					
+					break;
+					
 				case PATH_CLASS_LOADER:
 					effectivePathClassLoader = true;
 					setUpPathClassLoader();
@@ -159,7 +165,7 @@ public class MainActivity extends Activity {
 			
 		} catch (ClassNotFoundException e) {
 
-			Log.e(TAG_MAIN, "Error! Invalid Class!");
+			Log.e(TAG_MAIN, "Error: Class not found!");
 			
 			toastHandler.post(new Runnable() {
 
@@ -167,6 +173,22 @@ public class MainActivity extends Activity {
 				public void run() {
 					Toast.makeText(MainActivity.this,
 							"Error! No class found for DexClassLoader..",
+							Toast.LENGTH_SHORT).show();
+				}
+				
+			});
+			
+			e.printStackTrace();
+		} catch (ActivityNotFoundException e) {
+		
+			Log.e(TAG_MAIN, "Error: Activity not found in the manifest!");
+			
+			toastHandler.post(new Runnable() {
+
+				@Override
+				public void run() {
+					Toast.makeText(MainActivity.this,
+							"Error! The activity found by DexClassLoader is not a legitimate one..",
 							Toast.LENGTH_SHORT).show();
 				}
 				
