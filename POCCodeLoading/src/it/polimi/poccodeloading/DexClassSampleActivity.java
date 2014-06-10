@@ -8,6 +8,7 @@ import dalvik.system.DexClassLoader;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
@@ -37,11 +38,11 @@ public class DexClassSampleActivity extends Activity {
 	// retrieved from the external jar..
 	private ComponentModifier mComponentModifier;
 	
-	private String assetSuffix = "/exampleJar/componentModifier.jar";
+	//private String assetSuffix = "/exampleJar/componentModifier.jar";
 	
 	// Used to pick different classes dynamically at run time
-	private final String firstClassName = "FirstComponentModifierImpl";
-	private final String secondClassName = "SecondComponentModifierImpl";
+	private final String firstClassName = "it.polimi.componentmodifier.FirstComponentModifierImpl";
+	private final String secondClassName = "it.polimi.componentmodifier.SecondComponentModifierImpl";
 	
 	// Used to visualize helper toast messages..
 	private Handler toastHandler;
@@ -69,76 +70,30 @@ public class DexClassSampleActivity extends Activity {
 		switchSlider.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 
 			   @Override
-			   public void onCheckedChanged(CompoundButton buttonView,
-			     boolean isChecked) {
+			   public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 
-			    if(isChecked){
-			     onBtnClickExit(buttonView);
-			    }
+				   if(isChecked){
+					   onBtnClickExit(buttonView);
+				   }
 			   }
 		});
 		
 	}
 	
-	/**
-	 * When one of the two initial buttons in this activity is clicked 
-	 * a different component is dynamically loaded and used to customize
-	 * the rest of the layout.
-	 * 
-	 * @param view
-	 */
-	public void onBtnClick(View view) {
-		
-		if (view.getId() == firstBtn.getId()) 
-			mComponentModifier = retrieveComponentModifier(assetSuffix, firstClassName);
-		else
-			mComponentModifier = retrieveComponentModifier(assetSuffix, secondClassName);
-		
-		List<Button> buttonList = new ArrayList<Button>();
-		buttonList.add(firstBtn);
-		buttonList.add(secondBtn);
-		buttonList.add(thirdBtn);
-		
-		// The dynamic loaded class customizes all the components..
-		mComponentModifier.customizeButtons(buttonList);
-		mComponentModifier.customizeSwitch(switchSlider);
-		mComponentModifier.customizeTextView(textView);
-	}
-	
-	/**
-	 * This effect is used to end the activity.
-	 * 
-	 * @param view
-	 */
-	public void onBtnClickExit(View view) {
-		
-		toastHandler.post(new Runnable() {
-
-			@Override
-			public void run() {
-				Toast.makeText(DexClassSampleActivity.this,
-						"Activity completed..",
-						Toast.LENGTH_SHORT).show();
-			}
-			
-		});
-		
-		finish();
-	}
-	
-	private ComponentModifier retrieveComponentModifier(String assetSuffix, final String className) {
+	private ComponentModifier retrieveComponentModifier(String className) {
 
 		Log.i(TAG_DEX_SAMPLE, "Setting up Dex Class Loader..");
 		
 		ComponentModifier retComponentModifier = null;
 		
-		final String jarContainerPath = getAssets() + assetSuffix;
+		// final String jarContainerPath = getAssets() + assetSuffix;
+		final String jarContainerPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/componentModifier.jar";
 		File dexOutputDir = getDir("dex", MODE_PRIVATE);
 		
 		DexClassLoader mDexClassLoader = new DexClassLoader(	jarContainerPath, 
 																dexOutputDir.getAbsolutePath(), 
 																null, 
-																getClassLoader().getParent());		
+																getClass().getClassLoader());		
 		
 		try {
 			
@@ -159,13 +114,17 @@ public class DexClassSampleActivity extends Activity {
 		
 		if (retComponentModifier != null) {
 			
+			final String shortClassName = retComponentModifier.getClass().getSimpleName();
+			
+			Log.i(TAG_DEX_SAMPLE, "DexClassLoader was successful!\nLoaded class name:" + shortClassName + "\nPath: " + jarContainerPath);
+			
 			toastHandler.post(new Runnable() {
 
 				@Override
 				public void run() {
 					Toast.makeText(DexClassSampleActivity.this,
-							"DexClassLoader was successful!\nLoaded class name:" + className + ";\nPath: " + jarContainerPath,
-							Toast.LENGTH_SHORT).show();
+							"DexClassLoader was successful!\nLoaded class name: " + shortClassName + "\nPath: " + jarContainerPath,
+							Toast.LENGTH_LONG).show();
 				}
 				
 			});
@@ -188,6 +147,62 @@ public class DexClassSampleActivity extends Activity {
 		}
 		
 		return retComponentModifier;
+	}
+	
+	/**
+	 * When one of the two initial buttons in this activity is clicked 
+	 * a different component is dynamically loaded and used to customize
+	 * the rest of the layout.
+	 * 
+	 * @param view
+	 */
+	public void onBtnClick(View view) {
+		
+		if (view.getId() == firstBtn.getId()) {
+			
+			mComponentModifier = retrieveComponentModifier(firstClassName);
+			Log.i(TAG_DEX_SAMPLE, "First button was pressed..");
+		}
+		else {
+		
+			mComponentModifier = retrieveComponentModifier(secondClassName);
+			Log.i(TAG_DEX_SAMPLE, "Second button was pressed..");
+		}
+		
+		List<Button> buttonList = new ArrayList<Button>();
+		buttonList.add(firstBtn);
+		buttonList.add(secondBtn);
+		buttonList.add(thirdBtn);
+		
+		// The dynamic loaded class customizes all the components..
+		mComponentModifier.customizeButtons(buttonList);
+		mComponentModifier.customizeSwitch(switchSlider);
+		mComponentModifier.customizeTextView(textView);
+		
+		Log.i(TAG_DEX_SAMPLE, "Customization process successfully completed.");
+	}
+	
+	/**
+	 * This effect is used to end the activity.
+	 * 
+	 * @param view
+	 */
+	public void onBtnClickExit(View view) {
+		
+		toastHandler.post(new Runnable() {
+
+			@Override
+			public void run() {
+				Toast.makeText(DexClassSampleActivity.this,
+						"Activity completed..",
+						Toast.LENGTH_SHORT).show();
+			}
+			
+		});
+		
+		Log.i(TAG_DEX_SAMPLE, "End of " + R.string.title_activity_dex_class_sample + " Activity.");
+		
+		finish();
 	}
 
 }

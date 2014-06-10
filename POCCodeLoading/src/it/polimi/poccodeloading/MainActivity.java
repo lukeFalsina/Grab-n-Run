@@ -77,18 +77,20 @@ public class MainActivity extends Activity {
 					effectiveDexClassLoader = true;
 					setUpDexClassLoader();
 					effectiveDexClassLoader = false;
-					Log.i(TAG_MAIN, "DexClassLoader case should be finished.");
+					Log.i(TAG_MAIN, "DexClassLoader from apk case should be started.");
 					break;
 				
 				case DEX_CLASS_LOADER_JAR:
-					
+					Intent dexClassLoaderIntent = new Intent(MainActivity.this, DexClassSampleActivity.class);
+					startActivity(dexClassLoaderIntent);
+					Log.i(TAG_MAIN, "DexClassLoader from jar case should be started.");
 					break;
 					
 				case PATH_CLASS_LOADER:
 					effectivePathClassLoader = true;
 					setUpPathClassLoader();
 					effectivePathClassLoader = false;
-					Log.i(TAG_MAIN, "PathClassLoader case should be finished.");
+					Log.i(TAG_MAIN, "PathClassLoader case should be started.");
 					break;
 				
 				case CREATE_PACK_CTX:
