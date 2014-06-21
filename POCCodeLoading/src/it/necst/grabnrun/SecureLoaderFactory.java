@@ -72,7 +72,8 @@ public class SecureLoaderFactory {
 		SecureDexClassLoader mSecureDexClassLoader = new SecureDexClassLoader(	finalDexPath,
 																				dexOutputDir.getAbsolutePath(),
 																				libraryPath,
-																				parent);
+																				parent,
+																				mContextWrapper);
 		
 		return mSecureDexClassLoader;
 	}
