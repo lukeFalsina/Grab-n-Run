@@ -18,14 +18,15 @@ public class SecureLoaderFactory {
 	private ContextWrapper mContextWrapper;
 	
 	/**
-	 * Creates a SecureLoaderFactory used to check and generate instances 
+	 * Creates a {@code SecureLoaderFactory} used to check and generate instances 
 	 * from secure dynamic code loader classes.
 	 * 
-	 * It requires a ContextWrapper (i.e. the launching activity) which 
+	 * It requires a {@link ContextWrapper} (i.e. the launching activity) which 
 	 * should be used to manage and retrieve internal directories 
 	 * of the application.
 	 * 
 	 * @param parentContentWrapper
+	 *  The content wrapper coming from the launching Activity
 	 */
 	public SecureLoaderFactory(ContextWrapper parentContentWrapper) {
 	
@@ -33,7 +34,7 @@ public class SecureLoaderFactory {
 	}
 	
 	/**
-	 * Creates a SecureDexClassLoader that finds interpreted and native code in a secure location
+	 * Creates a {@link SecureDexClassLoader} that finds interpreted and native code in a secure location
 	 * by enforcing the use of https for remote location provided in dexPath.
 	 * Interpreted classes are found in a set of DEX files contained in Jar or Apk files and 
 	 * stored into an application-private, writable directory.
@@ -42,8 +43,11 @@ public class SecureLoaderFactory {
 	 * provided dexPath parameter; otherwise a SecureDexClassLoader instance is returned.
 	 * 
 	 * @param dexPath
+	 *  the list of jar/apk files containing classes and resources
 	 * @param libraryPath
+	 *  the list of directories containing native libraries; it may be null
 	 * @param parent
+	 *  the parent class loader
 	 * @return secureDexClassLoader
 	 */
 	public SecureDexClassLoader createDexClassLoader( String dexPath, String libraryPath, ClassLoader parent) {

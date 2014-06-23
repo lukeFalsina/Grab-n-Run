@@ -9,6 +9,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateFactory;
@@ -16,6 +20,7 @@ import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.security.auth.x500.X500Principal;
 
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -25,14 +30,14 @@ import android.util.Log;
 import dalvik.system.DexClassLoader;
 
 /**
- * A class loader that extends the default one provided by the Android
- * system and it is used to load classes from Jar and Apk files 
- * containing a classes.dex entry in a secure way.
+ * A class that provides an extension of default {@link DexClassLoader} 
+ * provided by the Android system and it is used to load classes 
+ * from Jar and Apk files containing a classes.dex entry in a secure way.
  * 
  * In order to instantiate this class a call to the method createDexClassLoader
  * from a SecureLoaderFactory object must be performed.
  * 
- * SecureDexClassLoader ensures integrity of loaded external remote 
+ * {@code SecureDexClassLoader} ensures integrity of loaded external remote 
  * classes by comparing them with the developer certificate, which
  * is retrieved, as a first implementation, by simply reverting the 
  * first two worlds of the package name of the loaded class and then 
@@ -104,7 +109,7 @@ public class SecureDexClassLoader extends DexClassLoader {
 			
 			// No matching certificate or an expired one was found 
 			// locally and so it's necessary to download the 
-			// certificate through an https request.
+			// certificate through an Https request.
 			boolean isCertificateDownloadSuccessful = downloadCertificateRemotelyViaHttps(packageName);
 			
 			if (isCertificateDownloadSuccessful) {
@@ -124,15 +129,51 @@ public class SecureDexClassLoader extends DexClassLoader {
 			// Now it's time to check whether this certificate
 			// was used to sign the class to be loaded.
 			
-			// TODO Missing Implementation..
+			// TODO Need to be tested!!
+			// Check whether the certificate used to verify is the one 
+			// used by Android in Debug Mode. If so, discard the request
+			// since it's not secure.
+			String androidDebugModeDN = "C=US,O=Android,CN=Android Debug";
+			X500Principal androidDebugModePrincipal = new X500Principal(androidDebugModeDN);
+			if (	verifiedCertificate.getIssuerX500Principal().equals(androidDebugModePrincipal) ||
+					verifiedCertificate.getSubjectX500Principal().equals(androidDebugModePrincipal)	)
+				return null;
 			
-			return super.loadClass(className);
+			try {
+				
+				// Retrieve the correct apk or jar file 
+				// containing the class that we should load
+				byte[] data = retrieveContainerFromClassName(className);
+				
+				// Signature verification..
+				Signature mSignature = Signature.getInstance(verifiedCertificate.getSigAlgName());
+				mSignature.update(data);
+				mSignature.initVerify(verifiedCertificate);
+				if (mSignature.verify(data)) {
+					
+					// The signature of the related .apk or .jar container
+					// was successfully verified against the valid certificate.
+					// Integrity was granted and the class can be loaded.
+					return super.loadClass(className);
+				}
+				
+				// The signature of the .apk or jar.container
+				// was not obtained from the selected certificate.
+				// No class loading should start!
+				return null;
+				
+			} catch (NoSuchAlgorithmException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InvalidKeyException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SignatureException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 		}
-		
-		// TODO Think better about this scenario..
-		// Maybe instead a CertificateException should be thrown..
-		// But than the signature of this method becomes different 
-		// from the one of the parent..
 		
 		// Download procedure fails and the required
 		// certificate has not been cached locally.
@@ -141,6 +182,11 @@ public class SecureDexClassLoader extends DexClassLoader {
 		return null;
 	}
 	
+	private byte[] retrieveContainerFromClassName(String className) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	private X509Certificate importCertificateFromLocalDir(String packageName) {
 		
 		// The procedure looks for the correct certificate and 
@@ -235,8 +281,9 @@ public class SecureDexClassLoader extends DexClassLoader {
 					
 				URL certificateURL = new URL(urlString);
 				urlConnection = (HttpsURLConnection) certificateURL.openConnection();
-				// TODO Discuss how to interact with web sites that has just 
-				// a self signed certificate.. Up to now they're probably rejected..
+				// TODO Discuss how to interact with a web site that has just 
+				// a self signed certificate.. Up to now they're rejected..
+				// And it makes sense..
 				urlConnection.connect();
 				
 				Log.i(TAG_SECURE_DEX_CLASS_LOADER, "A connection to the URL was set up.");

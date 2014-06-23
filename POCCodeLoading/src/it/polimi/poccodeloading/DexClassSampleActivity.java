@@ -88,6 +88,7 @@ public class DexClassSampleActivity extends Activity {
 		
 		// final String jarContainerPath = getAssets() + assetSuffix;
 		final String jarContainerPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/componentModifier.jar";
+		// final String jarContainerPath = "https://github.com/lukeFalsina/test/blob/master/componentModifier.jar";
 		File dexOutputDir = getDir("dex", MODE_PRIVATE);
 		
 		DexClassLoader mDexClassLoader = new DexClassLoader(	jarContainerPath, 
