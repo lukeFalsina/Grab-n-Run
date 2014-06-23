@@ -3,15 +3,24 @@ package it.necst.grabnrun;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 
+import javax.net.ssl.HttpsURLConnection;
+
+import android.content.Context;
 import android.content.ContextWrapper;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.util.Log;
 import dalvik.system.DexClassLoader;
 
@@ -57,13 +66,16 @@ public class SecureDexClassLoader extends DexClassLoader {
 	private static final String TAG_SECURE_DEX_CLASS_LOADER = SecureDexClassLoader.class.getSimpleName();
 	
 	private File certificateFolder;
+	private ConnectivityManager mConnectivityManager;
 	
 	SecureDexClassLoader(	String dexPath, String optimizedDirectory,
 							String libraryPath, ClassLoader parent,
 							ContextWrapper parentContextWrapper) {
 		super(dexPath, optimizedDirectory, libraryPath, parent);
 		
-		certificateFolder = parentContextWrapper.getDir("valid_certs", ContextWrapper.MODE_PRIVATE);		
+		certificateFolder = parentContextWrapper.getDir("valid_certs", ContextWrapper.MODE_PRIVATE);
+		mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);
+		
 	}
 
 	/* (non-Javadoc)
@@ -74,7 +86,7 @@ public class SecureDexClassLoader extends DexClassLoader {
 		
 		// Instantiate a certificate object used to check 
 		// the signature of .apk or .jar container
-		X509Certificate verifiedCertificate = null;
+		X509Certificate verifiedCertificate;
 		
 		// TODO Decide the policy to apply with cached certificates
 		// i.e. Always keep them, cancel when the VM is terminated..
@@ -84,21 +96,70 @@ public class SecureDexClassLoader extends DexClassLoader {
 		// from the package name.
 		String packageName = className.substring(0, className.lastIndexOf('.'));
 		
-		// Now the procedure looks for the correct certificate and 
-		// if a match is found, it will import it.
+		// At first check if the correct certificate has been 
+		// already imported in the local certificate directory.
+		verifiedCertificate = importCertificateFromLocalDir(packageName);
+		
+		if (verifiedCertificate == null) {
+			
+			// No matching certificate or an expired one was found 
+			// locally and so it's necessary to download the 
+			// certificate through an https request.
+			boolean isCertificateDownloadSuccessful = downloadCertificateRemotelyViaHttps(packageName);
+			
+			if (isCertificateDownloadSuccessful) {
+				
+				// Download procedure works fine and the new 
+				// certificate should now be in the local folder.
+				// So let's try to retrieve it once again..
+				verifiedCertificate = importCertificateFromLocalDir(packageName);
+			}
+		}
+		
+		if (verifiedCertificate != null) {
+		
+			// We were able to get a valid certificate either directly
+			// from the local cache directory or after having 
+			// downloaded it from the web securely.
+			// Now it's time to check whether this certificate
+			// was used to sign the class to be loaded.
+			
+			// TODO Missing Implementation..
+			
+			return super.loadClass(className);
+		}
+		
+		// TODO Think better about this scenario..
+		// Maybe instead a CertificateException should be thrown..
+		// But than the signature of this method becomes different 
+		// from the one of the parent..
+		
+		// Download procedure fails and the required
+		// certificate has not been cached locally.
+		// No class should be loaded since its signature
+		// can't be verified..
+		return null;
+	}
+	
+	private X509Certificate importCertificateFromLocalDir(String packageName) {
+		
+		// The procedure looks for the correct certificate and 
+		// if a match is found, it will import it and return it.
 		File[] certMatchingFiles = certificateFolder.listFiles(new CertFileFilter(packageName));
 		
+		X509Certificate verifiedCertificate = null;
+				
 		if (certMatchingFiles != null && certMatchingFiles.length != 0) {
-			
+					
 			// Import just the first matching certificate from file..
 			InputStream inStream = null;
 			
 			try {
-			
+					
 				inStream = new FileInputStream(certMatchingFiles[0]);
 			    CertificateFactory cf = CertificateFactory.getInstance("X.509");
 			    verifiedCertificate = (X509Certificate) cf.generateCertificate(inStream);
-			    
+					    
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -115,11 +176,11 @@ public class SecureDexClassLoader extends DexClassLoader {
 					}
 			     }
 			}
-			
+					
 			// If the certificate was correctly created, check 
 			// if it's currently valid
 			if (verifiedCertificate != null) {
-				
+						
 				try {
 					verifiedCertificate.checkValidity();
 				} catch (CertificateExpiredException
@@ -135,37 +196,106 @@ public class SecureDexClassLoader extends DexClassLoader {
 						Log.w(TAG_SECURE_DEX_CLASS_LOADER, "Problems while deleting expired certificate " + certFileToErase + "!");
 					}
 				}
-			}
-			
+			}	
 		}
 		
-		if (verifiedCertificate == null) {
-			
-			// No matching or not expired certificate was found 
-			// locally and so it's necessary to download the 
-			// certificate through an https request.
-			
-			// TODO Missing Implementation..
-			
-		}
-		
-		if (verifiedCertificate != null) {
-		
-			// We were able to get a valid certificate either
-			// from the local cache directory or by downloading
-			// it now we would like to check if this certificate
-			// was used to sign the class to be loaded.
-			
-			// TODO Missing Implementation..
-			
-			return super.loadClass(className);
-		}
-		
-		// TODO Think better about this scenario..
-		// Maybe instead a CertificateException should be thrown..
-		// But than the signature of this method becomes different 
-		// from the one of the parent..
-		return null;
+		// At the end return the result of the procedure: 
+		// either null or a valid and not expired certificate
+		return verifiedCertificate;
 	}
 
+	private boolean downloadCertificateRemotelyViaHttps(String packageName) {
+		
+		// Check whether Internet access is granted..
+		NetworkInfo activeNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
+		if (activeNetworkInfo != null && activeNetworkInfo.isConnected()) {
+						
+			// Reconstruct URL of the certificate from the class
+			// package name.
+			String urlString, firstLevelDomain, secondLevelDomain;
+						
+			int firstPointChar = packageName.indexOf('.');
+			int secondPointChar = packageName.indexOf('.', firstPointChar + 1);
+			firstLevelDomain = packageName.substring(0, firstPointChar);
+			secondLevelDomain = packageName.substring(firstPointChar + 1, secondPointChar);
+						
+			urlString = "https://" + secondLevelDomain + firstLevelDomain 
+						+ packageName.substring(secondPointChar).replaceAll(".", "/")
+						+ "/certificate.pem";
+			
+			Log.i(TAG_SECURE_DEX_CLASS_LOADER, "Certificate Remote Location: " + urlString);
+						
+			// Open an Https connection by trusting default CA on
+			// the Android device.
+			HttpsURLConnection urlConnection = null;
+			InputStream inputStream = null;
+			OutputStream outputStream = null;
+						
+			try {
+					
+				URL certificateURL = new URL(urlString);
+				urlConnection = (HttpsURLConnection) certificateURL.openConnection();
+				// TODO Discuss how to interact with web sites that has just 
+				// a self signed certificate.. Up to now they're probably rejected..
+				urlConnection.connect();
+				
+				Log.i(TAG_SECURE_DEX_CLASS_LOADER, "A connection to the URL was set up.");
+							
+				inputStream = urlConnection.getInputStream();
+				// The new certificate is stored in the application private directory
+				// and its name is the same as the package name.
+				String downloadPath = certificateFolder.getAbsolutePath() + "/" + packageName + ".pem";
+				outputStream = new FileOutputStream(downloadPath);
+						
+				int read = 0;
+				byte[] bytes = new byte[1024];
+				
+				while ((read = inputStream.read(bytes)) != -1) {
+					outputStream.write(bytes, 0, read);
+				}
+				
+				Log.i(TAG_SECURE_DEX_CLASS_LOADER, "Download complete. Certificate Path: " + downloadPath);
+							
+			} catch (MalformedURLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return false;
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return false;
+			} finally {
+				if (inputStream != null) {
+					try {
+						inputStream.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				if (outputStream != null) {
+					try {
+						// outputStream.flush();
+						outputStream.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}			 
+				}
+				if (urlConnection != null)	urlConnection.disconnect();
+				
+				Log.i(TAG_SECURE_DEX_CLASS_LOADER, "Clean up of all pending streams completed.");
+			}
+
+			// If the code reaches this point, it means that the Https
+			// request was correctly instantiated and a certificate
+			// was properly downloaded in the local folder.
+			return true;
+		}
+		
+		Log.w(TAG_SECURE_DEX_CLASS_LOADER, "No connectivity is available for the device!");
+		
+		// If this branch is reached it means that no Internet 
+		// connectivity was available..
+		// So the procedure fails..
+		return false;
+	}
 }
