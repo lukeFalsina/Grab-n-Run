@@ -54,12 +54,17 @@ public class SecureLoaderFactory {
 		
 		String finalDexPath = dexPath;
 		
+		/*
+		 * After discussion it results useless to force https while 
+		 * downloading apk/jar files (MITM may even be allowed here).
+		 * What we really need to enforce is retrieving the matching 
+		 * certificate securely (so if it's downloaded, use https).
 		if (dexPath.contains("http://")) {
 			// This dexPath must be forced to use https (avoid MITM attacks)..
 			finalDexPath = finalDexPath.replace("http://", "https://");
 			
 			Log.i(TAG_SECURE_FACTORY, "Dex Path has been modified to: " + finalDexPath);
-		}
+		} */
 		
 		// Now the location of the final loaded classes is created.
 		// Since it is assumed that the developer do not care where

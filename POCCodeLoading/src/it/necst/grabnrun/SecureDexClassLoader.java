@@ -102,8 +102,8 @@ public class SecureDexClassLoader extends DexClassLoader {
 		String packageName = className.substring(0, className.lastIndexOf('.'));
 		
 		// At first check if the correct certificate has been 
-		// already imported in the local certificate directory.
-		verifiedCertificate = importCertificateFromLocalDir(packageName);
+		// already imported in the application-private certificate directory.
+		verifiedCertificate = importCertificateFromAppPrivateDir(packageName);
 		
 		if (verifiedCertificate == null) {
 			
@@ -117,7 +117,7 @@ public class SecureDexClassLoader extends DexClassLoader {
 				// Download procedure works fine and the new 
 				// certificate should now be in the local folder.
 				// So let's try to retrieve it once again..
-				verifiedCertificate = importCertificateFromLocalDir(packageName);
+				verifiedCertificate = importCertificateFromAppPrivateDir(packageName);
 			}
 		}
 		
@@ -187,7 +187,7 @@ public class SecureDexClassLoader extends DexClassLoader {
 		return null;
 	}
 
-	private X509Certificate importCertificateFromLocalDir(String packageName) {
+	private X509Certificate importCertificateFromAppPrivateDir(String packageName) {
 		
 		// The procedure looks for the correct certificate and 
 		// if a match is found, it will import it and return it.
@@ -202,6 +202,9 @@ public class SecureDexClassLoader extends DexClassLoader {
 			
 			try {
 					
+				// Since certificate files has unique package names as their own
+				// name, either no one or one matching certificate file will
+				// be found.
 				inStream = new FileInputStream(certMatchingFiles[0]);
 			    CertificateFactory cf = CertificateFactory.getInstance("X.509");
 			    verifiedCertificate = (X509Certificate) cf.generateCertificate(inStream);
