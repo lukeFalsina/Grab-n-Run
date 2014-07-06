@@ -1,6 +1,8 @@
 package it.necst.grabnrun;
 
 import java.io.File;
+import java.util.regex.Pattern;
+
 import android.content.ContextWrapper;
 import android.util.Log;
 
@@ -66,6 +68,42 @@ public class SecureLoaderFactory {
 			Log.i(TAG_SECURE_FACTORY, "Dex Path has been modified to: " + finalDexPath);
 		} */
 		
+		// Evaluate incoming paths. If one of those starts with http or https
+		// retrieve the related resources through a download and import it 
+		// into an internal application private directory.
+		String[] strings = finalDexPath.split(Pattern.quote(File.pathSeparator));
+		
+		File resDownloadDir = null;
+		boolean isResourceFolderInitialized = false;
+		
+		for (String path : strings) {
+			
+			if (path.startsWith("http://") || path.startsWith("https://")) {
+				
+				// A new resource should be retrieved from the web..
+				// Check whether the final directory for downloaded resources
+				// has been already initialized
+				if (!isResourceFolderInitialized) {
+					
+					// TODO Policy for dismissing this folder and its contents???
+					resDownloadDir = mContextWrapper.getDir("downloaded_res", ContextWrapper.MODE_PRIVATE);
+					Log.i(TAG_SECURE_FACTORY, "Download Resource Dir has been mounted at: " + resDownloadDir.getAbsolutePath());
+					isResourceFolderInitialized = true;
+				}
+				
+				String downloadedContainerName = downloadContainerIntoFolder(path, resDownloadDir);
+				
+				if (downloadedContainerName != null) {
+					
+					// In such a case the download was successful and so
+					// it is necessary to replace the older web path to access the 
+					// resource with the new one.
+					finalDexPath.replaceFirst(path, resDownloadDir.getAbsolutePath() + "/" + downloadedContainerName);
+					Log.i(TAG_SECURE_FACTORY, "Dex Path has been modified into: " + finalDexPath);
+				}
+			}
+		}
+		
 		// Now the location of the final loaded classes is created.
 		// Since it is assumed that the developer do not care where
 		// exactly the dex classes will be stored, an application-private, 
@@ -85,5 +123,11 @@ public class SecureLoaderFactory {
 																				mContextWrapper);
 		
 		return mSecureDexClassLoader;
+	}
+
+	
+	private String downloadContainerIntoFolder(String path, File resOutputDir) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

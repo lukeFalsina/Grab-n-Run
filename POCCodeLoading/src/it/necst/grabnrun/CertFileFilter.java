@@ -41,7 +41,7 @@ public class CertFileFilter implements FileFilter {
 			return false;
 		else if (file.isFile()) {
 			
-			// While if it is a normal file and its name is
+			// On the contrary if this is a normal file and its name is
 			// the desired one and it ends with one of the 
 			// approved extensions then it's fine.
 			for (String extension : okCertsExtensions) {
