@@ -1,7 +1,17 @@
 package it.necst.grabnrun;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.regex.Pattern;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import android.content.ContextWrapper;
 import android.util.Log;
@@ -91,14 +101,14 @@ public class SecureLoaderFactory {
 					isResourceFolderInitialized = true;
 				}
 				
-				String downloadedContainerName = downloadContainerIntoFolder(path, resDownloadDir);
+				String downloadedContainerPath = downloadContainerIntoFolder(path, resDownloadDir);
 				
-				if (downloadedContainerName != null) {
+				if (downloadedContainerPath != null) {
 					
 					// In such a case the download was successful and so
 					// it is necessary to replace the older web path to access the 
-					// resource with the new one.
-					finalDexPath.replaceFirst(path, resDownloadDir.getAbsolutePath() + "/" + downloadedContainerName);
+					// resource with the new local one.
+					finalDexPath.replaceFirst(path, downloadedContainerPath);
 					Log.i(TAG_SECURE_FACTORY, "Dex Path has been modified into: " + finalDexPath);
 				}
 			}
@@ -126,8 +136,116 @@ public class SecureLoaderFactory {
 	}
 
 	
-	private String downloadContainerIntoFolder(String path, File resOutputDir) {
-		// TODO Auto-generated method stub
-		return null;
+	private String downloadContainerIntoFolder(String urlPath, File resOutputDir) {
+		
+		// Precondition check on URL path variable..
+		if (urlPath == null) return null;
+		
+		// Precondition check on the output local folder..
+		if (resOutputDir == null || !resOutputDir.exists()) return null;
+		if (!resOutputDir.isDirectory() || !resOutputDir.canRead() || !resOutputDir.canWrite()) return null;
+		
+		URL url;
+		try {
+			url = new URL(urlPath);
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+			return null;
+		}
+		
+		if (url.getProtocol()!= "http" && url.getProtocol()!= "https") return null;
+		
+		// Check whether the selected resource is not empty
+		int finalSeparatorIndex = url.getPath().lastIndexOf("/");
+		String containerName = url.getPath().substring(finalSeparatorIndex);
+		
+		if (containerName == null || containerName.isEmpty()) return null;
+		
+		// Check whether the selected resource is a container (jar or apk)
+		int extensionIndex = containerName.lastIndexOf(".");
+		String extension = containerName.substring(extensionIndex);
+		if (!extension.equals(".jar") && !extension.equals(".apk")) return null;
+		
+		// The new file name is fixed after having checked that its 
+		// is unique.
+		File checkFile = new File(resOutputDir.getAbsolutePath() + "/" + containerName);
+		String finalContainerName;
+		
+		if (checkFile.exists()) {
+		
+			int currentIndex = 0;
+		
+			do {
+				currentIndex ++;
+				finalContainerName = containerName.substring(0, extensionIndex) + currentIndex + extension;
+				checkFile = new File(resOutputDir.getAbsolutePath()+ "/" + finalContainerName);
+					
+			} while (checkFile.exists());
+		}
+		else {
+			finalContainerName = containerName;
+		}
+		
+		// Finally the container file can be downloaded from the URL
+		// and stored in the local folder
+		URLConnection urlConnection = null;
+		InputStream inputStream = null;
+		OutputStream outputStream = null;
+		String localContainerPath = resOutputDir.getAbsolutePath()+ "/" + finalContainerName;
+		
+		try {
+			
+			if (url.getProtocol()!= "https") {
+				// HTTPS protocol
+				urlConnection = (HttpsURLConnection) url.openConnection();
+			}
+			else {
+				// HTTP protocol
+				urlConnection = (HttpURLConnection) url.openConnection();
+			}
+			urlConnection.connect();
+			
+			Log.i(TAG_SECURE_FACTORY, "A connection was set up: " + url.toString());
+				
+			inputStream = urlConnection.getInputStream();
+			outputStream = new FileOutputStream(localContainerPath);
+				
+			int read = 0;
+			byte[] bytes = new byte[1024];
+				
+			while ((read = inputStream.read(bytes)) != -1) {
+				outputStream.write(bytes, 0, read);
+			}
+				
+			Log.i(TAG_SECURE_FACTORY, "Download complete. Container Path: " + localContainerPath);
+				
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		} finally {
+			if (inputStream != null) {
+				try {
+					inputStream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			if (outputStream != null) {
+				try {
+					// outputStream.flush();
+					outputStream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}			 
+			}
+			if (urlConnection != null)	((HttpURLConnection) urlConnection).disconnect();
+			
+			Log.i(TAG_SECURE_FACTORY, "Clean up of all pending streams completed.");
+		}
+			
+		// If this part of the method is reached, the download 
+		// procedure worked properly and the path of the output
+		// file container is returned.
+		return localContainerPath;
 	}
 }
