@@ -64,7 +64,9 @@ public class SecureLoaderFactory {
 	 */
 	public SecureDexClassLoader createDexClassLoader( String dexPath, String libraryPath, ClassLoader parent) {
 		
-		String finalDexPath = dexPath;
+		// Final dex path list will be constructed incrementally
+		// while scanning dexPath variable
+		StringBuilder finalDexPath = new StringBuilder();
 		
 		/*
 		 * After discussion it results useless to force https while 
@@ -81,7 +83,7 @@ public class SecureLoaderFactory {
 		// Evaluate incoming paths. If one of those starts with http or https
 		// retrieve the related resources through a download and import it 
 		// into an internal application private directory.
-		String[] strings = finalDexPath.split(Pattern.quote(File.pathSeparator));
+		String[] strings = dexPath.split(Pattern.quote(File.pathSeparator));
 		
 		File resDownloadDir = null;
 		boolean isResourceFolderInitialized = false;
@@ -106,13 +108,21 @@ public class SecureLoaderFactory {
 				if (downloadedContainerPath != null) {
 					
 					// In such a case the download was successful and so
-					// it is necessary to replace the older web path to access the 
-					// resource with the new local one.
-					finalDexPath.replaceFirst(path, downloadedContainerPath);
+					// it is necessary to replace the current web-like path 
+					// to access the resource with the new local version.
+					finalDexPath.append(downloadedContainerPath + Pattern.quote(File.pathSeparator));
 					Log.i(TAG_SECURE_FACTORY, "Dex Path has been modified into: " + finalDexPath);
 				}
 			}
+			else {
+				
+				// Simply copy current path into the final dex path list
+				finalDexPath.append(path + Pattern.quote(File.pathSeparator));
+			}
 		}
+		
+		// Finally remove the last unnecessary separator from finalDexPath
+		finalDexPath.deleteCharAt(finalDexPath.lastIndexOf(Pattern.quote(File.pathSeparator)));
 		
 		// Now the location of the final loaded classes is created.
 		// Since it is assumed that the developer do not care where
@@ -126,7 +136,7 @@ public class SecureLoaderFactory {
 		// TODO: Discuss about this aspect with Federico..
 		// Up to now libraryPath is not checked and left untouched..
 		
-		SecureDexClassLoader mSecureDexClassLoader = new SecureDexClassLoader(	finalDexPath,
+		SecureDexClassLoader mSecureDexClassLoader = new SecureDexClassLoader(	finalDexPath.toString(),
 																				dexOutputDir.getAbsolutePath(),
 																				libraryPath,
 																				parent,
