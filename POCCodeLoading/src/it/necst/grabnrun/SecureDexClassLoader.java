@@ -1,5 +1,6 @@
 package it.necst.grabnrun;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -13,6 +14,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
 import java.security.SignatureException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateFactory;
@@ -22,6 +24,10 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Vector;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.regex.Pattern;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -237,6 +243,11 @@ public class SecureDexClassLoader extends DexClassLoader {
 		// from the package name.
 		String packageName = className.substring(0, className.lastIndexOf('.'));
 		
+		// Retrieve the path of the container from package name.
+		// If there is not such a path, then no class can be loaded.
+		String containerPath = packageNameToContainerPathMap.get(packageName);
+		if(containerPath == null) return null;
+		
 		// Instantiate a certificate object used to check 
 		// the signature of .apk or .jar container
 		X509Certificate verifiedCertificate;
@@ -272,27 +283,99 @@ public class SecureDexClassLoader extends DexClassLoader {
 			// Now it's time to check whether this certificate
 			// was used to sign the class to be loaded.
 			
-			// TODO Need to be tested!!
-			// Check whether the certificate used to verify is the one 
-			// used by Android in Debug Mode. If so, discard the request
-			// since it's not secure.
-			String androidDebugModeDN = "C=US,O=Android,CN=Android Debug";
-			X500Principal androidDebugModePrincipal = new X500Principal(androidDebugModeDN);
-			if (	verifiedCertificate.getIssuerX500Principal().equals(androidDebugModePrincipal) ||
-					verifiedCertificate.getSubjectX500Principal().equals(androidDebugModePrincipal)	)
-				return null;
-			
 			try {
 				
-				// Retrieve the correct apk or jar file 
-				// containing the class that we should load
-				byte[] data = retrieveContainerFromClassName(className);
+				// Retrieve the correct apk or jar file containing the class that we should load
+				// Check whether the selected resource is a jar or apk container
+				int extensionIndex = containerPath.lastIndexOf(".");
+				String extension = containerPath.substring(extensionIndex);
 				
-				// Signature verification..
-				Signature mSignature = Signature.getInstance(verifiedCertificate.getSigAlgName());
-				mSignature.update(data);
-				mSignature.initVerify(verifiedCertificate);
-				if (mSignature.verify(data)) {
+				boolean signatureCheckIsSuccessful = false;
+				
+				// Depending on the container extension the process for
+				// signature verification changes
+				if (extension.equals(".apk")) {
+					
+					// APK container case:
+					// Initialize the signature object with the appropriate 
+					// signing algorithm (the one used in the trusted certificate).
+					Signature mSignature = Signature.getInstance(verifiedCertificate.getSigAlgName());
+					
+					// Fill signature object with the data which was initially signed (e.g. the APK container)
+					FileInputStream containerFIS = null;
+					BufferedInputStream containerBufIn = null;
+					
+					try {
+						
+						containerFIS = new FileInputStream(containerPath);
+						containerBufIn = new BufferedInputStream(containerFIS);
+						
+						byte[] buffer = new byte[1024];
+						int len;
+						while (containerBufIn.available() != 0) {
+						    len = containerBufIn.read(buffer);
+						    mSignature.update(buffer, 0, len);
+						};
+						
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} finally {
+						if (containerBufIn != null) {
+							try {
+								containerBufIn.close();
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+					}
+					
+					// Provide the trusted certificate from which the public
+					// key will be extracted for the signature verification.
+					mSignature.initVerify(verifiedCertificate);
+					
+					// Use PackageManager field to retrieve the signature 					
+					android.content.pm.Signature apkSignature = mPackageManager.getPackageArchiveInfo(containerPath, PackageManager.GET_SIGNATURES).signatures[0];
+					
+					// Trigger the signature verification procedure
+					signatureCheckIsSuccessful = mSignature.verify(apkSignature.toByteArray());
+				}
+				else {
+					
+					if (extension.equals(".jar")) {
+						
+						// JAR container case:
+						JarFile jarContainerToVerify = null;
+						
+						try {
+							
+							jarContainerToVerify = new JarFile(containerPath);
+							// This method will throw an IOException when ever
+							// the JAR container was not signed with the trusted certificate
+							verifyJARContainer(jarContainerToVerify, verifiedCertificate);
+							
+							// No exception raised so the signature 
+							// verification succeeded
+							signatureCheckIsSuccessful = true;
+							
+						} catch (IOException e) {
+							// Signature process failed since it triggered
+							// this exception
+							signatureCheckIsSuccessful = false;
+						} finally {
+							if (jarContainerToVerify != null)
+								try {
+									jarContainerToVerify.close();
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+						}
+					}
+				}
+				
+				// Signature verification result..
+				if (signatureCheckIsSuccessful) {
 					
 					// The signature of the related .apk or .jar container
 					// was successfully verified against the valid certificate.
@@ -300,9 +383,14 @@ public class SecureDexClassLoader extends DexClassLoader {
 					return super.loadClass(className);
 				}
 				
-				// The signature of the .apk or jar.container
-				// was not obtained from the selected certificate.
-				// No class loading should start!
+				// The signature of the .apk or .jar container
+				// was not valid when compared against the selected certificate.
+				// No class loading should be allowed and the container 
+				// should be removed as well.
+				File containerToRemove = new File(containerPath);
+				containerToRemove.delete();
+				packageNameToContainerPathMap.remove(packageName);
+				
 				return null;
 				
 			} catch (NoSuchAlgorithmException e) {
@@ -322,9 +410,101 @@ public class SecureDexClassLoader extends DexClassLoader {
 		return null;
 	}
 	
-	private byte[] retrieveContainerFromClassName(String className) {
-		// TODO Auto-generated method stub
-		return null;
+	private void verifyJARContainer(JarFile jarFile, X509Certificate trustedCert) throws IOException {
+		
+		// Sanity checking
+		if (jarFile == null || trustedCert == null) 
+		   	throw new SecurityException("JarFile or certificate are missing");
+
+		Vector<JarEntry> entriesVec = new Vector<JarEntry>();
+
+	    // Ensure the jar file is signed.
+	    Manifest man = jarFile.getManifest();
+	    if (man == null) throw new SecurityException("The provider is not signed");
+
+	    // Ensure all the entries' signatures verify correctly
+	    byte[] buffer = new byte[8192];
+	    Enumeration<JarEntry> entries = jarFile.entries();
+
+	    while (entries.hasMoreElements()) {
+			
+		    JarEntry je = (JarEntry) entries.nextElement();
+
+		    // Skip directories.
+		    if (je.isDirectory()) continue;
+		    entriesVec.addElement(je);
+		    InputStream is = jarFile.getInputStream(je);
+
+			// Read in each jar entry. A security exception will
+			// be thrown if a signature/digest check fails.
+			while (is.read(buffer, 0, buffer.length) != -1) {
+			    // Don't care
+			}
+			
+			is.close();
+	    }
+
+		// Get the list of signer certificates
+		Enumeration<JarEntry> e = entriesVec.elements();
+
+		while (e.hasMoreElements()) {
+			
+			JarEntry je = (JarEntry) e.nextElement();
+
+			// Every file must be signed except files in META-INF.
+			Certificate[] certs = je.getCertificates();
+			if ((certs == null) || (certs.length == 0)) {
+			    if (!je.getName().startsWith("META-INF"))
+			    	throw new SecurityException("The container has unsigned class files.");
+			} 
+			else {
+			    // Check whether the file is signed by the expected
+			    // signer. The jar may be signed by multiple signers.
+			    // See if one of the signers is 'targetCert'.
+			    int startIndex = 0;
+			    X509Certificate[] certChain;
+			    boolean signedAsExpected = false;
+
+			    while ((certChain = getAChain(certs, startIndex)) != null) {
+			    	
+			    	if (certChain[0].equals(trustedCert)) {
+			    		// Stop since one trusted signer is found.
+			    		signedAsExpected = true;
+			    		break;
+			    	}
+			    	// Proceed to the next chain.
+			    	startIndex += certChain.length;
+			    }
+
+			    if (!signedAsExpected)
+			    	throw new SecurityException("The provider is not signed by a trusted signer");
+			}
+	    }
+	}
+	
+	private X509Certificate[] getAChain(Certificate[] certs, int startIndex) {
+	    
+		if (startIndex > certs.length - 1)
+			return null;
+
+	    int i;
+	    // Keep going until the next certificate is not the
+	    // issuer of this certificate.
+	    for (i = startIndex; i < certs.length - 1; i++) {
+	    	if (!((X509Certificate)certs[i + 1]).getSubjectDN().equals(((X509Certificate)certs[i]).getIssuerDN())) {
+	    		break;
+	    	}
+	    }
+	    
+	    // Construct and return the found certificate chain.
+	    int certChainSize = (i-startIndex) + 1;
+	    X509Certificate[] ret = new X509Certificate[certChainSize];
+	    
+	    for (int j = 0; j < certChainSize; j++ ) {
+	    	ret[j] = (X509Certificate) certs[startIndex + j];
+	    }
+	    
+	    return ret;
 	}
 
 	private X509Certificate importCertificateFromAppPrivateDir(String packageName) {
@@ -337,13 +517,13 @@ public class SecureDexClassLoader extends DexClassLoader {
 				
 		if (certMatchingFiles != null && certMatchingFiles.length != 0) {
 					
-			// Import just the first matching certificate from file..
+			// Import the first (and only) matching certificate from file..
 			InputStream inStream = null;
 			
 			try {
 					
 				// Since certificate files has unique package names as their own
-				// name, either no one or one matching certificate file will
+				// name, either no one or exactly one matching certificate file will
 				// be found.
 				inStream = new FileInputStream(certMatchingFiles[0]);
 			    CertificateFactory cf = CertificateFactory.getInstance("X.509");
@@ -369,9 +549,26 @@ public class SecureDexClassLoader extends DexClassLoader {
 						
 				try {
 					verifiedCertificate.checkValidity();
+					
+					// Evaluate whether the certificate can be used for signature verification
+					// keyCertSignIndex is a magic number from ASN.1 definition of Key Usage.
+					int keyCertSignIndex = 5;
+					if(!verifiedCertificate.getKeyUsage()[keyCertSignIndex])
+						throw new CertificateExpiredException("These certificate can't be used for signature verification!");
+					
+					// TODO Need to be tested!!
+					// Check whether the certificate used to verify is the one 
+					// used by Android in Debug Mode. If so, discard this certificate
+					// since it's not secure.
+					String androidDebugModeDN = "C=US,O=Android,CN=Android Debug";
+					X500Principal androidDebugModePrincipal = new X500Principal(androidDebugModeDN);
+					if (	verifiedCertificate.getIssuerX500Principal().equals(androidDebugModePrincipal) ||
+							verifiedCertificate.getSubjectX500Principal().equals(androidDebugModePrincipal)	)
+						throw new CertificateExpiredException("Android Debug Certificate can't be accepted to sign containers!");
+					
 				} catch (CertificateExpiredException
 						| CertificateNotYetValidException e) {
-					// This certificate is no longer valid!
+					// This certificate is not valid!
 					// Discard it and erase the copy of 
 					// the file on the device memory
 					verifiedCertificate = null;
@@ -395,21 +592,9 @@ public class SecureDexClassLoader extends DexClassLoader {
 		// Check whether Internet access is granted..
 		NetworkInfo activeNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
 		if (activeNetworkInfo != null && activeNetworkInfo.isConnected()) {
-						
-			// Reconstruct URL of the certificate from the class
-			// package name.
-			String urlString, firstLevelDomain, secondLevelDomain;
-						
-			int firstPointChar = packageName.indexOf('.');
-			int secondPointChar = packageName.indexOf('.', firstPointChar + 1);
-			firstLevelDomain = packageName.substring(0, firstPointChar);
-			secondLevelDomain = packageName.substring(firstPointChar + 1, secondPointChar);
-						
-			urlString = "https://" + secondLevelDomain + firstLevelDomain 
-						+ packageName.substring(secondPointChar).replaceAll(".", "/")
-						+ "/certificate.pem";
-			
-			Log.i(TAG_SECURE_DEX_CLASS_LOADER, "Certificate Remote Location: " + urlString);
+					
+			// Find remote URL of the certificate from the related map through class package name.
+			String urlString = packageNameToCertificateMap.get(packageName);
 						
 			// Open an Https connection by trusting default CA on
 			// the Android device.
@@ -422,7 +607,7 @@ public class SecureDexClassLoader extends DexClassLoader {
 				URL certificateURL = new URL(urlString);
 				urlConnection = (HttpsURLConnection) certificateURL.openConnection();
 				// TODO Discuss how to interact with a web site that has just 
-				// a self signed certificate.. Up to now they're rejected..
+				// a self signed certificate.. Up to now they're probably rejected..
 				// And it makes sense..
 				urlConnection.connect();
 				
