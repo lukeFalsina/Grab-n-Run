@@ -20,6 +20,7 @@ import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -135,11 +136,10 @@ public class SecureDexClassLoader extends DexClassLoader {
 		if (extension.equals(".jar")) {
 				
 			// JAR container case:
-			// 1. Unzip the JAR container
-			// 2. Look for "classes.dex" file and open it
-			// 3. Find a valid class entry and retrieve package name from it
+			// 1. Open classes.dex file (JAR container with "classes.dex" inside)
+			// 2. Find the first class name from it
+			// 3. Extract and return package name from previous class name 
 				
-			// Open classes.dex file
 			DexFile classesDexFile = null;
 			String packageName;
 				
@@ -163,13 +163,63 @@ public class SecureDexClassLoader extends DexClassLoader {
 					}
 			     }
 			}
-				
+			
+			// A valid package name for JAR container was found..
 			return packageName;				
 		}
 		
 		// Any other file format is not supported so 
 		// package name is returned..
 		return null;
+	}
+	
+	void setCertificateLocationMap(	Map<String, String> extPackageNameToCertificateMap) {
+		
+		// Either initialize a new map or copy the provided one if it's valid.
+		if (extPackageNameToCertificateMap == null) 
+			packageNameToCertificateMap = new HashMap<String, String>();
+		else
+			packageNameToCertificateMap = extPackageNameToCertificateMap;
+		
+		// Now check all the package names inside packageNameToContainerPathMap.
+		// For each one of those which is missing in packageNameToCertificateMap
+		// add a new entry (package name, URL certificate = reverted package name)
+		// to the latter map.
+		Iterator<String> packageNameIterator = packageNameToContainerPathMap.keySet().iterator();
+		
+		while (packageNameIterator.hasNext()) {
+			
+			String currentPackageName = packageNameIterator.next();
+			
+			if (packageNameToCertificateMap.get(currentPackageName) == null) {
+				
+				// No certificate URL was defined for this package name
+				// so certificate URL must be constructed by reverting package name
+				// and a new entry is put in the map.
+				String certificateRemoteURL = revertPackageNameToURL(currentPackageName);
+				packageNameToCertificateMap.put(currentPackageName, certificateRemoteURL);
+				
+				Log.i(	TAG_SECURE_DEX_CLASS_LOADER, "Package Name: " + currentPackageName + 
+						"; Certificate Remote Location: " + certificateRemoteURL + ";");
+			}
+		}
+	}
+
+	private String revertPackageNameToURL(String packageName) {
+		
+		// Reconstruct URL of the certificate from the class package name.
+		String urlString, firstLevelDomain, secondLevelDomain;
+								
+		int firstPointChar = packageName.indexOf('.');
+		int secondPointChar = packageName.indexOf('.', firstPointChar + 1);
+		firstLevelDomain = packageName.substring(0, firstPointChar);
+		secondLevelDomain = packageName.substring(firstPointChar + 1, secondPointChar);
+								
+		urlString = "https://" + secondLevelDomain + firstLevelDomain 
+					+ packageName.substring(secondPointChar).replaceAll(".", "/")
+					+ "/certificate.pem";
+		
+		return urlString;
 	}
 
 	/* (non-Javadoc)
@@ -178,9 +228,14 @@ public class SecureDexClassLoader extends DexClassLoader {
 	@Override
 	public Class<?> loadClass(String className) throws ClassNotFoundException {
 		
-		// A map which links package names and certificate location
+		// A map which links package names to certificate locations
 		// must be provided before calling this method..
 		if (packageNameToCertificateMap == null) return null;
+		
+		// At first the name of the certificate possibly stored 
+		// in the application private directory is generated
+		// from the package name.
+		String packageName = className.substring(0, className.lastIndexOf('.'));
 		
 		// Instantiate a certificate object used to check 
 		// the signature of .apk or .jar container
@@ -188,11 +243,6 @@ public class SecureDexClassLoader extends DexClassLoader {
 		
 		// TODO Decide the policy to apply with cached certificates
 		// i.e. Always keep them, cancel when the VM is terminated..
-		
-		// At first the name of the certificate possibly stored 
-		// in the application private directory is generated
-		// from the package name.
-		String packageName = className.substring(0, className.lastIndexOf('.'));
 		
 		// At first check if the correct certificate has been 
 		// already imported in the application-private certificate directory.
@@ -430,10 +480,5 @@ public class SecureDexClassLoader extends DexClassLoader {
 		// connectivity was available..
 		// So the procedure fails..
 		return false;
-	}
-
-	void setCertificateLocationMap(	Map<String, String> packageNameToCertificateMap) {
-		
-		this.packageNameToCertificateMap = packageNameToCertificateMap;
 	}
 }
