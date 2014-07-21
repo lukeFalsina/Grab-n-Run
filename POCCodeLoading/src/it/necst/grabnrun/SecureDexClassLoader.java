@@ -283,18 +283,19 @@ public class SecureDexClassLoader extends DexClassLoader {
 			// Now it's time to check whether this certificate
 			// was used to sign the class to be loaded.
 			
-			try {
 				
-				// Retrieve the correct apk or jar file containing the class that we should load
-				// Check whether the selected resource is a jar or apk container
-				int extensionIndex = containerPath.lastIndexOf(".");
-				String extension = containerPath.substring(extensionIndex);
+			// Retrieve the correct apk or jar file containing the class that we should load
+			// Check whether the selected resource is a jar or apk container
+			int extensionIndex = containerPath.lastIndexOf(".");
+			String extension = containerPath.substring(extensionIndex);
 				
-				boolean signatureCheckIsSuccessful = false;
+			boolean signatureCheckIsSuccessful = false;
 				
-				// Depending on the container extension the process for
-				// signature verification changes
-				if (extension.equals(".apk")) {
+			// Depending on the container extension the process for
+			// signature verification changes
+			if (extension.equals(".apk")) {
+					
+				try {
 					
 					// APK container case:
 					// Initialize the signature object with the appropriate 
@@ -340,67 +341,66 @@ public class SecureDexClassLoader extends DexClassLoader {
 					
 					// Trigger the signature verification procedure
 					signatureCheckIsSuccessful = mSignature.verify(apkSignature.toByteArray());
+				
+				} catch (NoSuchAlgorithmException e) {
+					e.printStackTrace();
+				} catch (InvalidKeyException e) {
+					e.printStackTrace();
+				} catch (SignatureException e) {
+					e.printStackTrace();
 				}
-				else {
+			}
+			else {
 					
-					if (extension.equals(".jar")) {
+				if (extension.equals(".jar")) {
 						
-						// JAR container case:
-						JarFile jarContainerToVerify = null;
+					// JAR container case:
+					JarFile jarContainerToVerify = null;
 						
-						try {
+					try {
 							
-							jarContainerToVerify = new JarFile(containerPath);
-							// This method will throw an IOException when ever
-							// the JAR container was not signed with the trusted certificate
-							verifyJARContainer(jarContainerToVerify, verifiedCertificate);
+						jarContainerToVerify = new JarFile(containerPath);
+						// This method will throw an IOException when ever
+						// the JAR container was not signed with the trusted certificate
+						verifyJARContainer(jarContainerToVerify, verifiedCertificate);
 							
-							// No exception raised so the signature 
-							// verification succeeded
-							signatureCheckIsSuccessful = true;
+						// No exception raised so the signature 
+						// verification succeeded
+						signatureCheckIsSuccessful = true;
 							
-						} catch (IOException e) {
-							// Signature process failed since it triggered
-							// this exception
-							signatureCheckIsSuccessful = false;
-						} finally {
-							if (jarContainerToVerify != null)
-								try {
-									jarContainerToVerify.close();
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-						}
+					} catch (IOException e) {
+						// Signature process failed since it triggered
+						// this exception
+						signatureCheckIsSuccessful = false;
+					} finally {
+						if (jarContainerToVerify != null)
+							try {
+								jarContainerToVerify.close();
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
 					}
 				}
-				
-				// Signature verification result..
-				if (signatureCheckIsSuccessful) {
-					
-					// The signature of the related .apk or .jar container
-					// was successfully verified against the valid certificate.
-					// Integrity was granted and the class can be loaded.
-					return super.loadClass(className);
-				}
-				
-				// The signature of the .apk or .jar container
-				// was not valid when compared against the selected certificate.
-				// No class loading should be allowed and the container 
-				// should be removed as well.
-				File containerToRemove = new File(containerPath);
-				containerToRemove.delete();
-				packageNameToContainerPathMap.remove(packageName);
-				
-				return null;
-				
-			} catch (NoSuchAlgorithmException e) {
-				e.printStackTrace();
-			} catch (InvalidKeyException e) {
-				e.printStackTrace();
-			} catch (SignatureException e) {
-				e.printStackTrace();
 			}
-			
+				
+			// Signature verification result..
+			if (signatureCheckIsSuccessful) {
+					
+				// The signature of the related .apk or .jar container
+				// was successfully verified against the valid certificate.
+				// Integrity was granted and the class can be loaded.
+				return super.loadClass(className);
+			}
+				
+			// The signature of the .apk or .jar container
+			// was not valid when compared against the selected certificate.
+			// No class loading should be allowed and the container 
+			// should be removed as well.
+			File containerToRemove = new File(containerPath);
+			containerToRemove.delete();
+			packageNameToContainerPathMap.remove(packageName);
+				
+			return null;
 		}
 		
 		// Download procedure fails and the required
