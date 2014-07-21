@@ -206,7 +206,7 @@ public class SecureLoaderFactory {
 		while(packageNamesIterator.hasNext()) {
 			
 			String currentPackageName = packageNamesIterator.next();
-			String[] packStrings = currentPackageName.split(Pattern.quote(File.pathSeparator));
+			String[] packStrings = currentPackageName.split(".");
 			boolean isValidPackageName = true;
 			boolean removeThisPackageName = false;
 			

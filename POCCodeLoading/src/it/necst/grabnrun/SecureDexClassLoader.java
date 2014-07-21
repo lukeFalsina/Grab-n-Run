@@ -18,18 +18,22 @@ import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.security.auth.x500.X500Principal;
 
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
 import dalvik.system.DexClassLoader;
+import dalvik.system.DexFile;
 
 /**
  * A class that provides an extension of default {@link DexClassLoader} 
@@ -74,6 +78,7 @@ public class SecureDexClassLoader extends DexClassLoader {
 	
 	private File certificateFolder;
 	private ConnectivityManager mConnectivityManager;
+	private PackageManager mPackageManager;
 	private Map<String, String> packageNameToCertificateMap, packageNameToContainerPathMap;
 	
 	SecureDexClassLoader(	String dexPath, String optimizedDirectory,
@@ -83,11 +88,88 @@ public class SecureDexClassLoader extends DexClassLoader {
 		
 		certificateFolder = parentContextWrapper.getDir("valid_certs", ContextWrapper.MODE_PRIVATE);
 		mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);
+		mPackageManager = parentContextWrapper.getPackageManager();
 		
 		// Map initialization
 		packageNameToCertificateMap = null;
 		packageNameToContainerPathMap = new HashMap<String, String>();
 		
+		// Analyze each path in dexPath, find its package name and 
+		// populate packageNameToContainerPathMap accordingly
+		String[] pathStrings = dexPath.split(Pattern.quote(File.pathSeparator));
+		
+		for (String currentPath : pathStrings) {
+			
+			String packageName = getPackageNameFromContainerPath(currentPath);
+			
+			if (packageName != null) {
+				
+				// This is a valid entry so it must be added to packageNameToContainerPathMap
+				String previousPath = packageNameToContainerPathMap.put(packageName, currentPath);
+				
+				// If previous path is not null, it means that one of the previous analyzed
+				// path had the same package name (this is a possibility for JAR containers..)
+				if (previousPath != null) {
+					
+					// TODO Up to now only a warning message is registered in the logs
+					Log.w(	TAG_SECURE_DEX_CLASS_LOADER, "Package Name " + packageName + " is not unique!\n Previous path: " 
+							+ previousPath + ";\n New path: " + currentPath + ";" );
+				}
+			}
+		}
+	}
+
+	private String getPackageNameFromContainerPath(String containerPath) {
+		
+		// Check whether the selected resource is a container (jar or apk)
+		int extensionIndex = containerPath.lastIndexOf(".");
+		String extension = containerPath.substring(extensionIndex);
+		
+		if (extension.equals(".apk")) {
+			
+			// APK container case:
+			// Use PackageManager to retrieve the package name of the APK container
+			return mPackageManager.getPackageArchiveInfo(containerPath, 0).packageName;
+		}
+			
+		if (extension.equals(".jar")) {
+				
+			// JAR container case:
+			// 1. Unzip the JAR container
+			// 2. Look for "classes.dex" file and open it
+			// 3. Find a valid class entry and retrieve package name from it
+				
+			// Open classes.dex file
+			DexFile classesDexFile = null;
+			String packageName;
+				
+			try {
+				classesDexFile = new DexFile(containerPath);
+					
+				Enumeration<String> classesNames  = classesDexFile.entries();
+				String firstClassName = classesNames.nextElement().replaceAll(Pattern.quote(File.separator), ".");
+				packageName = firstClassName.substring(0, firstClassName.lastIndexOf('.'));
+					
+			} catch (IOException e) {
+				// No valid package name here..
+				return null;
+			} finally {
+				if (classesDexFile != null) {
+			         try {
+			        	 classesDexFile.close();
+					} catch (IOException e) {
+						// Problem while closing this file..
+						e.printStackTrace();
+					}
+			     }
+			}
+				
+			return packageName;				
+		}
+		
+		// Any other file format is not supported so 
+		// package name is returned..
+		return null;
 	}
 
 	/* (non-Javadoc)
@@ -174,13 +256,10 @@ public class SecureDexClassLoader extends DexClassLoader {
 				return null;
 				
 			} catch (NoSuchAlgorithmException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (InvalidKeyException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (SignatureException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
@@ -221,17 +300,14 @@ public class SecureDexClassLoader extends DexClassLoader {
 			    verifiedCertificate = (X509Certificate) cf.generateCertificate(inStream);
 					    
 			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (CertificateException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} finally {
 			     if (inStream != null) {
 			         try {
 						inStream.close();
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 			     }
@@ -318,12 +394,8 @@ public class SecureDexClassLoader extends DexClassLoader {
 				Log.i(TAG_SECURE_DEX_CLASS_LOADER, "Download complete. Certificate Path: " + downloadPath);
 							
 			} catch (MalformedURLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 				return false;
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 				return false;
 			} finally {
 				if (inputStream != null) {
