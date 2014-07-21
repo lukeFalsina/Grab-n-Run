@@ -18,6 +18,8 @@ import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.security.auth.x500.X500Principal;
@@ -72,6 +74,7 @@ public class SecureDexClassLoader extends DexClassLoader {
 	
 	private File certificateFolder;
 	private ConnectivityManager mConnectivityManager;
+	private Map<String, String> packageNameToCertificateMap, packageNameToContainerPathMap;
 	
 	SecureDexClassLoader(	String dexPath, String optimizedDirectory,
 							String libraryPath, ClassLoader parent,
@@ -81,6 +84,10 @@ public class SecureDexClassLoader extends DexClassLoader {
 		certificateFolder = parentContextWrapper.getDir("valid_certs", ContextWrapper.MODE_PRIVATE);
 		mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);
 		
+		// Map initialization
+		packageNameToCertificateMap = null;
+		packageNameToContainerPathMap = new HashMap<String, String>();
+		
 	}
 
 	/* (non-Javadoc)
@@ -88,6 +95,10 @@ public class SecureDexClassLoader extends DexClassLoader {
 	 */
 	@Override
 	public Class<?> loadClass(String className) throws ClassNotFoundException {
+		
+		// A map which links package names and certificate location
+		// must be provided before calling this method..
+		if (packageNameToCertificateMap == null) return null;
 		
 		// Instantiate a certificate object used to check 
 		// the signature of .apk or .jar container
@@ -122,7 +133,7 @@ public class SecureDexClassLoader extends DexClassLoader {
 		}
 		
 		if (verifiedCertificate != null) {
-		
+				
 			// We were able to get a valid certificate either directly
 			// from the local cache directory or after having 
 			// downloaded it from the web securely.
@@ -347,5 +358,10 @@ public class SecureDexClassLoader extends DexClassLoader {
 		// connectivity was available..
 		// So the procedure fails..
 		return false;
+	}
+
+	void setCertificateLocationMap(	Map<String, String> packageNameToCertificateMap) {
+		
+		this.packageNameToCertificateMap = packageNameToCertificateMap;
 	}
 }

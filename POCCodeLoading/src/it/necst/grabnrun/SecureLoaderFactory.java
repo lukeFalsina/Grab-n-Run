@@ -9,6 +9,8 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -54,23 +56,51 @@ public class SecureLoaderFactory {
 	}
 	
 	/**
-	 * Creates a {@link SecureDexClassLoader} that finds interpreted and native code in a secure location
-	 * by enforcing the use of https for remote location provided in dexPath.
+	 * Creates a {@link SecureDexClassLoader} that finds interpreted and native code in a set of
+	 * provided locations (either local or remote via HTTP or HTTPS) in dexPath.
 	 * Interpreted classes are found in a set of DEX files contained in Jar or Apk files and 
 	 * stored into an application-private, writable directory.
 	 * 
-	 * Note that this method return null if no matching Jar or Apk file is found at the
-	 * provided dexPath parameter; otherwise a SecureDexClassLoader instance is returned.
+	 * Before executing one of these classes the signature of the target class is 
+	 * verified against the certificate associated with its package name.
+	 * Certificates location are provided by filling appropriately {@link packageNameToCertificateMap}};
+	 * each package name must be linked with the remote location of the certificate that
+	 * should be used to validate all the classes of that package. It's important 
+	 * that each one of these locations uses HTTPS as its protocol; otherwise this 
+	 * choice will be enforced!
+	 * If a class package name do not match any of the provided entries in the map, 
+	 * certificate location will be constructed by simply reverting package name and 
+	 * transforming it into a web-based URL using HTTPS.
+	 * 
+	 * Note that this method returns null if no matching Jar or Apk file is found at the
+	 * provided dexPath parameter; otherwise a {@link SecureDexClassLoader} instance is returned.
+	 * 
+	 * Dynamic class loading with the returned {@link SecureDexClassLoader} will fail whether
+	 * at least one of these conditions is not accomplished: target class is not found in dexPath
+	 * or is in a missing remote container (i.e. Internet connectivity is not present), missing or
+	 * invalid (i.e. expired) certificate is associated with the package name of the target class,
+	 * target class signature check fails against the associated certificate.
 	 * 
 	 * @param dexPath
-	 *  the list of jar/apk files containing classes and resources
+	 *  the list of jar/apk files containing classes and resources; these paths could
+	 *  be either local URLs pointing to a location in the device or URLs that links
+	 *  to a resource stored in the web via HTTP/HTTPS. In the latter case, if Internet
+	 *  connectivity is available, the resource will be imported in a private-application 
+	 *  directory before being used.
 	 * @param libraryPath
 	 *  the list of directories containing native libraries; it may be null
+	 * @param packageNameToCertificateMap
+	 *  a map that couples each package name to a URL which contains the certificate
+	 *  that must be used to validate all the classes that belong to that package
+	 *  before launching them at run time.
 	 * @param parent
 	 *  the parent class loader
 	 * @return secureDexClassLoader
 	 */
-	public SecureDexClassLoader createDexClassLoader( String dexPath, String libraryPath, ClassLoader parent) {
+	public SecureDexClassLoader createDexClassLoader(	String dexPath, 
+														String libraryPath, 
+														Map<String, String> packageNameToCertificateMap, 
+														ClassLoader parent) {
 		
 		// Final dex path list will be constructed incrementally
 		// while scanning dexPath variable
@@ -145,16 +175,86 @@ public class SecureLoaderFactory {
 		// Up to now libraryPath is not checked and left untouched..
 		// This is not necessary a bad choice..
 		
+		// Sanitize fields in packageNameToCertificateMap:
+		// - Check the syntax of packages names (only not empty strings divided by single separator char)
+		// - Enforce that all the certificates URLs in the map can be parsed and use HTTPS as their protocol
+		Map<String, String> santiziedPackageNameToCertificateMap = sanitizePackageNameToCertificateMap(packageNameToCertificateMap);
+		
+		// Initialize SecureDexClassLoader instance
 		SecureDexClassLoader mSecureDexClassLoader = new SecureDexClassLoader(	finalDexPath.toString(),
 																				dexOutputDir.getAbsolutePath(),
 																				libraryPath,
 																				parent,
 																				mContextWrapper);
 		
+		// Provide packageNameToCertificateMap to mSecureDexClassLoader..
+		if (mSecureDexClassLoader != null) mSecureDexClassLoader.setCertificateLocationMap(santiziedPackageNameToCertificateMap);
+		
 		return mSecureDexClassLoader;
 	}
 
-	
+	private Map<String, String> sanitizePackageNameToCertificateMap(Map<String, String> packageNameToCertificateMap) {
+		
+		if (packageNameToCertificateMap == null || packageNameToCertificateMap.isEmpty()) return null;
+		
+		// Copy the initial map and start validating it..
+		Map<String, String> santiziedPackageNameToCertificateMap = packageNameToCertificateMap;
+		
+		// Retrieves all the package names (keys of the map)
+		Iterator<String> packageNamesIterator = santiziedPackageNameToCertificateMap.keySet().iterator();
+		
+		while(packageNamesIterator.hasNext()) {
+			
+			String currentPackageName = packageNamesIterator.next();
+			String[] packStrings = currentPackageName.split(Pattern.quote(File.pathSeparator));
+			boolean isValidPackageName = true;
+			boolean removeThisPackageName = false;
+			
+			for (String packString : packStrings) {
+				
+				// Heuristic: all the subfields should contain at least one char..
+				if (packString.isEmpty()) isValidPackageName = false;
+			}
+			
+			if (isValidPackageName) {
+				
+				// Check that the certificate location is a valid URL
+				// and its protocol is HTTPS
+				URL certificateURL;
+				try {
+					String certificateURLString = santiziedPackageNameToCertificateMap.get(currentPackageName);
+					certificateURL = new URL(certificateURLString);
+					
+					if (certificateURL.getProtocol() == "http") {
+						// In this case enforce HTTPS protocol
+						santiziedPackageNameToCertificateMap.put(currentPackageName, certificateURLString.replace("http", "https"));
+					}
+					else {
+						if (certificateURL.getProtocol() != "https") {
+							// If the certificate URL protocol is different from HTTPS
+							// or HTTP, this entry is not valid
+							removeThisPackageName = true;
+						}
+					}
+				} catch (MalformedURLException e) {
+					removeThisPackageName = true;
+				}
+			}
+			else removeThisPackageName = true;
+			
+			if (removeThisPackageName) {
+				// TODO Check whether this call affects also the 
+				// map and not just the iterator..
+				
+				// Remove invalid entry from the map
+				packageNamesIterator.remove();
+				// santiziedPackageNameToCertificateMap.remove(currentPackageName);
+			}
+		}
+		
+		return santiziedPackageNameToCertificateMap;
+	}
+
 	private String downloadContainerIntoFolder(String urlPath, File resOutputDir) {
 		
 		// Precondition check on URL path variable..
