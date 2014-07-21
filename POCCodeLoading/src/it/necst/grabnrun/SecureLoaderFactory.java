@@ -13,7 +13,10 @@ import java.util.regex.Pattern;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import android.content.Context;
 import android.content.ContextWrapper;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.util.Log;
 
 /**
@@ -29,6 +32,10 @@ public class SecureLoaderFactory {
 
 	private ContextWrapper mContextWrapper;
 	
+	// Objects used to check availability of Internet connection
+	private ConnectivityManager mConnectivityManager;
+	private NetworkInfo activeNetworkInfo;
+	
 	/**
 	 * Creates a {@code SecureLoaderFactory} used to check and generate instances 
 	 * from secure dynamic code loader classes.
@@ -37,12 +44,13 @@ public class SecureLoaderFactory {
 	 * should be used to manage and retrieve internal directories 
 	 * of the application.
 	 * 
-	 * @param parentContentWrapper
+	 * @param parentContextWrapper
 	 *  The content wrapper coming from the launching Activity
 	 */
-	public SecureLoaderFactory(ContextWrapper parentContentWrapper) {
+	public SecureLoaderFactory(ContextWrapper parentContextWrapper) {
 	
-		mContextWrapper = parentContentWrapper;
+		mContextWrapper = parentContextWrapper;
+		mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);
 	}
 	
 	/**
@@ -135,6 +143,7 @@ public class SecureLoaderFactory {
 		
 		// TODO: Discuss about this aspect with Federico..
 		// Up to now libraryPath is not checked and left untouched..
+		// This is not necessary a bad choice..
 		
 		SecureDexClassLoader mSecureDexClassLoader = new SecureDexClassLoader(	finalDexPath.toString(),
 																				dexOutputDir.getAbsolutePath(),
@@ -163,7 +172,7 @@ public class SecureLoaderFactory {
 			return null;
 		}
 		
-		if (url.getProtocol()!= "http" && url.getProtocol()!= "https") return null;
+		if (url.getProtocol() != "http" && url.getProtocol()!= "https") return null;
 		
 		// Check whether the selected resource is not empty
 		int finalSeparatorIndex = url.getPath().lastIndexOf("/");
@@ -203,59 +212,69 @@ public class SecureLoaderFactory {
 		OutputStream outputStream = null;
 		String localContainerPath = resOutputDir.getAbsolutePath()+ "/" + finalContainerName;
 		
-		try {
+		// Check whether Internet access is granted..
+		activeNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
+		if (activeNetworkInfo != null && activeNetworkInfo.isConnected()) {
+		
+			try {
 			
-			if (url.getProtocol()!= "https") {
-				// HTTPS protocol
-				urlConnection = (HttpsURLConnection) url.openConnection();
-			}
-			else {
-				// HTTP protocol
-				urlConnection = (HttpURLConnection) url.openConnection();
-			}
-			urlConnection.connect();
-			
-			Log.i(TAG_SECURE_FACTORY, "A connection was set up: " + url.toString());
-				
-			inputStream = urlConnection.getInputStream();
-			outputStream = new FileOutputStream(localContainerPath);
-				
-			int read = 0;
-			byte[] bytes = new byte[1024];
-				
-			while ((read = inputStream.read(bytes)) != -1) {
-				outputStream.write(bytes, 0, read);
-			}
-				
-			Log.i(TAG_SECURE_FACTORY, "Download complete. Container Path: " + localContainerPath);
-				
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
-		} finally {
-			if (inputStream != null) {
-				try {
-					inputStream.close();
-				} catch (IOException e) {
-					e.printStackTrace();
+				if (url.getProtocol()!= "https") {
+					// HTTPS protocol
+					urlConnection = (HttpsURLConnection) url.openConnection();
 				}
-			}
-			if (outputStream != null) {
-				try {
-					// outputStream.flush();
-					outputStream.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}			 
-			}
-			if (urlConnection != null)	((HttpURLConnection) urlConnection).disconnect();
+				else {
+					// HTTP protocol
+					urlConnection = (HttpURLConnection) url.openConnection();
+				}
+				urlConnection.connect();
 			
-			Log.i(TAG_SECURE_FACTORY, "Clean up of all pending streams completed.");
+				Log.i(TAG_SECURE_FACTORY, "A connection was set up: " + url.toString());
+				
+				inputStream = urlConnection.getInputStream();
+				outputStream = new FileOutputStream(localContainerPath);
+				
+				int read = 0;
+				byte[] bytes = new byte[1024];
+				
+				while ((read = inputStream.read(bytes)) != -1) {
+					outputStream.write(bytes, 0, read);
+				}
+				
+				Log.i(TAG_SECURE_FACTORY, "Download complete. Container Path: " + localContainerPath);
+				
+			} catch (IOException e) {
+				e.printStackTrace();
+				return null;
+			} finally {
+				if (inputStream != null) {
+					try {
+						inputStream.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				if (outputStream != null) {
+					try {
+						// outputStream.flush();
+						outputStream.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}			 
+				}
+				if (urlConnection != null)	((HttpURLConnection) urlConnection).disconnect();
+			
+				Log.i(TAG_SECURE_FACTORY, "Clean up of all pending streams completed.");
+			}
+			
+			// If this part of the method is reached, the download 
+			// procedure worked properly and the path of the output
+			// file container is returned.
+			return localContainerPath;
 		}
-			
-		// If this part of the method is reached, the download 
-		// procedure worked properly and the path of the output
-		// file container is returned.
-		return localContainerPath;
+		
+		// This branch is reached when no connectivity
+		// is available..
+		Log.i(TAG_SECURE_FACTORY, "No connectivity is available. Download failed!");
+		return null;
 	}
 }
