@@ -360,7 +360,7 @@ public class SecureDexClassLoader extends DexClassLoader {
 					try {
 							
 						jarContainerToVerify = new JarFile(containerPath);
-						// This method will throw an IOException when ever
+						// This method will throw an IOException whenever
 						// the JAR container was not signed with the trusted certificate
 						verifyJARContainer(jarContainerToVerify, verifiedCertificate);
 							
