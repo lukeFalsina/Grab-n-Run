@@ -36,7 +36,7 @@ public class MainActivity extends Activity {
 
 	// This array of strings contains the list of all the implemented
 	// techniques for external code loading that should be visualized.
-	public static final String techinquesToExecute[] = {	"DexClassLoader (.apk)", 
+	private static final String techinquesToExecute[] = {	"DexClassLoader (.apk)", 
 															"DexClassLoader (.jar)",
 															"SecureDexClassLoader (.apk)", 
 															"SecureDexClassLoader (.jar)",
@@ -53,14 +53,14 @@ public class MainActivity extends Activity {
 	private static final String TAG_MAIN = MainActivity.class.getSimpleName();
 	
 	// Extra passed to the intent to trigger the new activity with correct test parameters
-	private static final String IS_SECURE_LOADING_CHOSEN = "it.polimi.poccodeloading.IS_SECURE_LOADING_CHOSEN";
+	public static final String IS_SECURE_LOADING_CHOSEN = "it.polimi.poccodeloading.IS_SECURE_LOADING_CHOSEN";
 	
 	// Used to validate dynamic code loading operations..
 	private boolean effectiveDexClassLoader, effectiveSecureDexClassLoader;
 	
-	// String which represents the location of the apk container used for the test
+	// Strings which represent locations of the apk containers used for the test
 	// and the name of the class to load dynamically..
-	private String exampleAPKPath, classNameInAPK;
+	private String exampleTestAPKPath, exampleSignedAPKPath, classNameInAPK;
 	
 	// Used to visualize helper toast messages..
 	private Handler toastHandler;
@@ -75,9 +75,11 @@ public class MainActivity extends Activity {
 		
 		toastHandler = new Handler();
 		
-		//String exampleAPKPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/NasaDailyImage.apk";
-		//String exampleAPKPath = Environment.getRootDirectory().getAbsolutePath() + "/ext_card/download/NasaDailyImage/NasaDailyImage.apk";
-		exampleAPKPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/NasaDailyImage/NasaDailyImage.apk";
+		//String exampleTestAPKPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/NasaDailyImage.apk";
+		//String exampleTestAPKPath = Environment.getRootDirectory().getAbsolutePath() + "/ext_card/download/NasaDailyImage/NasaDailyImage.apk";
+		exampleTestAPKPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/NasaDailyImage/NasaDailyImage.apk";
+		
+		exampleSignedAPKPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/NasaDailyImage/NasaDailyImageSigned.apk";
 		
 		classNameInAPK = "headfirstlab.nasadailyimage.NasaDailyImage";
 		
@@ -157,7 +159,7 @@ public class MainActivity extends Activity {
 		// Aim: Retrieve NasaDailyImage apk securely
 		// 1st Test: Fetch the certificate by reverting package name --> FAIL
 		Log.i(TAG_MAIN, "1st Test: Fetch the certificate by reverting package name..");
-		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(exampleAPKPath, null, null, ClassLoader.getSystemClassLoader().getParent());		
+		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(exampleTestAPKPath, null, null, ClassLoader.getSystemClassLoader().getParent());		
 		
 		try {
 			
@@ -167,7 +169,7 @@ public class MainActivity extends Activity {
 				Log.w(TAG_MAIN, "No class should be returned in this case!!");
 			}
 			else {
-				Log.i(TAG_MAIN, "SecureDexClassLoader loads nothing since no certificate should have been found. SUCCESS!");
+				Log.i(TAG_MAIN, "SecureDexClassLoader loads nothing since no certificate should have been found. CORRECT!");
 			}
 			
 		} catch (ClassNotFoundException e) {
@@ -176,11 +178,12 @@ public class MainActivity extends Activity {
 		}
 		
 		// 2nd Test: Fetch the certificate by filling associative map 
-		// between package name and certificate --> SUCCESS
+		// between package name and certificate --> FAIL cause the apk
+		// was signed with the DEBUG ANDROID certificate
 		
 		// Creating the apk paths list (you can mix between remote and local URL)..
 		String listAPKPaths = 	Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/testApp.apk:" +
-								exampleAPKPath + ":http://google.com/testApp2.apk";
+								exampleTestAPKPath + ":http://google.com/testApp2.apk";
 		
 		// Filling the associative map to link package names and certificates..
 		Map<String, String> packageNamesToCertMap = new HashMap<String, String>();
@@ -200,10 +203,40 @@ public class MainActivity extends Activity {
 			
 			if (loadedClass != null) {
 				
+				Log.w(TAG_MAIN, "No class should be loaded!");
+			} else {
+				
+				Log.i(TAG_MAIN, "This time the chosen class should find a certificate but it's the " +
+						"wrong one! CORRECT!");
+			}
+			
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			Log.w(TAG_MAIN, "Class should be present in the provided path!!");
+		}
+		
+		// 3rd Test: Fetch the certificate by filling associative map 
+		// between package name and certificate --> SUCCESS cause this 
+		// time the apk was signed with the correct certificate
+		Log.i(TAG_MAIN, "3rd Test: Fetch the certificate by filling associative map..");
+		
+		// Creating the apk paths list (you can mix between remote and local URL)..
+		listAPKPaths = 	"http://google.com/testApp2.apk:" + exampleSignedAPKPath;
+		
+		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	listAPKPaths, 
+																			null, 
+																			packageNamesToCertMap, 
+																			ClassLoader.getSystemClassLoader().getParent());
+		
+		try {
+			Class<?> loadedClass = mSecureDexClassLoader.loadClass(classNameInAPK);
+			
+			if (loadedClass != null) {
+				
 				Activity NasaDailyActivity = (Activity) loadedClass.newInstance();
 				
 				Log.i(TAG_MAIN, "Found class: " + NasaDailyActivity.getLocalClassName() + 
-								"; APK path: " + NasaDailyActivity.getPackageResourcePath() + "; SUCCESS!");
+								"; APK path: " + NasaDailyActivity.getPackageResourcePath() + "; CORRECT!");
 			} else {
 				
 				Log.w(TAG_MAIN, "This time the chosen class should pass the security checks!");
@@ -238,7 +271,7 @@ public class MainActivity extends Activity {
 		Log.i(TAG_MAIN, "Setting up DexClassLoader..");
 		
 		File dexOutputDir = getDir("dex", MODE_PRIVATE);
-		DexClassLoader mDexClassLoader = new DexClassLoader(	exampleAPKPath, 
+		DexClassLoader mDexClassLoader = new DexClassLoader(	exampleTestAPKPath, 
 																dexOutputDir.getAbsolutePath(), 
 																null, 
 																ClassLoader.getSystemClassLoader().getParent());
@@ -249,7 +282,7 @@ public class MainActivity extends Activity {
 			Class<?> loadedClass = mDexClassLoader.loadClass(classNameInAPK);
 			final Activity NasaDailyActivity = (Activity) loadedClass.newInstance();
 			
-			Log.i(TAG_MAIN, "Found class: " + loadedClass.getSimpleName() + "; APK path: " + exampleAPKPath.toString());
+			Log.i(TAG_MAIN, "Found class: " + loadedClass.getSimpleName() + "; APK path: " + exampleTestAPKPath.toString());
 			
 			toastHandler.post(new Runnable() {
 

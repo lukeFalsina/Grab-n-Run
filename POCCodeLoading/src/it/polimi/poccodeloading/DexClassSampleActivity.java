@@ -7,6 +7,7 @@ import java.util.List;
 import dalvik.system.DexClassLoader;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -34,6 +35,8 @@ public class DexClassSampleActivity extends Activity {
 	// Unique identifier used for Log entries
 	private static final String TAG_DEX_SAMPLE = DexClassSampleActivity.class.getSimpleName();
 	
+	private boolean isSecureModeChosen;
+	
 	// This is the interface used to mask the object
 	// retrieved from the external jar..
 	private ComponentModifier mComponentModifier;
@@ -59,6 +62,12 @@ public class DexClassSampleActivity extends Activity {
 		setTitle(getString(R.string.title_activity_dex_class_sample));
 		
 		toastHandler = new Handler();
+		
+		// Retrieve the intent of the launching activity
+		Intent intent = getIntent();
+		
+		// Enable/Disable secure loading;
+		isSecureModeChosen = intent.getBooleanExtra(MainActivity.IS_SECURE_LOADING_CHOSEN, false);
 		
 		// Retrieve all the components, which are going to be modified
 		// by the instance of ComponentModifier
@@ -159,15 +168,22 @@ public class DexClassSampleActivity extends Activity {
 	 */
 	public void onBtnClick(View view) {
 		
-		if (view.getId() == firstBtn.getId()) {
+		if (isSecureModeChosen) {
 			
-			mComponentModifier = retrieveComponentModifier(firstClassName);
-			Log.i(TAG_DEX_SAMPLE, "First button was pressed..");
-		}
-		else {
+			// TODO Fill with test code for SecureDexClassLoader..
+			
+		} else {
 		
-			mComponentModifier = retrieveComponentModifier(secondClassName);
-			Log.i(TAG_DEX_SAMPLE, "Second button was pressed..");
+			if (view.getId() == firstBtn.getId()) {
+				
+				mComponentModifier = retrieveComponentModifier(firstClassName);
+				Log.i(TAG_DEX_SAMPLE, "First button was pressed..");
+			}
+			else {
+			
+				mComponentModifier = retrieveComponentModifier(secondClassName);
+				Log.i(TAG_DEX_SAMPLE, "Second button was pressed..");
+			}
 		}
 		
 		List<Button> buttonList = new ArrayList<Button>();
