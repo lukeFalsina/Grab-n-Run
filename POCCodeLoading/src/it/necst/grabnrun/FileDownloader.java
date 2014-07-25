@@ -47,7 +47,7 @@ public class FileDownloader {
 		mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);		
 	}
 	
-	static FileDownloader getInstance(ContextWrapper parentContextWrapper) {
+	FileDownloader getInstance(ContextWrapper parentContextWrapper) {
 		
 		if (instance == null) {
 			instance = new FileDownloader(parentContextWrapper);
@@ -62,7 +62,11 @@ public class FileDownloader {
 	
 		// Check whether Internet access is granted..
 		activeNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
-		if (activeNetworkInfo == null || !activeNetworkInfo.isConnected()) return false;
+		if (activeNetworkInfo == null || !activeNetworkInfo.isConnected()) {
+			
+			Log.w(TAG_FILE_DOWNLOADER, "No connectivity is available. Download failed!");
+			return false;
+		}
 		
 		// A progress dialog is shown to let the user know about the downloading process
     	dialog = ProgressDialog.show(mContextWrapper, "Downloading", "Downloading a remote resource..");
@@ -108,7 +112,7 @@ public class FileDownloader {
     				// and so null should be returned.
     				
     			} finally {
-    				Log.i(TAG_FILE_DOWNLOADER, "Clean up of all pending streams completed.");
+    				Log.d(TAG_FILE_DOWNLOADER, "Clean up all pending streams..");
     				if (urlConnection != null)	((HttpURLConnection) urlConnection).disconnect();
 
     				if (inputStream != null) {
@@ -149,7 +153,6 @@ public class FileDownloader {
     		// Wait for the data thread to finish its job..
 			dataThread.join();
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return false;
 		}

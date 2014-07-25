@@ -1,24 +1,15 @@
 package it.necst.grabnrun;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Pattern;
-
-import javax.net.ssl.HttpsURLConnection;
-
-import android.content.Context;
+//import android.content.Context;
 import android.content.ContextWrapper;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
+//import android.net.ConnectivityManager;
+//import android.net.NetworkInfo;
 import android.util.Log;
 
 /**
@@ -35,8 +26,11 @@ public class SecureLoaderFactory {
 	private ContextWrapper mContextWrapper;
 	
 	// Objects used to check availability of Internet connection
-	private ConnectivityManager mConnectivityManager;
-	private NetworkInfo activeNetworkInfo;
+	//private ConnectivityManager mConnectivityManager;
+	//private NetworkInfo activeNetworkInfo;
+	
+	// Object used for retrieving file from remote URL
+	static FileDownloader FileDownloader;
 	
 	/**
 	 * Creates a {@code SecureLoaderFactory} used to check and generate instances 
@@ -52,7 +46,8 @@ public class SecureLoaderFactory {
 	public SecureLoaderFactory(ContextWrapper parentContextWrapper) {
 	
 		mContextWrapper = parentContextWrapper;
-		mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);
+		//mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);
+		FileDownloader = FileDownloader.getInstance(mContextWrapper);
 	}
 	
 	/**
@@ -146,7 +141,7 @@ public class SecureLoaderFactory {
 					
 					// TODO Policy for dismissing this folder and its contents???
 					resDownloadDir = mContextWrapper.getDir("downloaded_res", ContextWrapper.MODE_PRIVATE);
-					Log.i(TAG_SECURE_FACTORY, "Download Resource Dir has been mounted at: " + resDownloadDir.getAbsolutePath());
+					Log.d(TAG_SECURE_FACTORY, "Download Resource Dir has been mounted at: " + resDownloadDir.getAbsolutePath());
 					isResourceFolderInitialized = true;
 				}
 				
@@ -158,7 +153,7 @@ public class SecureLoaderFactory {
 					// it is necessary to replace the current web-like path 
 					// to access the resource with the new local version.
 					finalDexPath.append(downloadedContainerPath + File.pathSeparator);
-					Log.i(TAG_SECURE_FACTORY, "Dex Path has been modified into: " + finalDexPath);
+					Log.d(TAG_SECURE_FACTORY, "Dex Path has been modified into: " + finalDexPath);
 				}
 			}
 			else {
@@ -178,7 +173,7 @@ public class SecureLoaderFactory {
 		
 		File dexOutputDir = mContextWrapper.getDir("dex_classes", ContextWrapper.MODE_PRIVATE);
 		
-		Log.i(TAG_SECURE_FACTORY, "Dex Output Dir has been mounted at: " + dexOutputDir.getAbsolutePath());
+		Log.d(TAG_SECURE_FACTORY, "Dex Output Dir has been mounted at: " + dexOutputDir.getAbsolutePath());
 		
 		// TODO: Discuss about this aspect with Federico..
 		// Up to now libraryPath is not checked and left untouched..
@@ -316,87 +311,18 @@ public class SecureLoaderFactory {
 		
 		// Finally the container file can be downloaded from the URL
 		// and stored in the local folder
-		HttpURLConnection urlConnection = null;
-		InputStream inputStream = null;
-		OutputStream outputStream = null;
 		String localContainerPath = resOutputDir.getAbsolutePath() + finalContainerName;
 		
-		// Check whether Internet access is granted..
-		activeNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
-		if (activeNetworkInfo != null && activeNetworkInfo.isConnected()) {
+		boolean isDownloadSuccessful = FileDownloader.downloadRemoteUrl(url, localContainerPath);
 		
-			try {
-			
-				if (url.getProtocol().equals("https")) {
-					// HTTPS protocol
-					urlConnection = (HttpsURLConnection) url.openConnection();
-				}
-				else {
-					// HTTP protocol
-					urlConnection = (HttpURLConnection) url.openConnection();
-				}
-				// urlConnection.setDoInput(true);
-				// urlConnection.connect();
-				
-				//int responseCode = urlConnection.getResponseCode();
-				
-				//if ( responseCode == HttpURLConnection.HTTP_OK) {
-				
-					Log.i(TAG_SECURE_FACTORY, "A connection was set up: " + url.toString());
-					
-					inputStream = new BufferedInputStream(urlConnection.getInputStream());
-					outputStream = new FileOutputStream(localContainerPath);
-					
-					int read = 0;
-					byte[] bytes = new byte[1024];
-					
-					while ((read = inputStream.read(bytes)) > 0) {
-						outputStream.write(bytes, 0, read);
-					}
-					
-					Log.i(TAG_SECURE_FACTORY, "Download complete. Container Path: " + localContainerPath);
-				//}
-				
-			} catch (IOException e) {
-				// No file was found at the remote URL!
-				// Nothing should have been written at the local path 
-				// and so null should be returned.
-				return null;
-				
-			} finally {
-				Log.i(TAG_SECURE_FACTORY, "Clean up of all pending streams completed.");
-				if (urlConnection != null)	((HttpURLConnection) urlConnection).disconnect();
-
-				if (inputStream != null) {
-					try {
-						inputStream.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-				if (outputStream != null) {
-					try {
-						// outputStream.flush();
-						outputStream.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}			 
-				} else {
-					// No file was written!
-					return null;
-				}
-			
-			}
-			
-			// If this part of the method is reached, the download 
-			// procedure worked properly and the path of the output
+		if (isDownloadSuccessful)
+			// If this branch is reached, the download 
+			// worked properly and the path of the output
 			// file container is returned.
 			return localContainerPath;
-		}
 		
-		// This branch is reached when no connectivity
-		// is available..
-		Log.i(TAG_SECURE_FACTORY, "No connectivity is available. Download failed!");
+		// Return null if any of the download
+		// steps failed.
 		return null;
 	}
 }

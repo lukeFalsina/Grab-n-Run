@@ -4,10 +4,8 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.InvalidKeyException;
@@ -30,14 +28,12 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.regex.Pattern;
 
-import javax.net.ssl.HttpsURLConnection;
 import javax.security.auth.x500.X500Principal;
 
-import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.pm.PackageManager;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
+//import android.net.ConnectivityManager;
+//import android.net.NetworkInfo;
 import android.util.Log;
 import dalvik.system.DexClassLoader;
 import dalvik.system.DexFile;
@@ -84,8 +80,9 @@ public class SecureDexClassLoader extends DexClassLoader {
 	private static final String TAG_SECURE_DEX_CLASS_LOADER = SecureDexClassLoader.class.getSimpleName();
 	
 	private File certificateFolder;
-	private ConnectivityManager mConnectivityManager;
+	//private ConnectivityManager mConnectivityManager;
 	private PackageManager mPackageManager;
+	
 	private Map<String, String> packageNameToCertificateMap, packageNameToContainerPathMap;
 	
 	SecureDexClassLoader(	String dexPath, String optimizedDirectory,
@@ -94,7 +91,7 @@ public class SecureDexClassLoader extends DexClassLoader {
 		super(dexPath, optimizedDirectory, libraryPath, parent);
 		
 		certificateFolder = parentContextWrapper.getDir("valid_certs", ContextWrapper.MODE_PRIVATE);
-		mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);
+		//mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);
 		mPackageManager = parentContextWrapper.getPackageManager();
 		
 		// Map initialization
@@ -208,7 +205,7 @@ public class SecureDexClassLoader extends DexClassLoader {
 				String certificateRemoteURL = revertPackageNameToURL(currentPackageName);
 				packageNameToCertificateMap.put(currentPackageName, certificateRemoteURL);
 				
-				Log.i(	TAG_SECURE_DEX_CLASS_LOADER, "Package Name: " + currentPackageName + 
+				Log.d(	TAG_SECURE_DEX_CLASS_LOADER, "Package Name: " + currentPackageName + 
 						"; Certificate Remote Location: " + certificateRemoteURL + ";");
 			}
 		}
@@ -606,88 +603,24 @@ public class SecureDexClassLoader extends DexClassLoader {
 
 	private boolean downloadCertificateRemotelyViaHttps(String packageName) {
 		
-		// Check whether Internet access is granted..
-		NetworkInfo activeNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
-		if (activeNetworkInfo != null && activeNetworkInfo.isConnected()) {
-					
-			// Find remote URL of the certificate from the related map through class package name.
-			String urlString = packageNameToCertificateMap.get(packageName);
-						
-			// Open an Https connection by trusting default CA on
-			// the Android device.
-			HttpsURLConnection urlConnection = null;
-			InputStream inputStream = null;
-			OutputStream outputStream = null;
-						
-			try {
-					
-				URL certificateURL = new URL(urlString);
-				urlConnection = (HttpsURLConnection) certificateURL.openConnection();
-				// TODO Discuss how to interact with a web site that has just 
-				// a self signed certificate.. Up to now they're probably rejected..
-				// And it makes sense..
-				//urlConnection.connect();
-				
-				if (urlConnection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
-				
-					Log.i(TAG_SECURE_DEX_CLASS_LOADER, "A connection to the URL was set up.");
-					
-					inputStream = urlConnection.getInputStream();
-					//inputStream = certificateURL.openStream();
-					
-					// The new certificate is stored in the application private directory
-					// and its name is the same as the package name.
-					String downloadPath = certificateFolder.getAbsolutePath() + "/" + packageName + ".pem";
-					outputStream = new FileOutputStream(downloadPath);
-							
-					int read = 0;
-					byte[] bytes = new byte[1024];
-					
-					while ((read = inputStream.read(bytes)) > 0) {
-						outputStream.write(bytes, 0, read);
-					}
-					
-					Log.i(TAG_SECURE_DEX_CLASS_LOADER, "Download complete. Certificate Path: " + downloadPath);
-				}
-							
-			} catch (MalformedURLException e) {
-				return false;
-			} catch (IOException e) {
-				return false;
-			} finally {
-				
-				Log.i(TAG_SECURE_DEX_CLASS_LOADER, "Clean up of all pending streams completed.");
-				if (urlConnection != null)	urlConnection.disconnect();
-				
-				if (inputStream != null) {
-					try {
-						inputStream.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-				if (outputStream != null) {
-					try {
-						// outputStream.flush();
-						outputStream.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}			 
-				} else return false;
-				
-			}
-
-			// If the code reaches this point, it means that the Https
-			// request was correctly instantiated and a certificate
-			// was properly downloaded in the local folder.
-			return true;
+		// Find remote URL of the certificate from the related map through class package name.
+		String urlString = packageNameToCertificateMap.get(packageName);
+		
+		// All URLs here use method HTTPS.
+		URL certificateRemoteURL;
+		
+		try {
+			certificateRemoteURL = new URL(urlString);
+		} catch (MalformedURLException e) {
+			// Not valid remote URL for the certificate..
+			return false;
 		}
 		
-		Log.w(TAG_SECURE_DEX_CLASS_LOADER, "No connectivity is available for the device!");
+		// The new certificate should be stored in the application private directory
+		// and its name should be the same as the package name.
+		String localCertPath = certificateFolder.getAbsolutePath() + "/" + packageName + ".pem";
 		
-		// If this branch is reached it means that no Internet 
-		// connectivity was available..
-		// So the procedure fails..
-		return false;
+		// Return the result of the download procedure..
+		return SecureLoaderFactory.FileDownloader.downloadRemoteUrl(certificateRemoteURL, localCertPath);
 	}
 }
