@@ -170,7 +170,7 @@ public class DexClassSampleActivity extends Activity {
 		
 		if (isSecureModeChosen) {
 			
-			// TODO Fill with test code for SecureDexClassLoader..
+			// TODO Fill with test ClassLoader..
 			
 		} else {
 		

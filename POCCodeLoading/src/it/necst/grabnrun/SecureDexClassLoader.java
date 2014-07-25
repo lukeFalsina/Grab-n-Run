@@ -136,7 +136,10 @@ public class SecureDexClassLoader extends DexClassLoader {
 			
 			// APK container case:
 			// Use PackageManager to retrieve the package name of the APK container
-			return mPackageManager.getPackageArchiveInfo(containerPath, 0).packageName;
+			if (mPackageManager.getPackageArchiveInfo(containerPath, 0) != null)
+				return mPackageManager.getPackageArchiveInfo(containerPath, 0).packageName;
+			
+			return null;
 		}
 			
 		if (extension.equals(".jar")) {
@@ -175,7 +178,7 @@ public class SecureDexClassLoader extends DexClassLoader {
 		}
 		
 		// Any other file format is not supported so 
-		// package name is returned..
+		// no package name is returned..
 		return null;
 	}
 	
@@ -214,18 +217,32 @@ public class SecureDexClassLoader extends DexClassLoader {
 	private String revertPackageNameToURL(String packageName) {
 		
 		// Reconstruct URL of the certificate from the class package name.
-		String urlString, firstLevelDomain, secondLevelDomain;
+		String firstLevelDomain, secondLevelDomain;
 								
 		int firstPointChar = packageName.indexOf('.');
-		int secondPointChar = packageName.indexOf('.', firstPointChar + 1);
+		
+		if (firstPointChar == -1) {
+			// No point inside the package name.. NO SENSE
+			// Forced to .com domain
+			return "https://" + packageName + ".com/certificate.pem";
+		}
+		
 		firstLevelDomain = packageName.substring(0, firstPointChar);
+		int secondPointChar = packageName.indexOf('.', firstPointChar + 1);
+		
+		if (secondPointChar == -1) {
+			// Just two substrings in the package name..
+			return "https://" + packageName.substring(firstPointChar + 1) + "." + firstLevelDomain + "/certificate.pem";
+		
+		} 
+		
+		// The rest of the package name is interpreted as a location
 		secondLevelDomain = packageName.substring(firstPointChar + 1, secondPointChar);
 								
-		urlString = "https://" + secondLevelDomain + firstLevelDomain 
-					+ packageName.substring(secondPointChar).replaceAll(".", "/")
-					+ "/certificate.pem";
+		return	"https://" + secondLevelDomain + "." + firstLevelDomain 
+				+ packageName.substring(secondPointChar).replaceAll(".", "/")
+				+ "/certificate.pem";
 		
-		return urlString;
 	}
 
 	/* (non-Javadoc)
@@ -609,30 +626,39 @@ public class SecureDexClassLoader extends DexClassLoader {
 				// TODO Discuss how to interact with a web site that has just 
 				// a self signed certificate.. Up to now they're probably rejected..
 				// And it makes sense..
-				urlConnection.connect();
+				//urlConnection.connect();
 				
-				Log.i(TAG_SECURE_DEX_CLASS_LOADER, "A connection to the URL was set up.");
+				if (urlConnection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
+				
+					Log.i(TAG_SECURE_DEX_CLASS_LOADER, "A connection to the URL was set up.");
+					
+					inputStream = urlConnection.getInputStream();
+					//inputStream = certificateURL.openStream();
+					
+					// The new certificate is stored in the application private directory
+					// and its name is the same as the package name.
+					String downloadPath = certificateFolder.getAbsolutePath() + "/" + packageName + ".pem";
+					outputStream = new FileOutputStream(downloadPath);
 							
-				inputStream = urlConnection.getInputStream();
-				// The new certificate is stored in the application private directory
-				// and its name is the same as the package name.
-				String downloadPath = certificateFolder.getAbsolutePath() + "/" + packageName + ".pem";
-				outputStream = new FileOutputStream(downloadPath);
-						
-				int read = 0;
-				byte[] bytes = new byte[1024];
-				
-				while ((read = inputStream.read(bytes)) != -1) {
-					outputStream.write(bytes, 0, read);
+					int read = 0;
+					byte[] bytes = new byte[1024];
+					
+					while ((read = inputStream.read(bytes)) > 0) {
+						outputStream.write(bytes, 0, read);
+					}
+					
+					Log.i(TAG_SECURE_DEX_CLASS_LOADER, "Download complete. Certificate Path: " + downloadPath);
 				}
-				
-				Log.i(TAG_SECURE_DEX_CLASS_LOADER, "Download complete. Certificate Path: " + downloadPath);
 							
 			} catch (MalformedURLException e) {
 				return false;
 			} catch (IOException e) {
 				return false;
 			} finally {
+				
+				Log.i(TAG_SECURE_DEX_CLASS_LOADER, "Clean up of all pending streams completed.");
+				if (urlConnection != null)	urlConnection.disconnect();
+				
 				if (inputStream != null) {
 					try {
 						inputStream.close();
@@ -647,10 +673,8 @@ public class SecureDexClassLoader extends DexClassLoader {
 					} catch (IOException e) {
 						e.printStackTrace();
 					}			 
-				}
-				if (urlConnection != null)	urlConnection.disconnect();
+				} else return false;
 				
-				Log.i(TAG_SECURE_DEX_CLASS_LOADER, "Clean up of all pending streams completed.");
 			}
 
 			// If the code reaches this point, it means that the Https

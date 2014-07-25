@@ -1,5 +1,6 @@
 package it.necst.grabnrun;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -8,7 +9,6 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -118,17 +118,26 @@ public class SecureLoaderFactory {
 			Log.i(TAG_SECURE_FACTORY, "Dex Path has been modified to: " + finalDexPath);
 		} */
 		
+		// Necessary workaround to avoid remote URL being split 
+		// in a wrong way..
+		String tempPath = dexPath.replaceAll("http://", "http//");
+		tempPath = tempPath.replaceAll("https://", "https//");
+		
 		// Evaluate incoming paths. If one of those starts with http or https
 		// retrieve the related resources through a download and import it 
 		// into an internal application private directory.
-		String[] strings = dexPath.split(Pattern.quote(File.pathSeparator));
+		String[] strings = tempPath.split(Pattern.quote(File.pathSeparator));
 		
 		File resDownloadDir = null;
 		boolean isResourceFolderInitialized = false;
 		
 		for (String path : strings) {
 			
-			if (path.startsWith("http://") || path.startsWith("https://")) {
+			if (path.startsWith("http//") || path.startsWith("https//")) {
+				
+				// Used to fix previous workaround on remote URL..
+				String fixedPath = path.replaceAll("http//", "http://");
+				fixedPath = fixedPath.replaceAll("https//", "https://");
 				
 				// A new resource should be retrieved from the web..
 				// Check whether the final directory for downloaded resources
@@ -141,26 +150,26 @@ public class SecureLoaderFactory {
 					isResourceFolderInitialized = true;
 				}
 				
-				String downloadedContainerPath = downloadContainerIntoFolder(path, resDownloadDir);
+				String downloadedContainerPath = downloadContainerIntoFolder(fixedPath, resDownloadDir);
 				
 				if (downloadedContainerPath != null) {
 					
 					// In such a case the download was successful and so
 					// it is necessary to replace the current web-like path 
 					// to access the resource with the new local version.
-					finalDexPath.append(downloadedContainerPath + Pattern.quote(File.pathSeparator));
+					finalDexPath.append(downloadedContainerPath + File.pathSeparator);
 					Log.i(TAG_SECURE_FACTORY, "Dex Path has been modified into: " + finalDexPath);
 				}
 			}
 			else {
 				
 				// Simply copy current path into the final dex path list
-				finalDexPath.append(path + Pattern.quote(File.pathSeparator));
+				finalDexPath.append(path + File.pathSeparator);
 			}
 		}
 		
 		// Finally remove the last unnecessary separator from finalDexPath
-		finalDexPath.deleteCharAt(finalDexPath.lastIndexOf(Pattern.quote(File.pathSeparator)));
+		finalDexPath.deleteCharAt(finalDexPath.lastIndexOf(File.pathSeparator));
 		
 		// Now the location of the final loaded classes is created.
 		// Since it is assumed that the developer do not care where
@@ -225,12 +234,12 @@ public class SecureLoaderFactory {
 					String certificateURLString = santiziedPackageNameToCertificateMap.get(currentPackageName);
 					certificateURL = new URL(certificateURLString);
 					
-					if (certificateURL.getProtocol() == "http") {
+					if (certificateURL.getProtocol().equals("http")) {
 						// In this case enforce HTTPS protocol
 						santiziedPackageNameToCertificateMap.put(currentPackageName, certificateURLString.replace("http", "https"));
 					}
 					else {
-						if (certificateURL.getProtocol() != "https") {
+						if (!certificateURL.getProtocol().equals("https")) {
 							// If the certificate URL protocol is different from HTTPS
 							// or HTTP, this entry is not valid
 							removeThisPackageName = true;
@@ -272,11 +281,11 @@ public class SecureLoaderFactory {
 			return null;
 		}
 		
-		if (url.getProtocol() != "http" && url.getProtocol()!= "https") return null;
+		if (!url.getProtocol().equals("http") && !url.getProtocol().equals("https")) return null;
 		
 		// Check whether the selected resource is not empty
 		int finalSeparatorIndex = url.getPath().lastIndexOf("/");
-		String containerName = url.getPath().substring(finalSeparatorIndex);
+		String containerName = url.getFile().substring(finalSeparatorIndex);
 		
 		if (containerName == null || containerName.isEmpty()) return null;
 		
@@ -285,9 +294,9 @@ public class SecureLoaderFactory {
 		String extension = containerName.substring(extensionIndex);
 		if (!extension.equals(".jar") && !extension.equals(".apk")) return null;
 		
-		// The new file name is fixed after having checked that its 
+		// The new file name is fixed after having checked that its file name
 		// is unique.
-		File checkFile = new File(resOutputDir.getAbsolutePath() + "/" + containerName);
+		File checkFile = new File(resOutputDir.getAbsolutePath() + containerName);
 		String finalContainerName;
 		
 		if (checkFile.exists()) {
@@ -297,7 +306,7 @@ public class SecureLoaderFactory {
 			do {
 				currentIndex ++;
 				finalContainerName = containerName.substring(0, extensionIndex) + currentIndex + extension;
-				checkFile = new File(resOutputDir.getAbsolutePath()+ "/" + finalContainerName);
+				checkFile = new File(resOutputDir.getAbsolutePath() + finalContainerName);
 					
 			} while (checkFile.exists());
 		}
@@ -307,10 +316,10 @@ public class SecureLoaderFactory {
 		
 		// Finally the container file can be downloaded from the URL
 		// and stored in the local folder
-		URLConnection urlConnection = null;
+		HttpURLConnection urlConnection = null;
 		InputStream inputStream = null;
 		OutputStream outputStream = null;
-		String localContainerPath = resOutputDir.getAbsolutePath()+ "/" + finalContainerName;
+		String localContainerPath = resOutputDir.getAbsolutePath() + finalContainerName;
 		
 		// Check whether Internet access is granted..
 		activeNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
@@ -318,7 +327,7 @@ public class SecureLoaderFactory {
 		
 			try {
 			
-				if (url.getProtocol()!= "https") {
+				if (url.getProtocol().equals("https")) {
 					// HTTPS protocol
 					urlConnection = (HttpsURLConnection) url.openConnection();
 				}
@@ -326,26 +335,38 @@ public class SecureLoaderFactory {
 					// HTTP protocol
 					urlConnection = (HttpURLConnection) url.openConnection();
 				}
-				urlConnection.connect();
-			
-				Log.i(TAG_SECURE_FACTORY, "A connection was set up: " + url.toString());
+				// urlConnection.setDoInput(true);
+				// urlConnection.connect();
 				
-				inputStream = urlConnection.getInputStream();
-				outputStream = new FileOutputStream(localContainerPath);
+				//int responseCode = urlConnection.getResponseCode();
 				
-				int read = 0;
-				byte[] bytes = new byte[1024];
+				//if ( responseCode == HttpURLConnection.HTTP_OK) {
 				
-				while ((read = inputStream.read(bytes)) != -1) {
-					outputStream.write(bytes, 0, read);
-				}
-				
-				Log.i(TAG_SECURE_FACTORY, "Download complete. Container Path: " + localContainerPath);
+					Log.i(TAG_SECURE_FACTORY, "A connection was set up: " + url.toString());
+					
+					inputStream = new BufferedInputStream(urlConnection.getInputStream());
+					outputStream = new FileOutputStream(localContainerPath);
+					
+					int read = 0;
+					byte[] bytes = new byte[1024];
+					
+					while ((read = inputStream.read(bytes)) > 0) {
+						outputStream.write(bytes, 0, read);
+					}
+					
+					Log.i(TAG_SECURE_FACTORY, "Download complete. Container Path: " + localContainerPath);
+				//}
 				
 			} catch (IOException e) {
-				e.printStackTrace();
+				// No file was found at the remote URL!
+				// Nothing should have been written at the local path 
+				// and so null should be returned.
 				return null;
+				
 			} finally {
+				Log.i(TAG_SECURE_FACTORY, "Clean up of all pending streams completed.");
+				if (urlConnection != null)	((HttpURLConnection) urlConnection).disconnect();
+
 				if (inputStream != null) {
 					try {
 						inputStream.close();
@@ -360,10 +381,11 @@ public class SecureLoaderFactory {
 					} catch (IOException e) {
 						e.printStackTrace();
 					}			 
+				} else {
+					// No file was written!
+					return null;
 				}
-				if (urlConnection != null)	((HttpURLConnection) urlConnection).disconnect();
 			
-				Log.i(TAG_SECURE_FACTORY, "Clean up of all pending streams completed.");
 			}
 			
 			// If this part of the method is reached, the download 
