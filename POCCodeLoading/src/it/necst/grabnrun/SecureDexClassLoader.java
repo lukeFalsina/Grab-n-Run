@@ -83,6 +83,8 @@ public class SecureDexClassLoader extends DexClassLoader {
 	//private ConnectivityManager mConnectivityManager;
 	private PackageManager mPackageManager;
 	
+	private FileDownloader mFileDownloader;
+	
 	private Map<String, String> packageNameToCertificateMap, packageNameToContainerPathMap;
 	
 	SecureDexClassLoader(	String dexPath, String optimizedDirectory,
@@ -93,6 +95,8 @@ public class SecureDexClassLoader extends DexClassLoader {
 		certificateFolder = parentContextWrapper.getDir("valid_certs", ContextWrapper.MODE_PRIVATE);
 		//mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);
 		mPackageManager = parentContextWrapper.getPackageManager();
+		
+		mFileDownloader = new FileDownloader(parentContextWrapper);
 		
 		// Map initialization
 		packageNameToCertificateMap = null;
@@ -621,6 +625,6 @@ public class SecureDexClassLoader extends DexClassLoader {
 		String localCertPath = certificateFolder.getAbsolutePath() + "/" + packageName + ".pem";
 		
 		// Return the result of the download procedure..
-		return SecureLoaderFactory.FileDownloader.downloadRemoteUrl(certificateRemoteURL, localCertPath);
+		return mFileDownloader.downloadRemoteUrl(certificateRemoteURL, localCertPath);
 	}
 }

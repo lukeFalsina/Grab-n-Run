@@ -30,7 +30,7 @@ public class SecureLoaderFactory {
 	//private NetworkInfo activeNetworkInfo;
 	
 	// Object used for retrieving file from remote URL
-	static FileDownloader FileDownloader;
+	private FileDownloader mFileDownloader;
 	
 	/**
 	 * Creates a {@code SecureLoaderFactory} used to check and generate instances 
@@ -47,7 +47,7 @@ public class SecureLoaderFactory {
 	
 		mContextWrapper = parentContextWrapper;
 		//mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);
-		FileDownloader = FileDownloader.getInstance(mContextWrapper);
+		mFileDownloader = new FileDownloader(mContextWrapper);
 	}
 	
 	/**
@@ -313,7 +313,7 @@ public class SecureLoaderFactory {
 		// and stored in the local folder
 		String localContainerPath = resOutputDir.getAbsolutePath() + finalContainerName;
 		
-		boolean isDownloadSuccessful = FileDownloader.downloadRemoteUrl(url, localContainerPath);
+		boolean isDownloadSuccessful = mFileDownloader.downloadRemoteUrl(url, localContainerPath);
 		
 		if (isDownloadSuccessful)
 			// If this branch is reached, the download 

@@ -20,9 +20,6 @@ import android.os.Handler;
 import android.util.Log;
 
 public class FileDownloader {
-
-	// A single instance of this class is sufficient..
-	private static FileDownloader instance = null;
 	
 	// Unique identifier used for Log entries
 	private static final String TAG_FILE_DOWNLOADER = FileDownloader.class.getSimpleName();
@@ -40,20 +37,11 @@ public class FileDownloader {
 	// Used to dismiss the dialog
 	private Handler handler;
 
-	private FileDownloader(ContextWrapper parentContextWrapper) {
+	FileDownloader(ContextWrapper parentContextWrapper) {
 		
 		handler = new Handler();
 		mContextWrapper = parentContextWrapper;
 		mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);		
-	}
-	
-	FileDownloader getInstance(ContextWrapper parentContextWrapper) {
-		
-		if (instance == null) {
-			instance = new FileDownloader(parentContextWrapper);
-		}
-		
-		return instance;
 	}
 	
 	// Assumption: input URL and output URI has been already validated
