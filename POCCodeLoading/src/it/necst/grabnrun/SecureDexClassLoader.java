@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 import javax.security.auth.x500.X500Principal;
 
 import android.content.ContextWrapper;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 //import android.net.ConnectivityManager;
 //import android.net.NetworkInfo;
@@ -43,19 +44,20 @@ import dalvik.system.DexFile;
 /**
  * A class that provides an extension of default {@link DexClassLoader} 
  * provided by the Android system and it is used to load classes 
- * from Jar and Apk files containing a classes.dex entry in a secure way.
+ * from jar and apk container files including a classes.dex entry in a secure way.
  * 
  * In order to instantiate this class a call to the method createDexClassLoader
- * from a SecureLoaderFactory object must be performed.
+ * from a {@link SecureLoaderFactory} object must be performed.
  * 
- * {@code SecureDexClassLoader} ensures integrity of loaded external remote 
+ * {@link SecureDexClassLoader} ensures integrity of loaded external remote 
  * classes by comparing them with the developer certificate, which
- * is retrieved, as a first implementation, by simply reverting the 
- * first two worlds of the package name of the loaded class and then 
- * by adding each following world in the same order and separated by 
+ * is retrieved either by a provided associative map between package names 
+ * and certificate remote URL or by simply reverting the 
+ * first two words of the package name of the loaded class and then 
+ * by adding each following word in the same order and separated by 
  * a slash "/".
  * 
- * Example:
+ * Package name reversion example:
  * Class name = it.necst.grabnrun.example.TestClassImpl
  * Constructed URL = https://necst.it/grabnrun/example
  * Final certificate location = https://necst.it/grabnrun/example/certificate.pem
@@ -64,11 +66,12 @@ import dalvik.system.DexFile;
  * the file is found, it is imported in the local private 
  * application directory.
  * 
- * Please note that in the current implementation certificate must be 
- * saved at the described location as "certificate.pem", it must 
- * fit all the requirements of a standard X.509 certificate, it must 
- * be valid and of course it must have been used to sign the Jar or 
- * Apk, which contains the classes to be loaded.
+ * Please note that in the current implementation certificates obtained 
+ * by reverting package name must have been saved at the described 
+ * location as "certificate.pem". Moreover all the certificates must 
+ * fit requirements of a standard X.509 certificate, they must 
+ * be valid in the current time frame and of course they must have been 
+ * used to sign the jar or apk, which contains the classes to be loaded.
  * 
  * If any of these previous requirements is violated no class is loaded 
  * and this class immediately returns without executing any class code 
@@ -358,21 +361,20 @@ public class SecureDexClassLoader extends DexClassLoader {
 						};
 						
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					} finally {
 						if (containerBufIn != null) {
 							try {
 								containerBufIn.close();
 							} catch (IOException e) {
-								// TODO Auto-generated catch block
 								e.printStackTrace();
 							}
 						}
 					}
 					
-					// Use PackageManager field to retrieve the signature 					
-					android.content.pm.Signature apkSignature = mPackageManager.getPackageArchiveInfo(containerPath, PackageManager.GET_SIGNATURES).signatures[0];
+					// Use PackageManager field to retrieve the signature
+					PackageInfo mPackageSignatureInfo = mPackageManager.getPackageArchiveInfo(containerPath, PackageManager.GET_SIGNATURES);
+					android.content.pm.Signature apkSignature = mPackageSignatureInfo.signatures[0];
 					
 					// Trigger the signature verification procedure
 					signatureCheckIsSuccessful = mSignature.verify(apkSignature.toByteArray());
@@ -431,6 +433,7 @@ public class SecureDexClassLoader extends DexClassLoader {
 			// was not valid when compared against the selected certificate.
 			// No class loading should be allowed and the container 
 			// should be removed as well.
+			// TODO NO PERMISSION --> It won't cancel data on external storage..
 			File containerToRemove = new File(containerPath);
 			containerToRemove.delete();
 			packageNameToContainerPathMap.remove(packageName);
@@ -590,8 +593,8 @@ public class SecureDexClassLoader extends DexClassLoader {
 					if (verifiedCertificate.getKeyUsage() != null) {
 						
 						int keyCertSignIndex = 5;
-						if(!verifiedCertificate.getKeyUsage()[keyCertSignIndex])
-							throw new CertificateExpiredException("These certificate can't be used for signature verification!");
+						if(verifiedCertificate.getKeyUsage()[keyCertSignIndex])
+							throw new CertificateExpiredException("These certificate should not be used for code verification!");
 						
 						Log.i(TAG_SECURE_DEX_CLASS_LOADER, verifiedCertificate.getKeyUsage().toString());
 					}
