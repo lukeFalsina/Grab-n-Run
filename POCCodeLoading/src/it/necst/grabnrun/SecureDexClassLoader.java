@@ -18,9 +18,11 @@ import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 import java.util.jar.JarEntry;
@@ -79,7 +81,7 @@ public class SecureDexClassLoader extends DexClassLoader {
 	// Unique identifier used for Log entries
 	private static final String TAG_SECURE_DEX_CLASS_LOADER = SecureDexClassLoader.class.getSimpleName();
 	
-	private File certificateFolder;
+	private File certificateFolder, resDownloadFolder;
 	//private ConnectivityManager mConnectivityManager;
 	private PackageManager mPackageManager;
 	
@@ -87,16 +89,27 @@ public class SecureDexClassLoader extends DexClassLoader {
 	
 	private Map<String, String> packageNameToCertificateMap, packageNameToContainerPathMap;
 	
+	// Final name of the folder user to store certificates for the verification
+	private static final String CERTIFICATE_DIR = "valid_certs";
+	
+	// Used to verify if a call to the wiped out method has
+	// been performed.
+	private boolean hasBeenWipedOut;
+	
 	SecureDexClassLoader(	String dexPath, String optimizedDirectory,
 							String libraryPath, ClassLoader parent,
 							ContextWrapper parentContextWrapper) {
 		super(dexPath, optimizedDirectory, libraryPath, parent);
 		
-		certificateFolder = parentContextWrapper.getDir("valid_certs", ContextWrapper.MODE_PRIVATE);
+		certificateFolder = parentContextWrapper.getDir(CERTIFICATE_DIR, ContextWrapper.MODE_PRIVATE);
+		resDownloadFolder = parentContextWrapper.getDir(SecureLoaderFactory.RES_DOWNLOAD_DIR, ContextWrapper.MODE_PRIVATE);
+		
 		//mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);
 		mPackageManager = parentContextWrapper.getPackageManager();
 		
 		mFileDownloader = new FileDownloader(parentContextWrapper);
+		
+		hasBeenWipedOut = false;
 		
 		// Map initialization
 		packageNameToCertificateMap = null;
@@ -255,6 +268,10 @@ public class SecureDexClassLoader extends DexClassLoader {
 		// A map which links package names to certificate locations
 		// must be provided before calling this method..
 		if (packageNameToCertificateMap == null) return null;
+		
+		// Cached data have been wiped out so some of the require
+		// resources may have been erased..
+		if (hasBeenWipedOut) return null;
 		
 		// At first the name of the certificate possibly stored 
 		// in the application private directory is generated
@@ -626,5 +643,80 @@ public class SecureDexClassLoader extends DexClassLoader {
 		
 		// Return the result of the download procedure..
 		return mFileDownloader.downloadRemoteUrl(certificateRemoteURL, localCertPath);
+	}
+	
+	/**
+	 * Sometimes it may be useful to remove those data that have been cached in 
+	 * the private application folder (basically for performance reason or for saving 
+	 * disk space on the device). A call to this method solves the issue.
+	 * 
+	 * Please notice that a call to this method with both the parameters set to false 
+	 * has no effect.
+	 * 
+	 * In any of the other cases the content of the related folder(s) will be erased and 
+	 * since some of the data may have been used by {@link SecureDexClassLoader} instances, it is 
+	 * required to the caller to create a new {@link SecureDexClassLoader} object through 
+	 * {@link SecureLoaderFactory} since the already present object is going to be disabled 
+	 * from loading classes dynamically.
+	 * 
+	 * @param containerPrivateFolder
+	 * if the private folder containing jar and apk containers downloaded from remote URL needs to be wiped out
+	 * @param certificatePrivateFolder
+	 * if the private folder containing certificates needs to be wiped out
+	 */
+	public void wipeOutPrivateAppCachedData(boolean containerPrivateFolder, boolean certificatePrivateFolder) {
+		
+		// This is a useless call.. Nothing will happen..
+		if (!containerPrivateFolder && !certificatePrivateFolder) return;
+		
+		List<File> fileToEraseList = new ArrayList<File>();
+		
+		if (containerPrivateFolder) {
+			
+			// It is required to erase all the files in the application
+			// private container folder..
+			File[] containerFiles = resDownloadFolder.listFiles();
+			
+			for (File file : containerFiles) {
+				
+				fileToEraseList.add(file);
+			}
+		}
+		
+		if (certificatePrivateFolder) {
+			
+			// It is required to erase all the files in the application
+			// private certificate folder..
+			File[] certificateFiles = certificateFolder.listFiles();
+			
+			for (File file : certificateFiles) {
+				
+				fileToEraseList.add(file);
+			}
+		}
+		
+		Iterator<File> fileToEraseIterator = fileToEraseList.iterator();
+		
+		while (fileToEraseIterator.hasNext()) {
+			
+			File file = fileToEraseIterator.next();
+			
+			// Check whether the selected resource is a container (jar or apk)
+			// or a certificate (pem)
+			String filePath = file.getAbsolutePath();
+			int extensionIndex = filePath.lastIndexOf(".");
+			String extension = filePath.substring(extensionIndex);
+			
+			if (extension.equals(".apk") || extension.equals(".jar") || extension.equals(".pem")) {
+				
+				if (file.delete())
+					Log.d(TAG_SECURE_DEX_CLASS_LOADER, filePath + " has been erased.");
+				else
+					Log.w(TAG_SECURE_DEX_CLASS_LOADER, filePath + " was NOT erased.");
+			}
+		}
+		
+		hasBeenWipedOut = true;
+
 	}
 }

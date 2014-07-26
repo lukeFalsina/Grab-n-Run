@@ -32,6 +32,9 @@ public class SecureLoaderFactory {
 	// Object used for retrieving file from remote URL
 	private FileDownloader mFileDownloader;
 	
+	// Final name of the folder user to store downloaded remote containers
+	static final String RES_DOWNLOAD_DIR = "downloaded_res";
+	
 	/**
 	 * Creates a {@code SecureLoaderFactory} used to check and generate instances 
 	 * from secure dynamic code loader classes.
@@ -110,7 +113,7 @@ public class SecureLoaderFactory {
 			// This dexPath must be forced to use https (avoid MITM attacks)..
 			finalDexPath = finalDexPath.replace("http://", "https://");
 			
-			Log.i(TAG_SECURE_FACTORY, "Dex Path has been modified to: " + finalDexPath);
+			Log.d(TAG_SECURE_FACTORY, "Dex Path has been modified to: " + finalDexPath);
 		} */
 		
 		// Necessary workaround to avoid remote URL being split 
@@ -140,7 +143,7 @@ public class SecureLoaderFactory {
 				if (!isResourceFolderInitialized) {
 					
 					// TODO Policy for dismissing this folder and its contents???
-					resDownloadDir = mContextWrapper.getDir("downloaded_res", ContextWrapper.MODE_PRIVATE);
+					resDownloadDir = mContextWrapper.getDir(RES_DOWNLOAD_DIR, ContextWrapper.MODE_PRIVATE);
 					Log.d(TAG_SECURE_FACTORY, "Download Resource Dir has been mounted at: " + resDownloadDir.getAbsolutePath());
 					isResourceFolderInitialized = true;
 				}
