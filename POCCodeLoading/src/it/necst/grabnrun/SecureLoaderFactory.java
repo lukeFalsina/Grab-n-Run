@@ -250,10 +250,8 @@ public class SecureLoaderFactory {
 			else removeThisPackageName = true;
 			
 			if (removeThisPackageName) {
-				// TODO Check whether this call affects also the 
-				// map and not just the iterator..
-				
-				// Remove invalid entry from the map
+
+				// Remove invalid entry from the map (removing from the iterator is enough..)
 				packageNamesIterator.remove();
 				// santiziedPackageNameToCertificateMap.remove(currentPackageName);
 			}

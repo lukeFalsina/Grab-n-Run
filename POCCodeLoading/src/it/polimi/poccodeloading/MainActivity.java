@@ -79,7 +79,7 @@ public class MainActivity extends Activity {
 		//String exampleTestAPKPath = Environment.getRootDirectory().getAbsolutePath() + "/ext_card/download/NasaDailyImage/NasaDailyImage.apk";
 		exampleTestAPKPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/NasaDailyImage/NasaDailyImage.apk";
 		
-		exampleSignedAPKPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/NasaDailyImage/NasaDailyImageSigned.apk";
+		exampleSignedAPKPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/NasaDailyImageSigned.apk";
 		
 		classNameInAPK = "headfirstlab.nasadailyimage.NasaDailyImage";
 		
@@ -161,7 +161,8 @@ public class MainActivity extends Activity {
 		
 		// Creating the apk paths list (you can mix between remote and local URL)..
 		String listAPKPaths = 	Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/testApp.apk:" +
-								exampleTestAPKPath + ":http://jdbc.postgresql.org/download/postgresql-9.2-1002.jdbc4.jar";
+								exampleTestAPKPath; 
+								//+ ":http://jdbc.postgresql.org/download/postgresql-9.2-1002.jdbc4.jar";
 		
 		Log.i(TAG_MAIN, "1st Test: Fetch the certificate by reverting package name..");
 		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(listAPKPaths, null, null, ClassLoader.getSystemClassLoader().getParent());		
@@ -182,17 +183,22 @@ public class MainActivity extends Activity {
 			Log.w(TAG_MAIN, "No class should be searched in this case!!");
 		}
 		
+		// Remove the cached resources before the next test..
+		mSecureDexClassLoader.wipeOutPrivateAppCachedData(true, true);
+		
 		// 2nd Test: Fetch the certificate by filling associative map 
 		// between package name and certificate --> FAIL cause the apk
 		// was signed with the DEBUG ANDROID certificate
 		
 		// Filling the associative map to link package names and certificates..
 		Map<String, String> packageNamesToCertMap = new HashMap<String, String>();
-		// 1st Location: valid remote certificate location
+		// 1st Entry: valid remote certificate location
 		// packageNamesToCertMap.put("headfirstlab.nasadailyimage", "https://github.com/lukeFalsina/test/test_cert.pem");
 		packageNamesToCertMap.put("headfirstlab.nasadailyimage", "https://dl.dropboxusercontent.com/u/28681922/test_cert.pem");
-		// 2nd Location: inexistent certificate
+		// 2nd Entry: inexistent certificate
 		packageNamesToCertMap.put("it.polimi.example", "http://google.com/test_cert.pem");
+		// 3rd Entry: misspelled and so invalid URL
+		packageNamesToCertMap.put("it.polimi.example2", "htt://google.com/test_cert2.pem");
 		
 		Log.i(TAG_MAIN, "2nd Test: Fetch the certificate by filling associative map..");
 		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	exampleTestAPKPath, 
@@ -254,6 +260,9 @@ public class MainActivity extends Activity {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		// Remove the cached resources..
+		mSecureDexClassLoader.wipeOutPrivateAppCachedData(false, true);
 	}
 
 	/**
@@ -291,7 +300,7 @@ public class MainActivity extends Activity {
 				@Override
 				public void run() {
 					Toast.makeText(MainActivity.this,
-							"DexClassLoader was successful! Found activity: " + NasaDailyActivity.getComponentName(),
+							"DexClassLoader was successful! Found activity: " + NasaDailyActivity.getClass().getName(),
 							Toast.LENGTH_SHORT).show();
 				}
 				

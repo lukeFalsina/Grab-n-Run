@@ -337,6 +337,10 @@ public class SecureDexClassLoader extends DexClassLoader {
 					// signing algorithm (the one used in the trusted certificate).
 					Signature mSignature = Signature.getInstance(verifiedCertificate.getSigAlgName());
 					
+					// Provide the trusted certificate from which the public
+					// key will be extracted for the signature verification.
+					mSignature.initVerify(verifiedCertificate);
+					
 					// Fill signature object with the data which was initially signed (e.g. the APK container)
 					FileInputStream containerFIS = null;
 					BufferedInputStream containerBufIn = null;
@@ -366,10 +370,6 @@ public class SecureDexClassLoader extends DexClassLoader {
 							}
 						}
 					}
-					
-					// Provide the trusted certificate from which the public
-					// key will be extracted for the signature verification.
-					mSignature.initVerify(verifiedCertificate);
 					
 					// Use PackageManager field to retrieve the signature 					
 					android.content.pm.Signature apkSignature = mPackageManager.getPackageArchiveInfo(containerPath, PackageManager.GET_SIGNATURES).signatures[0];
@@ -587,9 +587,14 @@ public class SecureDexClassLoader extends DexClassLoader {
 					
 					// Evaluate whether the certificate can be used for signature verification
 					// keyCertSignIndex is a magic number from ASN.1 definition of Key Usage.
-					int keyCertSignIndex = 5;
-					if(!verifiedCertificate.getKeyUsage()[keyCertSignIndex])
-						throw new CertificateExpiredException("These certificate can't be used for signature verification!");
+					if (verifiedCertificate.getKeyUsage() != null) {
+						
+						int keyCertSignIndex = 5;
+						if(!verifiedCertificate.getKeyUsage()[keyCertSignIndex])
+							throw new CertificateExpiredException("These certificate can't be used for signature verification!");
+						
+						Log.i(TAG_SECURE_DEX_CLASS_LOADER, verifiedCertificate.getKeyUsage().toString());
+					}
 					
 					// TODO Need to be tested!!
 					// Check whether the certificate used to verify is the one 

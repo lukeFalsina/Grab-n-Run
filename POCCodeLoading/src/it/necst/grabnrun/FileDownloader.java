@@ -11,6 +11,7 @@ import java.net.URL;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -57,7 +58,7 @@ public class FileDownloader {
 		}
 		
 		// A progress dialog is shown to let the user know about the downloading process
-    	dialog = ProgressDialog.show(mContextWrapper, "Downloading", "Downloading a remote resource..");
+    	dialog = ProgressDialog.show((Activity) mContextWrapper, "Downloading", "Downloading a remote resource..");
 		
     	// Data are retrieved here by an auxiliary thread.
     	Thread dataThread = new Thread() {
