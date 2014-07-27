@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateFactory;
@@ -352,18 +353,12 @@ public class SecureDexClassLoader extends DexClassLoader {
 								// Check that the reconstructed certificate is not expired..
 								certFromSign.checkValidity();
 								
-								// Check whether the two SubjectDN and IssuerDN matches
-								// Please note that certificates may be self-signed but
-								// it's not an issue..
-								if (	certFromSign.getSubjectDN().equals(verifiedCertificate.getSubjectDN()) && 
-										certFromSign.getIssuerDN().equals(verifiedCertificate.getIssuerDN())	) {
-									
-									// Finally check that the two public keys matches..
-									if (certFromSign.getPublicKey().equals(verifiedCertificate.getPublicKey()))
-										// This a necessary but not sufficient condition to
-										// prove that the apk container has not been repackaged..
-										signatureCheckIsSuccessful = true;
-								}
+								// Check whether the reconstructed certificate and the trusted one match
+								// Please note that certificates may be self-signed but it's not an issue..
+								if (certFromSign.equals(verifiedCertificate))
+									// This a necessary but not sufficient condition to
+									// prove that the apk container has not been repackaged..
+									signatureCheckIsSuccessful = true;
 
 							} catch (CertificateException e) {
 								// If this branch is reached certificateFromSign is not valid..
@@ -429,9 +424,10 @@ public class SecureDexClassLoader extends DexClassLoader {
 			// was not valid when compared against the selected certificate.
 			// No class loading should be allowed and the container 
 			// should be removed as well.
-			// TODO NO PERMISSION --> It won't cancel data on external storage..
+			// TODO NO PERMISSION REQUIRED IN THE MANIFEST TILL NOW --> It won't erase data on external storage..
 			File containerToRemove = new File(containerPath);
-			containerToRemove.delete();
+			if (!containerToRemove.delete())
+				Log.w(TAG_SECURE_DEX_CLASS_LOADER, "It was impossible to delete " + containerPath);
 			packageNameToContainerPathMap.remove(packageName);
 				
 			return null;
@@ -454,10 +450,13 @@ public class SecureDexClassLoader extends DexClassLoader {
 
 	    // Ensure the jar file is at least signed.
 	    Manifest man = jarFile.getManifest();
-	    if (man == null) throw new SecurityException("The provider is not signed");
+	    if (man == null) {
+	    	Log.d(TAG_SECURE_DEX_CLASS_LOADER, jarFile.getName() + "is not signed.");
+	    	throw new SecurityException("The container is not signed");
+	    }
 
 	    // Ensure all the entries' signatures verify correctly
-	    byte[] buffer = new byte[2048];
+	    byte[] buffer = new byte[8192];
 	    Enumeration<JarEntry> entries = jarFile.entries();
 
 	    while (entries.hasMoreElements()) {
@@ -473,7 +472,7 @@ public class SecureDexClassLoader extends DexClassLoader {
 			// Read in each jar entry. A security exception will
 			// be thrown if a signature/digest check fails.
 			while (inStream.read(buffer, 0, buffer.length) != -1) {
-			    // Don't care
+			    // Don't care as soon as no exception is raised..
 			}
 			
 			// Close the input stream
@@ -489,10 +488,12 @@ public class SecureDexClassLoader extends DexClassLoader {
 			JarEntry signedEntry = (JarEntry) signedEntries.nextElement();
 
 			// Every file must be signed except files in META-INF.
-			X509Certificate[] certificates = (X509Certificate[]) signedEntry.getCertificates();
+			Certificate[] certificates = signedEntry.getCertificates();
 			if ((certificates == null) || (certificates.length == 0)) {
-			    if (!signedEntry.getName().startsWith("META-INF"))
+			    if (!signedEntry.getName().startsWith("META-INF")) {
+			    	Log.d(TAG_SECURE_DEX_CLASS_LOADER, signedEntry.getName() + " is an unsigned class file");
 			    	throw new SecurityException("The container has unsigned class files.");
+			    }
 			} 
 			else {
 			    // Check whether the file is signed by the expected
@@ -500,25 +501,31 @@ public class SecureDexClassLoader extends DexClassLoader {
 			    // So see if one of the signers is 'trustedCert'.
 				boolean signedAsExpected = false;
 				
-				for (X509Certificate signerCert : certificates) {
+				for (Certificate signerCert : certificates) {
 					
 					try {
-						signerCert.checkValidity();
+						
+						((X509Certificate) signerCert).checkValidity();
 					} catch (CertificateExpiredException
 							| CertificateNotYetValidException e) {
 						// Usually expired certificate are not such a relevant issue; nevertheless
 						// on Android a common practice is using certificates (even self signed) but 
 						// with at least a long life span and so temporal validity should be enforced..
+						Log.d(TAG_SECURE_DEX_CLASS_LOADER, "One of the certificates used to sign " + signedEntry.getName() + " is expired");
 						throw new SecurityException("One of the used certificates is expired!");
+					} catch (Exception e) {
+						// It was impossible to cast the general certificate into an X.509 one..
 					}
 					
 					if (signerCert.equals(trustedCert))
-						// At least of the certificates is the trusted one..
+						// The trusted certificate was used to sign this entry
 						signedAsExpected = true;
 				}
 				
-			    if (!signedAsExpected)
+			    if (!signedAsExpected) {
+			    	Log.d(TAG_SECURE_DEX_CLASS_LOADER, "The trusted certificate was not used to sign " + signedEntry.getName());
 			    	throw new SecurityException("The provider is not signed by a trusted signer");
+			    }
 			}
 	    }
 	}
@@ -574,7 +581,7 @@ public class SecureDexClassLoader extends DexClassLoader {
 						if(verifiedCertificate.getKeyUsage()[keyCertSignIndex])
 							throw new CertificateExpiredException("This certificate should not be used for code verification!");
 						
-						Log.i(TAG_SECURE_DEX_CLASS_LOADER, verifiedCertificate.getKeyUsage().toString());
+						Log.d(TAG_SECURE_DEX_CLASS_LOADER, verifiedCertificate.getKeyUsage().toString());
 					}
 					
 					// TODO Need to be tested!!

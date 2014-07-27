@@ -100,30 +100,30 @@ public class MainActivity extends Activity {
 			
 					case DEX_CLASS_LOADER_APK:
 						effectiveDexClassLoader = true;
+						Log.d(TAG_MAIN, "DexClassLoader from apk case should start.");
 						setUpDexClassLoader();
 						effectiveDexClassLoader = false;
-						Log.i(TAG_MAIN, "DexClassLoader from apk case should be started.");
 						break;
 				
 					case DEX_CLASS_LOADER_JAR:
 						Intent dexClassLoaderIntent = new Intent(MainActivity.this, DexClassSampleActivity.class);
 						dexClassLoaderIntent.putExtra(IS_SECURE_LOADING_CHOSEN, false);
+						Log.d(TAG_MAIN, "DexClassLoader from jar case should start.");
 						startActivity(dexClassLoaderIntent);
-						Log.i(TAG_MAIN, "DexClassLoader from jar case should be started.");
 						break;
 					
 					case SECURE_DEX_CLASS_LOADER_APK:
 						effectiveSecureDexClassLoader = true;
+						Log.d(TAG_MAIN, "SecureDexClassLoader from apk case should start.");
 						setUpSecureDexClassLoader();
 						effectiveSecureDexClassLoader = false;
-						Log.i(TAG_MAIN, "SecureDexClassLoader from apk case should be started.");
 						break;
 				
 					case SECURE_DEX_CLASS_LOADER_JAR:
 						Intent secureDexClassLoaderIntent = new Intent(MainActivity.this, DexClassSampleActivity.class);
 						secureDexClassLoaderIntent.putExtra(IS_SECURE_LOADING_CHOSEN, true);
+						Log.d(TAG_MAIN, "SecureDexClassLoader from jar case should start.");
 						startActivity(secureDexClassLoaderIntent);
-						Log.i(TAG_MAIN, "SecureDexClassLoader from jar case should be started.");
 						break;
 						
 					case CREATE_PACK_CTX:
@@ -148,7 +148,7 @@ public class MainActivity extends Activity {
 		// that the proper button has just been pressed..
 		if (!effectiveSecureDexClassLoader) return;
 				
-		Log.i(TAG_MAIN, "Setting up SecureDexClassLoader..");
+		Log.d(TAG_MAIN, "Setting up SecureDexClassLoader..");
 		
 		// Create an instance of SecureLoaderFactory..
 		// It needs as a parameter a Context object (an Activity is an extension of such a class..)
@@ -254,15 +254,16 @@ public class MainActivity extends Activity {
 			e.printStackTrace();
 			Log.w(TAG_MAIN, "Class should be present in the provided path!!");
 		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
+			Log.w(TAG_MAIN, "Error while instanciating the loaded class!!");
 			e.printStackTrace();
 		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
+			Log.w(TAG_MAIN, "Error while instanciating the loaded class!!");
 			e.printStackTrace();
 		}
 		
 		// Remove the cached resources..
 		mSecureDexClassLoader.wipeOutPrivateAppCachedData(false, true);
+		Log.d(TAG_MAIN, "Cached data of SecureDexClassLoader have been wiped out..");
 	}
 
 	/**
@@ -279,10 +280,10 @@ public class MainActivity extends Activity {
 		// that the proper button has just been pressed..
 		if (!effectiveDexClassLoader) return;
 		
-		Log.i(TAG_MAIN, "Setting up DexClassLoader..");
+		Log.d(TAG_MAIN, "Setting up DexClassLoader..");
 		
 		File dexOutputDir = getDir("dex", MODE_PRIVATE);
-		DexClassLoader mDexClassLoader = new DexClassLoader(	exampleTestAPKPath, 
+		DexClassLoader mDexClassLoader = new DexClassLoader(	exampleSignedAPKPath, 
 																dexOutputDir.getAbsolutePath(), 
 																null, 
 																ClassLoader.getSystemClassLoader().getParent());
@@ -293,7 +294,7 @@ public class MainActivity extends Activity {
 			Class<?> loadedClass = mDexClassLoader.loadClass(classNameInAPK);
 			final Activity NasaDailyActivity = (Activity) loadedClass.newInstance();
 			
-			Log.i(TAG_MAIN, "Found class: " + loadedClass.getSimpleName() + "; APK path: " + exampleTestAPKPath.toString());
+			Log.i(TAG_MAIN, "Found class: " + loadedClass.getSimpleName() + "; APK path: " + exampleSignedAPKPath.toString());
 			
 			toastHandler.post(new Runnable() {
 
@@ -344,10 +345,8 @@ public class MainActivity extends Activity {
 			
 			e.printStackTrace();
 		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

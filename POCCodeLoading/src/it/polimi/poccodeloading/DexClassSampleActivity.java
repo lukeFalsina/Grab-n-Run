@@ -91,7 +91,7 @@ public class DexClassSampleActivity extends Activity {
 	
 	private ComponentModifier retrieveComponentModifier(String className) {
 
-		Log.i(TAG_DEX_SAMPLE, "Setting up Dex Class Loader..");
+		Log.d(TAG_DEX_SAMPLE, "Setting up Dex Class Loader..");
 		
 		ComponentModifier retComponentModifier = null;
 		
@@ -177,12 +177,12 @@ public class DexClassSampleActivity extends Activity {
 			if (view.getId() == firstBtn.getId()) {
 				
 				mComponentModifier = retrieveComponentModifier(firstClassName);
-				Log.i(TAG_DEX_SAMPLE, "First button was pressed..");
+				Log.d(TAG_DEX_SAMPLE, "First button was pressed..");
 			}
 			else {
 			
 				mComponentModifier = retrieveComponentModifier(secondClassName);
-				Log.i(TAG_DEX_SAMPLE, "Second button was pressed..");
+				Log.d(TAG_DEX_SAMPLE, "Second button was pressed..");
 			}
 		}
 		
@@ -217,7 +217,7 @@ public class DexClassSampleActivity extends Activity {
 			
 		});
 		
-		Log.i(TAG_DEX_SAMPLE, "End of " + R.string.title_activity_dex_class_sample + " Activity.");
+		Log.d(TAG_DEX_SAMPLE, "End of " + R.string.title_activity_dex_class_sample + " Activity.");
 		
 		finish();
 	}
