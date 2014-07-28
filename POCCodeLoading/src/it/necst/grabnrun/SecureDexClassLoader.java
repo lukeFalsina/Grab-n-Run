@@ -31,8 +31,6 @@ import javax.security.auth.x500.X500Principal;
 import android.content.ContextWrapper;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
-//import android.net.ConnectivityManager;
-//import android.net.NetworkInfo;
 import android.util.Log;
 import dalvik.system.DexClassLoader;
 
@@ -74,7 +72,7 @@ import dalvik.system.DexClassLoader;
  * 
  * @author Luca Falsina
  */
-public class SecureDexClassLoader extends DexClassLoader {
+public class SecureDexClassLoader {
 	
 	// Unique identifier used for Log entries
 	private static final String TAG_SECURE_DEX_CLASS_LOADER = SecureDexClassLoader.class.getSimpleName();
@@ -84,6 +82,10 @@ public class SecureDexClassLoader extends DexClassLoader {
 	private PackageManager mPackageManager;
 	
 	private FileDownloader mFileDownloader;
+	
+	// The internal DexClassLoader used to load classes that
+	// passes all the checks..
+	private DexClassLoader mDexClassLoader;
 	
 	private Map<String, String> packageNameToCertificateMap, packageNameToContainerPathMap;
 	
@@ -97,7 +99,9 @@ public class SecureDexClassLoader extends DexClassLoader {
 	SecureDexClassLoader(	String dexPath, String optimizedDirectory,
 							String libraryPath, ClassLoader parent,
 							ContextWrapper parentContextWrapper) {
-		super(dexPath, optimizedDirectory, libraryPath, parent);
+		
+		// Initialization of the linked internal DexClassLoader
+		mDexClassLoader = new DexClassLoader(dexPath, optimizedDirectory, libraryPath, parent);
 		
 		certificateFolder = parentContextWrapper.getDir(CERTIFICATE_DIR, ContextWrapper.MODE_PRIVATE);
 		resDownloadFolder = parentContextWrapper.getDir(SecureLoaderFactory.RES_DOWNLOAD_DIR, ContextWrapper.MODE_PRIVATE);
@@ -282,7 +286,6 @@ public class SecureDexClassLoader extends DexClassLoader {
 	/* (non-Javadoc)
 	 * @see java.lang.ClassLoader#loadClass(java.lang.String)
 	 */
-	@Override
 	public Class<?> loadClass(String className) throws ClassNotFoundException {
 		
 		// A map which links package names to certificate locations
@@ -438,7 +441,7 @@ public class SecureDexClassLoader extends DexClassLoader {
 				// The signature of the related .apk or .jar container
 				// was successfully verified against the valid certificate.
 				// Integrity was granted and the class can be loaded.
-				return super.loadClass(className);
+				return mDexClassLoader.loadClass(className);
 			}
 				
 			// The signature of the .apk or .jar container
