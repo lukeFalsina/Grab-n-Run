@@ -1,8 +1,13 @@
 package it.polimi.poccodeloading;
 
+import it.necst.grabnrun.SecureDexClassLoader;
+import it.necst.grabnrun.SecureLoaderFactory;
+
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import dalvik.system.DexClassLoader;
 
@@ -55,6 +60,12 @@ public class DexClassSampleActivity extends Activity {
 	private Button firstBtn, secondBtn, thirdBtn;
 	private Switch switchSlider;
 	
+	// Path where "componentModifier.jar" is stored
+	private String jarContainerPath;
+	
+	// Initialized only if the secure mode is enabled..
+	private SecureDexClassLoader mSecureDexClassLoader;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -68,6 +79,12 @@ public class DexClassSampleActivity extends Activity {
 		
 		// Enable/Disable secure loading;
 		isSecureModeChosen = intent.getBooleanExtra(MainActivity.IS_SECURE_LOADING_CHOSEN, false);
+		
+		mSecureDexClassLoader = null;
+		
+		// final String jarContainerPath = getAssets() + assetSuffix;
+		jarContainerPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/componentModifier.jar";
+		// final String jarContainerPath = "https://github.com/lukeFalsina/test/blob/master/componentModifier.jar";
 		
 		// Retrieve all the components, which are going to be modified
 		// by the instance of ComponentModifier
@@ -95,15 +112,12 @@ public class DexClassSampleActivity extends Activity {
 		
 		ComponentModifier retComponentModifier = null;
 		
-		// final String jarContainerPath = getAssets() + assetSuffix;
-		final String jarContainerPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/componentModifier.jar";
-		// final String jarContainerPath = "https://github.com/lukeFalsina/test/blob/master/componentModifier.jar";
 		File dexOutputDir = getDir("dex", MODE_PRIVATE);
 		
 		DexClassLoader mDexClassLoader = new DexClassLoader(	jarContainerPath, 
 																dexOutputDir.getAbsolutePath(), 
 																null, 
-																getClass().getClassLoader());		
+																getClass().getClassLoader());
 		
 		try {
 			
@@ -159,6 +173,83 @@ public class DexClassSampleActivity extends Activity {
 		return retComponentModifier;
 	}
 	
+	private ComponentModifier retrieveComponentModifierSecurely(String className) {
+		
+		Log.d(TAG_DEX_SAMPLE, "Setting up SecureDexClassLoader..");
+		
+		ComponentModifier retComponentModifier = null;
+		
+		if (mSecureDexClassLoader == null) {
+			
+			SecureLoaderFactory mSecureLoaderFactory = new SecureLoaderFactory(this);
+			
+			// Filling the associative map to link package names and certificates..
+			Map<String, String> packageNamesToCertMap = new HashMap<String, String>();
+			// 1st Entry: valid remote certificate location
+			// packageNamesToCertMap.put("it.polimi.componentmodifier", "https://github.com/lukeFalsina/test/test_cert.pem");
+			packageNamesToCertMap.put("it.polimi.componentmodifier", "https://dl.dropboxusercontent.com/u/28681922/test_cert.pem");
+			
+			// Initialize SecureDexClassLoader..
+			mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
+																				null, 
+																				packageNamesToCertMap, 
+																				getClass().getClassLoader());
+		}
+		
+		try {
+			
+			Class<?> loadedClass = mSecureDexClassLoader.loadClass(className);
+			
+			retComponentModifier = (ComponentModifier) loadedClass.newInstance();
+			
+		} catch (ClassNotFoundException e) {
+			Log.e(TAG_DEX_SAMPLE, "Error: Class not found!");
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			Log.e(TAG_DEX_SAMPLE, "Error: Instantiation issues!");
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			Log.e(TAG_DEX_SAMPLE, "Error: Illegal access!");
+			e.printStackTrace();
+		}
+		
+		if (retComponentModifier != null) {
+			
+			final String shortClassName = retComponentModifier.getClass().getSimpleName();
+			
+			Log.i(TAG_DEX_SAMPLE, "SecureDexClassLoader was successful!\nLoaded class name:" + shortClassName + "\nPath: " + jarContainerPath);
+			
+			toastHandler.post(new Runnable() {
+
+				@Override
+				public void run() {
+					Toast.makeText(DexClassSampleActivity.this,
+							"SecureDexClassLoader was successful!\nLoaded class name: " + shortClassName + "\nPath: " + jarContainerPath,
+							Toast.LENGTH_LONG).show();
+				}
+				
+			});
+		}
+		else {
+			
+			toastHandler.post(new Runnable() {
+
+				@Override
+				public void run() {
+					Toast.makeText(DexClassSampleActivity.this,
+							"SecureDexClassLoader failed!\nLeaving this activity..",
+							Toast.LENGTH_SHORT).show();
+				}
+				
+			});
+			
+			// Exit this activity..
+			finish();
+		}
+		
+		return retComponentModifier;
+	}
+	
 	/**
 	 * When one of the two initial buttons in this activity is clicked 
 	 * a different component is dynamically loaded and used to customize
@@ -170,7 +261,16 @@ public class DexClassSampleActivity extends Activity {
 		
 		if (isSecureModeChosen) {
 			
-			// TODO Fill with test ClassLoader..
+			if (view.getId() == firstBtn.getId()) {
+				
+				mComponentModifier = retrieveComponentModifierSecurely(firstClassName);
+				Log.d(TAG_DEX_SAMPLE, "First button was pressed..");
+			}
+			else {
+			
+				mComponentModifier = retrieveComponentModifierSecurely(secondClassName);
+				Log.d(TAG_DEX_SAMPLE, "Second button was pressed..");
+			}
 			
 		} else {
 		
@@ -197,6 +297,7 @@ public class DexClassSampleActivity extends Activity {
 		mComponentModifier.customizeTextView(textView);
 		
 		Log.i(TAG_DEX_SAMPLE, "Customization process successfully completed.");
+		
 	}
 	
 	/**
