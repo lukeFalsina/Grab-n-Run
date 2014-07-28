@@ -35,7 +35,6 @@ import android.content.pm.Signature;
 //import android.net.NetworkInfo;
 import android.util.Log;
 import dalvik.system.DexClassLoader;
-import dalvik.system.DexFile;
 
 /**
  * A class that provides an extension of default {@link DexClassLoader} 
@@ -158,36 +157,58 @@ public class SecureDexClassLoader extends DexClassLoader {
 		if (extension.equals(".jar")) {
 				
 			// JAR container case:
-			// 1. Open classes.dex file (JAR container with "classes.dex" inside)
-			// 2. Find the first class name from it
-			// 3. Extract and return package name from previous class name 
-				
-			DexFile classesDexFile = null;
-			String packageName;
-				
+			// 1. Open jar file
+			// 2. Scan all the entries till one .java is found
+			// 3. Retrieve package name from this entry class name
+			
+			String packageName = null;
+			boolean isAValidJar = false;
+			JarFile containerJar = null;
+			
 			try {
-				classesDexFile = new DexFile(containerPath);
+				
+				containerJar = new JarFile(containerPath);
+				Enumeration<JarEntry> entries = containerJar.entries();
+				
+				// Scan all the entries in the jar archive
+				while (entries.hasMoreElements()) {
+				
+					JarEntry currentEntry = entries.nextElement();
 					
-				Enumeration<String> classesNames  = classesDexFile.entries();
-				String firstClassName = classesNames.nextElement().replaceAll(Pattern.quote(File.separator), ".");
-				packageName = firstClassName.substring(0, firstClassName.lastIndexOf('.'));
-					
+					if (currentEntry.getName().endsWith(".java")) {
+						
+						// A valid java file of a class was found so 
+						// package name could be extracted from here
+						String fullClassName = currentEntry.getName();
+						int lastIndexPackageName = fullClassName.lastIndexOf(File.separator);
+						if (lastIndexPackageName != -1)
+							packageName = fullClassName.substring(0, lastIndexPackageName).replaceAll(File.separator, ".");
+						
+					} else {
+						
+						// It is necessary that the jar container has an entry "classes.dex" in 
+						// order to be correctly executed by a DexClassLoader..
+						if (currentEntry.getName().endsWith("classes.dex")) 
+							isAValidJar = true;
+					}
+				}
+				
 			} catch (IOException e) {
-				// No valid package name here..
 				return null;
 			} finally {
-				if (classesDexFile != null) {
-			         try {
-			        	 classesDexFile.close();
+				if (containerJar != null)
+					try {
+						containerJar.close();
 					} catch (IOException e) {
-						// Problem while closing this file..
 						e.printStackTrace();
 					}
-			     }
 			}
 			
-			// A valid package name for JAR container was found..
-			return packageName;				
+			if (isAValidJar)
+				return packageName;
+			
+			// If classes.dex is not present in the jar, the jar container is not valid
+			return null;			
 		}
 		
 		// Any other file format is not supported so 
