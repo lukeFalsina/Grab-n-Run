@@ -241,10 +241,21 @@ public class MainActivity extends Activity {
 			
 			if (loadedClass != null) {
 				
-				Activity NasaDailyActivity = (Activity) loadedClass.newInstance();
+				final Activity NasaDailyActivity = (Activity) loadedClass.newInstance();
 				
-				Log.i(TAG_MAIN, "Found class: " + NasaDailyActivity.getLocalClassName() + 
-								"; APK path: " + NasaDailyActivity.getPackageResourcePath() + "; CORRECT!");
+				Log.i(TAG_MAIN, "Found valid class: " + loadedClass.getSimpleName() + "; APK path: " + exampleSignedAPKPath.toString() + "; Success!");
+				
+				toastHandler.post(new Runnable() {
+
+					@Override
+					public void run() {
+						Toast.makeText(MainActivity.this,
+								"SecureDexClassLoader was successful! Found activity: " + NasaDailyActivity.getClass().getName(),
+								Toast.LENGTH_SHORT).show();
+					}
+					
+				});
+				
 			} else {
 				
 				Log.w(TAG_MAIN, "This time the chosen class should pass the security checks!");
@@ -283,7 +294,7 @@ public class MainActivity extends Activity {
 		Log.d(TAG_MAIN, "Setting up DexClassLoader..");
 		
 		File dexOutputDir = getDir("dex", MODE_PRIVATE);
-		DexClassLoader mDexClassLoader = new DexClassLoader(	exampleSignedAPKPath, 
+		DexClassLoader mDexClassLoader = new DexClassLoader(	exampleTestAPKPath, 
 																dexOutputDir.getAbsolutePath(), 
 																null, 
 																ClassLoader.getSystemClassLoader().getParent());
@@ -294,7 +305,7 @@ public class MainActivity extends Activity {
 			Class<?> loadedClass = mDexClassLoader.loadClass(classNameInAPK);
 			final Activity NasaDailyActivity = (Activity) loadedClass.newInstance();
 			
-			Log.i(TAG_MAIN, "Found class: " + loadedClass.getSimpleName() + "; APK path: " + exampleSignedAPKPath.toString());
+			Log.i(TAG_MAIN, "Found class: " + loadedClass.getSimpleName() + "; APK path: " + exampleTestAPKPath.toString());
 			
 			toastHandler.post(new Runnable() {
 

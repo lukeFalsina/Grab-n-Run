@@ -179,22 +179,19 @@ public class DexClassSampleActivity extends Activity {
 		
 		ComponentModifier retComponentModifier = null;
 		
-		if (mSecureDexClassLoader == null) {
-			
-			SecureLoaderFactory mSecureLoaderFactory = new SecureLoaderFactory(this);
-			
-			// Filling the associative map to link package names and certificates..
-			Map<String, String> packageNamesToCertMap = new HashMap<String, String>();
-			// 1st Entry: valid remote certificate location
-			// packageNamesToCertMap.put("it.polimi.componentmodifier", "https://github.com/lukeFalsina/test/test_cert.pem");
-			packageNamesToCertMap.put("it.polimi.componentmodifier", "https://dl.dropboxusercontent.com/u/28681922/test_cert.pem");
-			
-			// Initialize SecureDexClassLoader..
-			mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
-																				null, 
-																				packageNamesToCertMap, 
-																				getClass().getClassLoader());
-		}
+		SecureLoaderFactory mSecureLoaderFactory = new SecureLoaderFactory(this);
+		
+		// Filling the associative map to link package names and certificates..
+		Map<String, String> packageNamesToCertMap = new HashMap<String, String>();
+		// 1st Entry: valid remote certificate location
+		// packageNamesToCertMap.put("it.polimi.componentmodifier", "https://github.com/lukeFalsina/test/test_cert.pem");
+		packageNamesToCertMap.put("it.polimi.componentmodifier", "https://dl.dropboxusercontent.com/u/28681922/test_cert.pem");
+		
+		// Initialize SecureDexClassLoader..
+		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
+																			null, 
+																			packageNamesToCertMap, 
+																			getClass().getClassLoader());
 		
 		try {
 			
@@ -218,6 +215,9 @@ public class DexClassSampleActivity extends Activity {
 			final String shortClassName = retComponentModifier.getClass().getSimpleName();
 			
 			Log.i(TAG_DEX_SAMPLE, "SecureDexClassLoader was successful!\nLoaded class name:" + shortClassName + "\nPath: " + jarContainerPath);
+			
+			// Erase all the cached resources..
+			mSecureDexClassLoader.wipeOutPrivateAppCachedData(true, true);
 			
 			toastHandler.post(new Runnable() {
 
