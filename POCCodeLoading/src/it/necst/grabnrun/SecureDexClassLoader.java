@@ -184,6 +184,12 @@ public class SecureDexClassLoader {
 						// A valid java file of a class was found so 
 						// package name could be extracted from here
 						String fullClassName = currentEntry.getName();
+						
+						// Cancel white spaces before processing the full class name..
+						// It may happen to find them while parsing JarEntry objects..
+						while (fullClassName.startsWith(" "))
+							fullClassName = fullClassName.substring(1, fullClassName.length());
+						
 						int lastIndexPackageName = fullClassName.lastIndexOf(File.separator);
 						if (lastIndexPackageName != -1)
 							packageName = fullClassName.substring(0, lastIndexPackageName).replaceAll(File.separator, ".");
@@ -515,7 +521,7 @@ public class SecureDexClassLoader {
 			Certificate[] certificates = signedEntry.getCertificates();
 			if ((certificates == null) || (certificates.length == 0)) {
 			    if (!signedEntry.getName().startsWith("META-INF")) {
-			    	Log.d(TAG_SECURE_DEX_CLASS_LOADER, signedEntry.getName() + " is an unsigned class file");
+			    	Log.i(TAG_SECURE_DEX_CLASS_LOADER, signedEntry.getName() + " is an unsigned class file");
 			    	throw new SecurityException("The container has unsigned class files.");
 			    }
 			} 
@@ -535,7 +541,7 @@ public class SecureDexClassLoader {
 						// Usually expired certificate are not such a relevant issue; nevertheless
 						// on Android a common practice is using certificates (even self signed) but 
 						// with at least a long life span and so temporal validity should be enforced..
-						Log.d(TAG_SECURE_DEX_CLASS_LOADER, "One of the certificates used to sign " + signedEntry.getName() + " is expired");
+						Log.i(TAG_SECURE_DEX_CLASS_LOADER, "One of the certificates used to sign " + signedEntry.getName() + " is expired");
 						throw new SecurityException("One of the used certificates is expired!");
 					} catch (Exception e) {
 						// It was impossible to cast the general certificate into an X.509 one..
@@ -547,7 +553,7 @@ public class SecureDexClassLoader {
 				}
 				
 			    if (!signedAsExpected) {
-			    	Log.d(TAG_SECURE_DEX_CLASS_LOADER, "The trusted certificate was not used to sign " + signedEntry.getName());
+			    	Log.i(TAG_SECURE_DEX_CLASS_LOADER, "The trusted certificate was not used to sign " + signedEntry.getName());
 			    	throw new SecurityException("The provider is not signed by a trusted signer");
 			    }
 			}

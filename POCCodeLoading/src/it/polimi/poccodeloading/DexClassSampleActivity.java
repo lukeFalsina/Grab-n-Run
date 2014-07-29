@@ -1,3 +1,4 @@
+
 package it.polimi.poccodeloading;
 
 import it.necst.grabnrun.SecureDexClassLoader;
@@ -60,8 +61,8 @@ public class DexClassSampleActivity extends Activity {
 	private Button firstBtn, secondBtn, thirdBtn;
 	private Switch switchSlider;
 	
-	// Path where "componentModifier.jar" is stored
-	private String jarContainerPath;
+	// Path where "componentModifier.jar" and its variants are stored
+	private String jarContainerPath, jarContainerRepackPath;
 	
 	// Initialized only if the secure mode is enabled..
 	private SecureDexClassLoader mSecureDexClassLoader;
@@ -85,7 +86,8 @@ public class DexClassSampleActivity extends Activity {
 		// final String jarContainerPath = getAssets() + assetSuffix;
 		jarContainerPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/componentModifier.jar";
 		// final String jarContainerPath = "https://github.com/lukeFalsina/test/blob/master/componentModifier.jar";
-		
+		jarContainerRepackPath = "https://dl.dropboxusercontent.com/u/28681922/componentModifierRepackJavaSource.jar";
+
 		// Retrieve all the components, which are going to be modified
 		// by the instance of ComponentModifier
 		textView = (TextView) findViewById(R.id.exp_text_dex_load_jar);
@@ -187,8 +189,8 @@ public class DexClassSampleActivity extends Activity {
 		// packageNamesToCertMap.put("it.polimi.componentmodifier", "https://github.com/lukeFalsina/test/test_cert.pem");
 		packageNamesToCertMap.put("it.polimi.componentmodifier", "https://dl.dropboxusercontent.com/u/28681922/test_cert.pem");
 		
-		// Initialize SecureDexClassLoader..
-		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
+		// Initialize SecureDexClassLoader with repackaged jar container..
+		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerRepackPath, 
 																			null, 
 																			packageNamesToCertMap, 
 																			getClass().getClassLoader());
@@ -203,10 +205,31 @@ public class DexClassSampleActivity extends Activity {
 			Log.e(TAG_DEX_SAMPLE, "Error: Class not found!");
 			e.printStackTrace();
 		} catch (InstantiationException e) {
-			Log.e(TAG_DEX_SAMPLE, "Error: Instantiation issues!");
+			Log.i(TAG_DEX_SAMPLE, "Instantiation issues! Correct since the jar container was repackaged!");
+		} catch (IllegalAccessException e) {
+			Log.i(TAG_DEX_SAMPLE, "Instantiation issues! Correct since the jar container was repackaged!");
+		}
+		
+		// Initialize SecureDexClassLoader with repackaged jar container..
+		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
+																			null, 
+																			packageNamesToCertMap, 
+																			getClass().getClassLoader());
+				
+		try {
+					
+			Class<?> loadedClass = mSecureDexClassLoader.loadClass(className);
+					
+			retComponentModifier = (ComponentModifier) loadedClass.newInstance();
+					
+		} catch (ClassNotFoundException e) {
+			Log.e(TAG_DEX_SAMPLE, "Error: Class not found!");
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			Log.e(TAG_DEX_SAMPLE, "Error: Class not found!");
 			e.printStackTrace();
 		} catch (IllegalAccessException e) {
-			Log.e(TAG_DEX_SAMPLE, "Error: Illegal access!");
+			Log.e(TAG_DEX_SAMPLE, "Error: Class not found!");
 			e.printStackTrace();
 		}
 		
@@ -214,7 +237,7 @@ public class DexClassSampleActivity extends Activity {
 			
 			final String shortClassName = retComponentModifier.getClass().getSimpleName();
 			
-			Log.i(TAG_DEX_SAMPLE, "SecureDexClassLoader was successful!\nLoaded class name:" + shortClassName + "\nPath: " + jarContainerPath);
+			Log.i(TAG_DEX_SAMPLE, "SecureDexClassLoader was successful!\nLoaded class name:" + shortClassName + "\nPath: " + jarContainerRepackPath);
 			
 			// Erase all the cached resources..
 			mSecureDexClassLoader.wipeOutPrivateAppCachedData(true, true);
@@ -224,7 +247,7 @@ public class DexClassSampleActivity extends Activity {
 				@Override
 				public void run() {
 					Toast.makeText(DexClassSampleActivity.this,
-							"SecureDexClassLoader was successful!\nLoaded class name: " + shortClassName + "\nPath: " + jarContainerPath,
+							"SecureDexClassLoader was successful!\nLoaded class name: " + shortClassName + "\nPath: " + jarContainerRepackPath,
 							Toast.LENGTH_LONG).show();
 				}
 				

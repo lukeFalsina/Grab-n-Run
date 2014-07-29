@@ -60,7 +60,7 @@ public class MainActivity extends Activity {
 	
 	// Strings which represent locations of the apk containers used for the test
 	// and the name of the class to load dynamically..
-	private String exampleTestAPKPath, exampleSignedAPKPath, classNameInAPK;
+	private String exampleTestAPKPath, exampleSignedAPKPath, exampleSignedChangedAPKPath, classNameInAPK;
 	
 	// Used to visualize helper toast messages..
 	private Handler toastHandler;
@@ -80,6 +80,8 @@ public class MainActivity extends Activity {
 		exampleTestAPKPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/NasaDailyImage/NasaDailyImage.apk";
 		
 		exampleSignedAPKPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/NasaDailyImageSigned.apk";
+
+		exampleSignedChangedAPKPath = "https://dl.dropboxusercontent.com/u/28681922/NasaDailyImageSignedChangedDigest.apk";
 		
 		classNameInAPK = "headfirstlab.nasadailyimage.NasaDailyImage";
 		
@@ -201,7 +203,7 @@ public class MainActivity extends Activity {
 		packageNamesToCertMap.put("it.polimi.example2", "htt://google.com/test_cert2.pem");
 		
 		Log.i(TAG_MAIN, "2nd Test: Fetch the certificate by filling associative map..");
-		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	exampleTestAPKPath, 
+		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	exampleSignedChangedAPKPath, 
 																			null, 
 																			packageNamesToCertMap, 
 																			ClassLoader.getSystemClassLoader().getParent());
