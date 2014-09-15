@@ -481,7 +481,7 @@ public class SecureDexClassLoader {
 	    // Ensure the jar file is at least signed.
 	    Manifest man = jarFile.getManifest();
 	    if (man == null) {
-	    	Log.d(TAG_SECURE_DEX_CLASS_LOADER, jarFile.getName() + "is not signed.");
+	    	Log.i(TAG_SECURE_DEX_CLASS_LOADER, jarFile.getName() + "is not signed.");
 	    	throw new SecurityException("The container is not signed");
 	    }
 
@@ -520,15 +520,15 @@ public class SecureDexClassLoader {
 			// Every file must be signed except files in META-INF.
 			Certificate[] certificates = signedEntry.getCertificates();
 			if ((certificates == null) || (certificates.length == 0)) {
-			    if (!signedEntry.getName().startsWith("META-INF")) {
-			    	Log.i(TAG_SECURE_DEX_CLASS_LOADER, signedEntry.getName() + " is an unsigned class file");
-			    	throw new SecurityException("The container has unsigned class files.");
-			    }
+				if (!signedEntry.getName().startsWith("META-INF")) {
+					Log.i(TAG_SECURE_DEX_CLASS_LOADER, signedEntry.getName() + " is an unsigned class file");
+					throw new SecurityException("The container has unsigned class files.");
+				}
 			} 
 			else {
-			    // Check whether the file is signed by the expected
-			    // signer. The jar may be signed by multiple signers.
-			    // So see if one of the signers is 'trustedCert'.
+				// Check whether the file is signed by the expected
+				// signer. The jar may be signed by multiple signers.
+				// So see if one of the signers is 'trustedCert'.
 				boolean signedAsExpected = false;
 				
 				for (Certificate signerCert : certificates) {
@@ -733,7 +733,7 @@ public class SecureDexClassLoader {
 			if (extension.equals(".apk") || extension.equals(".jar") || extension.equals(".pem")) {
 				
 				if (file.delete())
-					Log.d(TAG_SECURE_DEX_CLASS_LOADER, filePath + " has been erased.");
+					Log.i(TAG_SECURE_DEX_CLASS_LOADER, filePath + " has been erased.");
 				else
 					Log.w(TAG_SECURE_DEX_CLASS_LOADER, filePath + " was NOT erased.");
 			}
