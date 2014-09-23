@@ -27,7 +27,7 @@ public class CertFileFilter implements FileFilter {
 	 * 
 	 * @param certificateName
 	 */
-	public CertFileFilter(String certificateName) {
+	CertFileFilter(String certificateName) {
 		
 		this.certificateName = certificateName;
 	}
