@@ -14,7 +14,7 @@ For a **quick start** on how to include the library and how to use
 it in your projects give a look at :doc:`tutorial`.
 
 For a brief explanation on the **issue** of *unsecure dynamic class 
-loading* and on Grab'n Run scope check the :doc:`security` section.
+loading* and on Grab'n Run purpose check the :doc:`security` section.
 
 A concise **example** of use of the library is provided into a toy
 Android application here. A *full explanation* of this code is 

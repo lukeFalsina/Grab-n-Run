@@ -1,4 +1,4 @@
-Discussion of the example project
-=================================
+Discussion of an example project
+================================
 
 
