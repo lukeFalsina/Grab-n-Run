@@ -298,7 +298,7 @@ public class SecureDexClassLoader {
 		// must be provided before calling this method..
 		if (packageNameToCertificateMap == null) return null;
 		
-		// Cached data have been wiped out so some of the require
+		// Cached data have been wiped out so some of the required
 		// resources may have been erased..
 		if (hasBeenWipedOut) return null;
 		
