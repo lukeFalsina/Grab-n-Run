@@ -38,7 +38,7 @@ public final class FileDownloader {
 	// Used to dismiss the dialog
 	private Handler handler;
 
-	FileDownloader(ContextWrapper parentContextWrapper) {
+	final FileDownloader(ContextWrapper parentContextWrapper) {
 		
 		handler = new Handler();
 		mContextWrapper = parentContextWrapper;
