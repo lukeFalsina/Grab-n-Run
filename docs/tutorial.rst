@@ -5,7 +5,7 @@ In this section you will learn how to retrieve and include Grab'n Run library in
 After this setup a brief tutorial will explain how to use different classes
 in the library to **secure** the *dynamic code loading operations*.
 
-Since this section is **introductory** and more descriptive, it should be read by those who are not familiar with this library or more in general with *class loading* in Android. On the other hand the :doc:`api` section provides a more complete and detailed view on Grab'n Run library and its insights, while :doc:`example` shows a simple case of use of the concepts introduced here.
+Since this section is **introductory** and more descriptive, it should be read by those who are not familiar with this library or more in general with *class loading* in Android. On the other hand the :doc:`api` section provides a more complete and detailed view on Grab'n Run library and its insights, while :doc:`example` shows a simple use case of the concepts introduced here.
 
 Retrieve Grab'n Run
 -------------------

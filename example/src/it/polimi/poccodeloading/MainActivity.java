@@ -160,13 +160,17 @@ public class MainActivity extends Activity {
 		
 		// Aim: Retrieve NasaDailyImage apk securely
 		// 1st Test: Fetch the certificate by reverting package name --> FAIL
+		// because no associative map was provided!! Even if you just want to revert package names
+		// you must provide a map with entries like ("any.package.name", null) and then for each one of
+		// those certificate location will be added by automatically reverting package names.
 		
-		// Creating the apk paths list (you can mix between remote and local URL)..
+		// Creating the apk paths list (you can freely mix between remote and local URL)..
 		String listAPKPaths = 	Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/testApp.apk:" +
-								exampleTestAPKPath; 
-								//+ ":http://jdbc.postgresql.org/download/postgresql-9.2-1002.jdbc4.jar";
+								exampleTestAPKPath 
+								// This last resource is downloaded from the web.
+								+ ":http://jdbc.postgresql.org/download/postgresql-9.2-1002.jdbc4.jar";
 		
-		Log.i(TAG_MAIN, "1st Test: Fetch the certificate by reverting package name..");
+		Log.i(TAG_MAIN, "1st Test: Fetch the certificate by reverting package name with no associative map..");
 		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(listAPKPaths, null, null, ClassLoader.getSystemClassLoader().getParent());		
 		
 		try {
@@ -186,6 +190,7 @@ public class MainActivity extends Activity {
 		}
 		
 		// Remove the cached resources before the next test..
+		// 2nd parameter may have been false as well since no certificate was fetched in this case..
 		mSecureDexClassLoader.wipeOutPrivateAppCachedData(true, true);
 		
 		// 2nd Test: Fetch the certificate by filling associative map 
@@ -197,11 +202,13 @@ public class MainActivity extends Activity {
 		// 1st Entry: valid remote certificate location
 		// packageNamesToCertMap.put("headfirstlab.nasadailyimage", "https://github.com/lukeFalsina/test/test_cert.pem");
 		packageNamesToCertMap.put("headfirstlab.nasadailyimage", "https://dl.dropboxusercontent.com/u/28681922/test_cert.pem");
-		// 2nd Entry: inexistent certificate
+		// 2nd Entry: inexistent certificate -> This link will be enforced to https but still it's an invalid one
 		packageNamesToCertMap.put("it.polimi.example", "http://google.com/test_cert.pem");
-		// 3rd Entry: misspelled and so invalid URL
+		// 3rd Entry: misspelled and so invalid URL (missing a p..)
 		packageNamesToCertMap.put("it.polimi.example2", "htt://google.com/test_cert2.pem");
-		
+		// 4th Entry: reverse package name and then inexistent certificate at https://polimi.it/example3/certificate.pem
+		packageNamesToCertMap.put("it.polimi.example3", null);
+
 		Log.i(TAG_MAIN, "2nd Test: Fetch the certificate by filling associative map..");
 		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	exampleSignedChangedAPKPath, 
 																			null, 
@@ -274,7 +281,8 @@ public class MainActivity extends Activity {
 			e.printStackTrace();
 		}
 		
-		// Remove the cached resources..
+		// Remove only the cached certificates, since no container was downloaded
+		// from the web in test case 2 and 3.
 		mSecureDexClassLoader.wipeOutPrivateAppCachedData(false, true);
 		Log.d(TAG_MAIN, "Cached data of SecureDexClassLoader have been wiped out..");
 	}
