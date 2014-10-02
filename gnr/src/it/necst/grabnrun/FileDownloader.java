@@ -20,7 +20,7 @@ import android.net.NetworkInfo;
 import android.os.Handler;
 import android.util.Log;
 
-public class FileDownloader {
+public final class FileDownloader {
 	
 	// Unique identifier used for Log entries
 	private static final String TAG_FILE_DOWNLOADER = FileDownloader.class.getSimpleName();
@@ -47,7 +47,7 @@ public class FileDownloader {
 	
 	// Assumption: input URL and output URI has been already validated
 	// before calling this method..
-	boolean downloadRemoteUrl(final URL remoteURL, final String localURI) {
+	final boolean downloadRemoteUrl(final URL remoteURL, final String localURI) {
 	
 		// Check whether Internet access is granted..
 		activeNetworkInfo = mConnectivityManager.getActiveNetworkInfo();

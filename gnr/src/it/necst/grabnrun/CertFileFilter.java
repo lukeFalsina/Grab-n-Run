@@ -12,7 +12,7 @@ import java.io.FileFilter;
  * 
  * @author Luca Falsina
  */
-public class CertFileFilter implements FileFilter {
+public final class CertFileFilter implements FileFilter {
 
 	private final String[] okCertsExtensions = new String[] {".pem"};
 	
@@ -33,7 +33,7 @@ public class CertFileFilter implements FileFilter {
 	}
 	
 	@Override
-	public boolean accept(File file) {
+	public final boolean accept(File file) {
 		
 		// If the file is a directory is not a
 		// certificate for sure..
