@@ -202,7 +202,7 @@ public class MainActivity extends Activity {
 		// 1st Entry: valid remote certificate location
 		// packageNamesToCertMap.put("headfirstlab.nasadailyimage", "https://github.com/lukeFalsina/test/test_cert.pem");
 		packageNamesToCertMap.put("headfirstlab.nasadailyimage", "https://dl.dropboxusercontent.com/u/28681922/test_cert.pem");
-		// 2nd Entry: inexistent certificate -> This link will be enforced to https but still it's an invalid one
+		// 2nd Entry: inexistent certificate -> This link will be enforced to https but still there is no certificate at the final pointed URL
 		packageNamesToCertMap.put("it.polimi.example", "http://google.com/test_cert.pem");
 		// 3rd Entry: misspelled and so invalid URL (missing a p..)
 		packageNamesToCertMap.put("it.polimi.example2", "htt://google.com/test_cert2.pem");
