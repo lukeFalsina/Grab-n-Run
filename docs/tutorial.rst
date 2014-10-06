@@ -1,11 +1,9 @@
 Quick start and tutorial
 ========================
 
-In this section you will learn how to retrieve and include Grab'n Run library into your project (either by using Android Development Tool or Android Studio).
-After this setup a brief tutorial will explain how to use different classes
-in the library to **secure** the *dynamic code loading operations*.
+In this section you will learn how to *retrieve and include Grab'n Run library* into your project (either by using Android Development Tool or Android Studio). After this setup a **brief tutorial** will explain how to use different classes in the library to **secure** the *dynamic code loading operations*.
 
-Since this section is **introductory** and more descriptive, it should be read by those who are not familiar with this library or more in general with *class loading* in Android. On the other hand the :doc:`api` section provides a more complete and detailed view on Grab'n Run library and its insights, while :doc:`example` shows a simple use case of the concepts introduced here.
+Since this section is **introductory** and more descriptive, it should be read by those who are not familiar with this library or more in general with *class loading* in Android. On the other hand the :doc:`javaAPI/packages` section provides a more complete and detailed view on Grab'n Run library and its insights, while :doc:`example` shows a simple use case of the concepts introduced here.
 
 Retrieve Grab'n Run
 -------------------
@@ -29,7 +27,7 @@ Text here
 Tutorial
 --------
 
-This tutorial assumes that you have already retrieved and imported Grab'n Run into your Android project.
+This tutorial assumes that you have *already retrieved and imported Grab'n Run* into your Android project.
 
 Using standard DexClassLoader to load code dynamically
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -96,11 +94,11 @@ to sign the *jar* or *apk* container which holds those classes.
 	For more details on signing applications and certificate, please check `here <http://developer.android.com/tools/publishing/app-signing.html#cert>`_.
 
 So in this example we assume that all the classes belonging to the package ``com.example`` have been signed 
-with a self-signed certificate, stored at ``https://something.somethingelse.com/example_cert.pem``.
+with a self-signed certificate, stored at ``https://something.somethelse.com/example_cert.pem``.
 Since here you just want to load ``com.example.MyClass`` the following snippet of code is enough::
 
 		Map<String, String> packageNamesToCertMap = new HashMap<String, String>();
-		packageNamesToCertMap.put("com.example", "https://something.somethingelse.com/example_cert.pem");
+		packageNamesToCertMap.put("com.example", "https://something.somethelse.com/example_cert.pem");
 
 .. note::
 	Any *self-signed certificate* can be used to validate classes to load as long as it is not 
