@@ -88,6 +88,9 @@ exclude_patterns = ['_build']
 # output. They are ignored by default.
 #show_authors = False
 
+# The language used in code block to set keywords highlight.
+highlight_language = 'java'
+
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 

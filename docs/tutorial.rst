@@ -40,7 +40,10 @@ A snippet of code to achieve this goal is the following::
 		MyClass myClassInstance = null;
 		String jarContainerPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/example.jar";
 		File dexOutputDir = getDir("dex", MODE_PRIVATE);
-		DexClassLoader mDexClassLoader = new DexClassLoader( jarContainerPath, dexOutputDir.getAbsolutePath(), null, getClass().getClassLoader());
+		DexClassLoader mDexClassLoader = new DexClassLoader(	jarContainerPath, 
+									dexOutputDir.getAbsolutePath(), 
+									null, 
+									getClass().getClassLoader());
 		
 		try {
 			Class<?> loadedClass = mDexClassLoader.loadClass("com.example.MyClass");
@@ -126,7 +129,10 @@ Since here you just want to load ``com.example.MyClass`` the following snippet o
 Now it comes the time to initialize a ``SecureDexClassLoader`` object through the method ``createDexClassLoader()``
 of ``SecureLoaderFactory``::
 
-		SecureDexClassLoader mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, null, packageNamesToCertMap, getClass().getClassLoader());
+		SecureDexClassLoader mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
+													null, 
+													packageNamesToCertMap, 
+													getClass().getClassLoader());
 
 ``mSecureDexClassLoader`` will be able to load the classes whose container path is listed in ``jarContainerPath`` and 
 it will use the ``packageNamesToCertMap`` to retrieve all the required certificate from the web and import them into 
