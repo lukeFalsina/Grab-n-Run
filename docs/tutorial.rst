@@ -32,13 +32,13 @@ This tutorial assumes that you have *already retrieved and imported Grab'n Run* 
 Using standard DexClassLoader to load code dynamically
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Let us pretend that you want to dynamically load an external class through `DexClassLoader <http://developer.android.com/reference/dalvik/system/DexClassLoader.html>`_, a class in the *Android API* used to load classes from *.jar* and *.apk* files containing a **classes.dex** entry. This is a convenient way to execute code not installed as part of an application package.
+Let us pretend that you want to dynamically load an external class through `DexClassLoader <http://developer.android.com/reference/dalvik/system/DexClassLoader.html>`_, a class in the *Android API* used to load classes from *jar* and *apk* files containing a **classes.dex** entry. This is a convenient way to execute code not installed as part of an application package.
 
-Let's assume, for example, that you want to load an instance of ``com.example.MyClass`` located in the container *example.jar*, stored in the *Download* folder of the sd_card on the target phone.
+Let's assume, for example, that you want to load an instance of ``com.example.MyClass`` located in the container *examplejar*, stored in the *Download* folder of the sd_card on the target phone.
 A snippet of code to achieve this goal is the following::
 
 		MyClass myClassInstance = null;
-		String jarContainerPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/example.jar";
+		String jarContainerPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/examplejar";
 		File dexOutputDir = getDir("dex", MODE_PRIVATE);
 		DexClassLoader mDexClassLoader = new DexClassLoader(	jarContainerPath, 
 									dexOutputDir.getAbsolutePath(), 
@@ -56,10 +56,10 @@ A snippet of code to achieve this goal is the following::
 			e.printStackTrace();
 		}
 
-The String ``jarContainerPath`` contains the path to *example.jar*, while ``dexOutputDir`` is an **application-private, writable** directory to cache optimized classes into *example.jar*.
+The String ``jarContainerPath`` contains the path to *examplejar*, while ``dexOutputDir`` is an **application-private, writable** directory to cache optimized classes into *examplejar*.
 
 The object ``mDexClassLoader`` is then initialized as a ``DexClassLoader`` instance, which loads all the classes
-into *example.jar* and caches their optimized version into ``dexOutputDir``. No native library is included
+into *examplejar* and caches their optimized version into ``dexOutputDir``. No native library is included
 since the third parameter of the constructor is ``null`` and the `ClassLoader <http://developer.android.com/reference/java/lang/ClassLoader.html>`_ of the current activity is passed as parent class loader.
 
 Finally the designated class is, at first, loaded by invoking the ``loadClass()`` method on ``mDexClassLoader`` with the **full class name** provided as a parameter and, secondly, instantiated through the ``newInstance()`` method and the forced
@@ -153,7 +153,7 @@ since ``SecureDexClassLoader`` will automatically reserve such a folder.
 	
 	Example::
 
-		jarContainerPath = "http://something.somethingelse.com/dev/example.jar"
+		jarContainerPath = "http://something.somethingelse.com/dev/examplejar"
 
 	This ``jarContainerPath`` will retrieve no resource when used in the constructor of ``DexClassLoader`` but it 
 	is perfectly fine as first parameter of the ``mSecureLoaderFactory.createDexClassLoader()`` call.
