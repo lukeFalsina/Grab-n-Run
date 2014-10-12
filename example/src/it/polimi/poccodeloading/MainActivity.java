@@ -166,9 +166,9 @@ public class MainActivity extends Activity {
 		
 		// Creating the apk paths list (you can freely mix between remote and local URL)..
 		String listAPKPaths = 	Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/testApp.apk:" +
-								exampleTestAPKPath 
+								exampleTestAPKPath; 
 								// This last resource is downloaded from the web.
-								+ ":http://jdbc.postgresql.org/download/postgresql-9.2-1002.jdbc4.jar";
+								//+ ":http://jdbc.postgresql.org/download/postgresql-9.2-1002.jdbc4.jar";
 		
 		Log.i(TAG_MAIN, "1st Test: Fetch the certificate by reverting package name with no associative map..");
 		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(listAPKPaths, null, null, ClassLoader.getSystemClassLoader().getParent());		

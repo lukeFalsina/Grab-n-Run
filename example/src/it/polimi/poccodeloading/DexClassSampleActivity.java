@@ -195,49 +195,36 @@ public class DexClassSampleActivity extends Activity {
 																			packageNamesToCertMap, 
 																			getClass().getClassLoader());
 		
+		// Class returned from the loadClass() operation..
+		Class<?> loadedClass = null;
+		
 		try {
 			
-			Class<?> loadedClass = mSecureDexClassLoader.loadClass(className);
-			
-			retComponentModifier = (ComponentModifier) loadedClass.newInstance();
+			loadedClass = mSecureDexClassLoader.loadClass(className);
 			
 		} catch (ClassNotFoundException e) {
 			Log.e(TAG_DEX_SAMPLE, "Error: Class not found!");
 			e.printStackTrace();
-		} catch (InstantiationException e) {
-			Log.i(TAG_DEX_SAMPLE, "Instantiation issues! Correct since the jar container was repackaged!");
-		} catch (IllegalAccessException e) {
-			Log.i(TAG_DEX_SAMPLE, "Instantiation issues! Correct since the jar container was repackaged!");
 		}
 		
-		// Initialize SecureDexClassLoader with repackaged jar container..
-		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
-																			null, 
-																			packageNamesToCertMap, 
-																			getClass().getClassLoader());
-				
-		try {
-					
-			Class<?> loadedClass = mSecureDexClassLoader.loadClass(className);
-					
-			retComponentModifier = (ComponentModifier) loadedClass.newInstance();
-					
-		} catch (ClassNotFoundException e) {
-			Log.e(TAG_DEX_SAMPLE, "Error: Class not found!");
-			e.printStackTrace();
-		} catch (InstantiationException e) {
-			Log.e(TAG_DEX_SAMPLE, "Error: Class not found!");
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			Log.e(TAG_DEX_SAMPLE, "Error: Class not found!");
-			e.printStackTrace();
-		}
-		
-		if (retComponentModifier != null) {
+		if (loadedClass != null) {
+			
+			// In this scenario the provided container is a repackaged version of the benign one
+			// so if this branch is accessed, it means that SecureDexClassLoader failed in
+			// the signature verification step in loadClass() method.
+			try {
+				retComponentModifier = (ComponentModifier) loadedClass.newInstance();
+			} catch (InstantiationException e) {
+				Log.e(TAG_DEX_SAMPLE, "Problem in the instantiation of the target class!");
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				Log.e(TAG_DEX_SAMPLE, "Problem in the access to the target class!");
+				e.printStackTrace();
+			}
 			
 			final String shortClassName = retComponentModifier.getClass().getSimpleName();
 			
-			Log.i(TAG_DEX_SAMPLE, "SecureDexClassLoader was successful!\nLoaded class name:" + shortClassName + "\nPath: " + jarContainerRepackPath);
+			Log.e(TAG_DEX_SAMPLE, "SecureDexClassLoader didn't recognize the repackaged container!\nLoaded class name:" + shortClassName + "\nPath: " + jarContainerRepackPath);
 			
 			// Erase all the cached resources..
 			mSecureDexClassLoader.wipeOutPrivateAppCachedData(true, true);
@@ -247,7 +234,7 @@ public class DexClassSampleActivity extends Activity {
 				@Override
 				public void run() {
 					Toast.makeText(DexClassSampleActivity.this,
-							"SecureDexClassLoader was successful!\nLoaded class name: " + shortClassName + "\nPath: " + jarContainerRepackPath,
+							"SecureDexClassLoader did not find out the repackaged ComponentModifier container!\nLoaded class name: " + shortClassName + "\nPath: " + jarContainerRepackPath,
 							Toast.LENGTH_LONG).show();
 				}
 				
@@ -255,19 +242,21 @@ public class DexClassSampleActivity extends Activity {
 		}
 		else {
 			
+			// In this specific example executing this branch is correct since the target class is contained in a 
+			// repackaged version of the original class and so no class should be loaded!
 			toastHandler.post(new Runnable() {
 
 				@Override
 				public void run() {
 					Toast.makeText(DexClassSampleActivity.this,
-							"SecureDexClassLoader failed!\nLeaving this activity..",
-							Toast.LENGTH_SHORT).show();
+							"SecureDexClassLoader found an invalid package as a container of the target class!\nLeaving this activity..",
+							Toast.LENGTH_LONG).show();
 				}
 				
 			});
 			
-			// Exit this activity..
-			finish();
+			Log.i(TAG_DEX_SAMPLE, "SecureDexClassLoader discovers a repackaged container!\nSo no dynamic loading operation will be allowed..");
+			
 		}
 		
 		return retComponentModifier;
@@ -314,12 +303,20 @@ public class DexClassSampleActivity extends Activity {
 		buttonList.add(secondBtn);
 		buttonList.add(thirdBtn);
 		
-		// The dynamic loaded class customizes all the components..
-		mComponentModifier.customizeButtons(buttonList);
-		mComponentModifier.customizeSwitch(switchSlider);
-		mComponentModifier.customizeTextView(textView);
-		
-		Log.i(TAG_DEX_SAMPLE, "Customization process successfully completed.");
+		if (mComponentModifier != null) {
+			
+			// The dynamic loaded class customizes all the components..
+			mComponentModifier.customizeButtons(buttonList);
+			mComponentModifier.customizeSwitch(switchSlider);
+			mComponentModifier.customizeTextView(textView);			
+
+			Log.i(TAG_DEX_SAMPLE, "Customization process successfully completed.");
+		}
+		else {
+			
+			// If no valid class was found just finish this activity..
+			finish();
+		}
 		
 	}
 	
