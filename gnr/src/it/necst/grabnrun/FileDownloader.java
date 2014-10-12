@@ -11,13 +11,13 @@ import java.net.URL;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import android.app.Activity;
-import android.app.ProgressDialog;
+//import android.app.Activity;
+//import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.Handler;
+//import android.os.Handler;
 import android.util.Log;
 
 public final class FileDownloader {
@@ -25,6 +25,7 @@ public final class FileDownloader {
 	// Unique identifier used for Log entries
 	private static final String TAG_FILE_DOWNLOADER = FileDownloader.class.getSimpleName();
 	
+	@SuppressWarnings("unused")
 	private ContextWrapper mContextWrapper;
 	
 	// Objects used to check availability of Internet connection
@@ -33,14 +34,14 @@ public final class FileDownloader {
 	
 	// Used to avoid users from clicking while downloading 
 	// other components..
-	private ProgressDialog dialog;
+	//private ProgressDialog dialog;
 	
 	// Used to dismiss the dialog
-	private Handler handler;
+	//private Handler handler;
 
-	final FileDownloader(ContextWrapper parentContextWrapper) {
+	FileDownloader(ContextWrapper parentContextWrapper) {
 		
-		handler = new Handler();
+		//handler = new Handler();
 		mContextWrapper = parentContextWrapper;
 		mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);		
 	}
@@ -58,7 +59,7 @@ public final class FileDownloader {
 		}
 		
 		// A progress dialog is shown to let the user know about the downloading process
-    	dialog = ProgressDialog.show((Activity) mContextWrapper, "Downloading", "Downloading a remote resource..");
+    	//dialog = ProgressDialog.show((Activity) mContextWrapper, "Downloading", "Downloading a remote resource..");
 		
     	// Data are retrieved here by an auxiliary thread.
     	Thread dataThread = new Thread() {
@@ -122,7 +123,7 @@ public final class FileDownloader {
     			}
     			
     			// Finally dismiss the dialog..
-    			handler.post(new Runnable () {
+    			/*handler.post(new Runnable () {
 
 					@Override
 					public void run() {
@@ -132,7 +133,7 @@ public final class FileDownloader {
 						
 					}
     				
-    			});
+    			});*/
     		}
     	};
     	
