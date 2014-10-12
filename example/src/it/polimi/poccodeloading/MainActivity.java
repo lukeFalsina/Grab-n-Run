@@ -77,9 +77,9 @@ public class MainActivity extends Activity {
 		
 		//String exampleTestAPKPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/NasaDailyImage.apk";
 		//String exampleTestAPKPath = Environment.getRootDirectory().getAbsolutePath() + "/ext_card/download/NasaDailyImage/NasaDailyImage.apk";
-		exampleTestAPKPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/NasaDailyImage/NasaDailyImage.apk";
+		exampleTestAPKPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/NasaDailyImage/NasaDailyImageDebugSigned.apk";
 		
-		exampleSignedAPKPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/NasaDailyImageSigned.apk";
+		exampleSignedAPKPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/NasaDailyImage/NasaDailyImageSigned.apk";
 
 		exampleSignedChangedAPKPath = "https://dl.dropboxusercontent.com/u/28681922/NasaDailyImageSignedChangedDigest.apk";
 		
@@ -210,7 +210,7 @@ public class MainActivity extends Activity {
 		packageNamesToCertMap.put("it.polimi.example3", null);
 
 		Log.i(TAG_MAIN, "2nd Test: Fetch the certificate by filling associative map..");
-		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	exampleSignedChangedAPKPath, 
+		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	exampleTestAPKPath, 
 																			null, 
 																			packageNamesToCertMap, 
 																			ClassLoader.getSystemClassLoader().getParent());
@@ -233,9 +233,36 @@ public class MainActivity extends Activity {
 		}
 		
 		// 3rd Test: Fetch the certificate by filling associative map 
+		// between package name and certificate --> FAIL cause some of 
+		// signatures in the container failed the verification process
+		// against the developer certificate.
+		Log.i(TAG_MAIN, "3rd Test: Fetch the certificate by filling associative map..");
+		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	exampleSignedChangedAPKPath, 
+																			null, 
+																			packageNamesToCertMap, 
+																			ClassLoader.getSystemClassLoader().getParent());
+		
+		try {
+			Class<?> loadedClass = mSecureDexClassLoader.loadClass(classNameInAPK);
+			
+			if (loadedClass != null) {
+				
+				Log.w(TAG_MAIN, "No class should be loaded!");
+			} else {
+				
+				Log.i(TAG_MAIN, "This time the chosen class should find a certificate but the" +
+						"apk container signatures do not match all properly and so no class loading! CORRECT!");
+			}
+			
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			Log.w(TAG_MAIN, "Class should be present in the provided path!!");
+		}
+		
+		// 4th Test: Fetch the certificate by filling associative map 
 		// between package name and certificate --> SUCCESS cause this 
 		// time the apk was signed with the correct certificate
-		Log.i(TAG_MAIN, "3rd Test: Fetch the certificate by filling associative map..");
+		Log.i(TAG_MAIN, "4th Test: Fetch the certificate by filling associative map..");
 		
 		// Creating the apk paths list (you can mix between remote and local URL)..
 		listAPKPaths = 	"http://google.com/testApp2.apk:" + exampleSignedAPKPath;
@@ -282,7 +309,7 @@ public class MainActivity extends Activity {
 		}
 		
 		// Remove only the cached certificates, since no container was downloaded
-		// from the web in test case 2 and 3.
+		// from the web in test cases 2, 3 and 4.
 		mSecureDexClassLoader.wipeOutPrivateAppCachedData(false, true);
 		Log.d(TAG_MAIN, "Cached data of SecureDexClassLoader have been wiped out..");
 	}
@@ -315,6 +342,9 @@ public class MainActivity extends Activity {
 			Class<?> loadedClass = mDexClassLoader.loadClass(classNameInAPK);
 			final Activity NasaDailyActivity = (Activity) loadedClass.newInstance();
 			
+			// Note that in this case loading class operation was performed even if the APK which contains
+			// the target class was signed just with the Android Debug key. This operation would have failed
+			// if SecureDexClassLoader would have been used in stead..
 			Log.i(TAG_MAIN, "Found class: " + loadedClass.getSimpleName() + "; APK path: " + exampleTestAPKPath.toString());
 			
 			toastHandler.post(new Runnable() {
