@@ -455,9 +455,9 @@ public class SecureDexClassLoader {
 			// No class loading should be allowed and the container 
 			// should be removed as well.
 			// TODO NO PERMISSION REQUIRED IN THE MANIFEST TILL NOW --> It won't erase data on external storage..
-			File containerToRemove = new File(containerPath);
-			if (!containerToRemove.delete())
-				Log.w(TAG_SECURE_DEX_CLASS_LOADER, "It was impossible to delete " + containerPath);
+			//File containerToRemove = new File(containerPath);
+			//if (!containerToRemove.delete())
+				//Log.w(TAG_SECURE_DEX_CLASS_LOADER, "It was impossible to delete " + containerPath);
 			packageNameToContainerPathMap.remove(packageName);
 				
 			return null;

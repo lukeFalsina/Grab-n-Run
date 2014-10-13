@@ -37,15 +37,15 @@ public class MainActivity extends Activity {
 	// This array of strings contains the list of all the implemented
 	// techniques for external code loading that should be visualized.
 	private static final String techinquesToExecute[] = {	"DexClassLoader (.apk)", 
-															"DexClassLoader (.jar)",
 															"SecureDexClassLoader (.apk)", 
+															"DexClassLoader (.jar)",
 															"SecureDexClassLoader (.jar)",
 															"CreatePackageContext"};
 	
 	// Auxiliary constants used for readability..
 	private static final int DEX_CLASS_LOADER_APK = 0;
-	private static final int DEX_CLASS_LOADER_JAR = 1;
-	private static final int SECURE_DEX_CLASS_LOADER_APK = 2;
+	private static final int SECURE_DEX_CLASS_LOADER_APK = 1;
+	private static final int DEX_CLASS_LOADER_JAR = 2;
 	private static final int SECURE_DEX_CLASS_LOADER_JAR = 3;
 	private static final int CREATE_PACK_CTX = 4;
 	
@@ -96,8 +96,7 @@ public class MainActivity extends Activity {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 						
-				// Depending on the chosen button a different technique
-				// is used..
+				// Depending on the chosen button a different example case is taken..
 				switch(position) {
 			
 					case DEX_CLASS_LOADER_APK:
@@ -107,18 +106,18 @@ public class MainActivity extends Activity {
 						effectiveDexClassLoader = false;
 						break;
 				
-					case DEX_CLASS_LOADER_JAR:
-						Intent dexClassLoaderIntent = new Intent(MainActivity.this, DexClassSampleActivity.class);
-						dexClassLoaderIntent.putExtra(IS_SECURE_LOADING_CHOSEN, false);
-						Log.d(TAG_MAIN, "DexClassLoader from jar case should start.");
-						startActivity(dexClassLoaderIntent);
-						break;
-					
 					case SECURE_DEX_CLASS_LOADER_APK:
 						effectiveSecureDexClassLoader = true;
 						Log.d(TAG_MAIN, "SecureDexClassLoader from apk case should start.");
 						setUpSecureDexClassLoader();
 						effectiveSecureDexClassLoader = false;
+						break;
+
+					case DEX_CLASS_LOADER_JAR:
+						Intent dexClassLoaderIntent = new Intent(MainActivity.this, DexClassSampleActivity.class);
+						dexClassLoaderIntent.putExtra(IS_SECURE_LOADING_CHOSEN, false);
+						Log.d(TAG_MAIN, "DexClassLoader from jar case should start.");
+						startActivity(dexClassLoaderIntent);
 						break;
 				
 					case SECURE_DEX_CLASS_LOADER_JAR:
