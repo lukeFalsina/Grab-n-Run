@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import dalvik.system.DexClassLoader;
 
@@ -61,7 +62,7 @@ public class DexClassSampleActivity extends Activity {
 	private Button firstBtn, secondBtn, thirdBtn;
 	private Switch switchSlider;
 	
-	// Path where "componentModifier.jar" and its variants are stored
+	// Path where "componentModifier.jar" and its repackaged version are stored on the device.
 	private String jarContainerPath, jarContainerRepackPath;
 	
 	// Initialized only if the secure mode is enabled..
@@ -86,7 +87,8 @@ public class DexClassSampleActivity extends Activity {
 		// final String jarContainerPath = getAssets() + assetSuffix;
 		jarContainerPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/componentModifier.jar";
 		// final String jarContainerPath = "https://github.com/lukeFalsina/test/blob/master/componentModifier.jar";
-		jarContainerRepackPath = "https://dl.dropboxusercontent.com/u/28681922/componentModifierRepackJavaSource.jar";
+		//jarContainerRepackPath = "https://dl.dropboxusercontent.com/u/28681922/componentModifierRepack.jar";
+		jarContainerRepackPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/componentModifierRepack.jar";
 
 		// Retrieve all the components, which are going to be modified
 		// by the instance of ComponentModifier
@@ -108,21 +110,37 @@ public class DexClassSampleActivity extends Activity {
 		
 	}
 	
+	// A simple method that randomly assign the path container of either the
+	// original and benign jar container or the repackaged one.
+	private String randomContainerPathChoice() {
+		
+		Random randomBooleanGen = new Random();
+		boolean randomBoolean = randomBooleanGen.nextBoolean();
+		
+		if (!randomBoolean) return jarContainerPath;
+		else return jarContainerRepackPath;
+	}
+	
 	private ComponentModifier retrieveComponentModifier(String className) {
 
 		Log.d(TAG_DEX_SAMPLE, "Setting up Dex Class Loader..");
 		
 		ComponentModifier retComponentModifier = null;
 		
+		final String jarContainerChoicePath = randomContainerPathChoice();
+		
 		File dexOutputDir = getDir("dex", MODE_PRIVATE);
 		
-		DexClassLoader mDexClassLoader = new DexClassLoader(	jarContainerPath, 
+		DexClassLoader mDexClassLoader = new DexClassLoader(	jarContainerChoicePath, 
 																dexOutputDir.getAbsolutePath(), 
 																null, 
 																getClass().getClassLoader());
 		
 		try {
 			
+			// It does not matter which one of the two containers is selected..
+			// DexClassLoader will always return a class from either the benign or the
+			// repackaged container..
 			Class<?> loadedClass = mDexClassLoader.loadClass(className);
 			
 			retComponentModifier = (ComponentModifier) loadedClass.newInstance();
@@ -142,14 +160,14 @@ public class DexClassSampleActivity extends Activity {
 			
 			final String shortClassName = retComponentModifier.getClass().getSimpleName();
 			
-			Log.i(TAG_DEX_SAMPLE, "DexClassLoader was successful!\nLoaded class name:" + shortClassName + "\nPath: " + jarContainerPath);
+			Log.i(TAG_DEX_SAMPLE, "DexClassLoader was successful!\nLoaded class name:" + shortClassName + "\nPath: " + jarContainerChoicePath);
 			
 			toastHandler.post(new Runnable() {
 
 				@Override
 				public void run() {
 					Toast.makeText(DexClassSampleActivity.this,
-							"DexClassLoader was successful!\nLoaded class name: " + shortClassName + "\nPath: " + jarContainerPath,
+							"DexClassLoader was successful!\nLoaded class name: " + shortClassName + "\nPath: " + jarContainerChoicePath,
 							Toast.LENGTH_LONG).show();
 				}
 				
@@ -181,6 +199,8 @@ public class DexClassSampleActivity extends Activity {
 		
 		ComponentModifier retComponentModifier = null;
 		
+		final String jarContainerChoicePath = randomContainerPathChoice();
+		
 		SecureLoaderFactory mSecureLoaderFactory = new SecureLoaderFactory(this);
 		
 		// Filling the associative map to link package names and certificates..
@@ -190,7 +210,7 @@ public class DexClassSampleActivity extends Activity {
 		packageNamesToCertMap.put("it.polimi.componentmodifier", "https://dl.dropboxusercontent.com/u/28681922/test_cert.pem");
 		
 		// Initialize SecureDexClassLoader with repackaged jar container..
-		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerRepackPath, 
+		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerChoicePath, 
 																			null, 
 																			packageNamesToCertMap, 
 																			getClass().getClassLoader());
@@ -224,17 +244,17 @@ public class DexClassSampleActivity extends Activity {
 			
 			final String shortClassName = retComponentModifier.getClass().getSimpleName();
 			
-			Log.e(TAG_DEX_SAMPLE, "SecureDexClassLoader didn't recognize the repackaged container!\nLoaded class name:" + shortClassName + "\nPath: " + jarContainerRepackPath);
+			Log.i(TAG_DEX_SAMPLE, "SecureDexClassLoader found out a consistent container!\nLoaded class name:" + shortClassName + "\nPath: " + jarContainerChoicePath);
 			
 			// Erase all the cached resources..
-			mSecureDexClassLoader.wipeOutPrivateAppCachedData(true, true);
+			// mSecureDexClassLoader.wipeOutPrivateAppCachedData(true, true);
 			
 			toastHandler.post(new Runnable() {
 
 				@Override
 				public void run() {
 					Toast.makeText(DexClassSampleActivity.this,
-							"SecureDexClassLoader did not find out the repackaged ComponentModifier container!\nLoaded class name: " + shortClassName + "\nPath: " + jarContainerRepackPath,
+							"SecureDexClassLoader found out a valid ComponentModifier container!\nLoaded class name: " + shortClassName + "\nPath: " + jarContainerChoicePath,
 							Toast.LENGTH_LONG).show();
 				}
 				
