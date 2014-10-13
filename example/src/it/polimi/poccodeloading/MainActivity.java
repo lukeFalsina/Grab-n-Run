@@ -13,6 +13,7 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
@@ -162,6 +163,10 @@ public class MainActivity extends Activity {
 		// 3. The container in the end is correct so the full signature verification step is performed
 		// 4. After the loading operation, the method to wipe out both the certificate and the container is invoked
 		
+		Debug.startMethodTracing("SecureDexClassLoader");
+		
+		Debug.startMethodTracing("SecureDexFactory Preparation");
+		
 		// Create an instance of SecureLoaderFactory..
 		// It needs as a parameter a Context object (an Activity is an extension of such a class..)
 		SecureLoaderFactory mSecureLoaderFactory = new SecureLoaderFactory(this);
@@ -182,13 +187,21 @@ public class MainActivity extends Activity {
 																			packageNamesToCertMap, 
 																			ClassLoader.getSystemClassLoader().getParent());
 		
+		Debug.stopMethodTracing(); // end of "SecureDexFactory Preparation" section
+		
 		try {
 			
 			// Attempt to load dynamically the target class.. 
+			Debug.startMethodTracing("Load Operation");
 			Class<?> loadedClass = mSecureDexClassLoader.loadClass(classNameInAPK);
+			Debug.stopMethodTracing(); // end of "Load Operation" section
 			
 			// Immediately wipe out all the cached data (certificate, container)
+			Debug.startMethodTracing("Wipe Cached Data");
 			mSecureDexClassLoader.wipeOutPrivateAppCachedData(true, true);
+			Debug.stopMethodTracing(); // end of "Wipe Cached Data" section
+			
+			Debug.stopMethodTracing(); // end of "SecureDexClassLoader" section
 			
 			if (loadedClass != null) {
 				
@@ -412,6 +425,8 @@ public class MainActivity extends Activity {
 		
 		Log.d(TAG_MAIN, "Setting up DexClassLoader..");
 		
+		if (PROFILING_ON) Debug.startMethodTracing("DexClassLoader");
+		
 		File dexOutputDir = getDir("dex", MODE_PRIVATE);
 		DexClassLoader mDexClassLoader = new DexClassLoader(	exampleTestAPKPath, 
 																dexOutputDir.getAbsolutePath(), 
@@ -422,6 +437,9 @@ public class MainActivity extends Activity {
 			
 			// Load NasaDailyImage Main Activity..
 			Class<?> loadedClass = mDexClassLoader.loadClass(classNameInAPK);
+			
+			if (PROFILING_ON) Debug.stopMethodTracing(); // end of "DexClassLoader" trace
+			
 			final Activity NasaDailyActivity = (Activity) loadedClass.newInstance();
 			
 			// Note that in this case loading class operation was performed even if the APK which contains

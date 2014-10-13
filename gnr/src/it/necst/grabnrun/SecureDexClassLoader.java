@@ -31,6 +31,7 @@ import javax.security.auth.x500.X500Principal;
 import android.content.ContextWrapper;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
+import android.os.Debug;
 import android.util.Log;
 import dalvik.system.DexClassLoader;
 
@@ -312,6 +313,8 @@ public class SecureDexClassLoader {
 		String containerPath = packageNameToContainerPathMap.get(packageName);
 		if(containerPath == null) return null;
 		
+		Debug.startMethodTracing("Import Certificate");
+		
 		// Instantiate a certificate object used to check 
 		// the signature of .apk or .jar container
 		X509Certificate verifiedCertificate;
@@ -328,7 +331,9 @@ public class SecureDexClassLoader {
 			// No matching certificate or an expired one was found 
 			// locally and so it's necessary to download the 
 			// certificate through an Https request.
+			Debug.startMethodTracing("Download Certificate");
 			boolean isCertificateDownloadSuccessful = downloadCertificateRemotelyViaHttps(packageName);
+			Debug.stopMethodTracing(); // end of "Download Certificate" section
 			
 			if (isCertificateDownloadSuccessful) {
 				
@@ -339,6 +344,8 @@ public class SecureDexClassLoader {
 			}
 		}
 		
+		Debug.stopMethodTracing(); // end of "Import Certificate" section
+		
 		if (verifiedCertificate != null) {
 				
 			// We were able to get a valid certificate either directly
@@ -347,7 +354,8 @@ public class SecureDexClassLoader {
 			// Now it's time to check whether this certificate
 			// was used to sign the class to be loaded.
 			
-				
+			Debug.startMethodTracing("Verify Signature");
+			
 			// Retrieve the correct apk or jar file containing the class that we should load
 			// Check whether the selected resource is a jar or apk container
 			int extensionIndex = containerPath.lastIndexOf(".");
@@ -438,9 +446,13 @@ public class SecureDexClassLoader {
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
+					
 				}
-			}
 				
+			}
+			
+			Debug.stopMethodTracing(); // end of "Verify Signature" section
+			
 			// Signature verification result..
 			if (signatureCheckIsSuccessful) {
 					

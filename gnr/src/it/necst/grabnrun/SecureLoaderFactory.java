@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 //import android.content.Context;
 import android.content.ContextWrapper;
+import android.os.Debug;
 //import android.net.ConnectivityManager;
 //import android.net.NetworkInfo;
 import android.util.Log;
@@ -148,7 +149,9 @@ public class SecureLoaderFactory {
 					isResourceFolderInitialized = true;
 				}
 				
+				Debug.startMethodTracing("Download Container");
 				String downloadedContainerPath = downloadContainerIntoFolder(fixedPath, resDownloadDir);
+				Debug.stopMethodTracing(); // end of "Download Container" section
 				
 				if (downloadedContainerPath != null) {
 					
