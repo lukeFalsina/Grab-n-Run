@@ -1,0 +1,235 @@
+*version
+3
+data-file-overflow=false
+clock=dual
+elapsed-time-usec=58026
+num-method-calls=1565
+clock-call-overhead-nsec=16352
+vm=dalvik
+*threads
+1	main
+10	Binder_2
+9	Binder_1
+8	FinalizerWatchdogDaemon
+7	FinalizerDaemon
+6	ReferenceQueueDaemon
+5	Compiler
+4	JDWP
+3	Signal Catcher
+2	GC
+*methods
+0x4572a718	android/app/ContextImpl	getDir	(Ljava/lang/String;I)Ljava/io/File;	ContextImpl.java	1849
+0x4572aa98	android/app/ContextImpl	getSystemService	(Ljava/lang/String;)Ljava/lang/Object;	ContextImpl.java	1513
+0x45729c90	android/app/ContextImpl	getDataDirFile	()Ljava/io/File;	ContextImpl.java	1841
+0x45729de0	android/app/ContextImpl	makeFilename	(Ljava/io/File;Ljava/lang/String;)Ljava/io/File;	ContextImpl.java	1997
+0x45729e88	android/app/ContextImpl	setFilePermissionsFromMode	(Ljava/lang/String;II)V	ContextImpl.java	-1
+0x4567e730	java/util/regex/Splitter	fastSplit	(Ljava/lang/String;Ljava/lang/String;I)[Ljava/lang/String;	Splitter.java	-1
+0x4567e768	java/util/regex/Splitter	finishSplit	(Ljava/util/List;Ljava/lang/String;II)[Ljava/lang/String;	Splitter.java	129
+0x4567e7a0	java/util/regex/Splitter	split	(Ljava/util/regex/Pattern;Ljava/lang/String;Ljava/lang/String;I)[Ljava/lang/String;	Splitter.java	105
+0x45673880	java/util/HashMap	addNewEntry	(Ljava/lang/Object;Ljava/lang/Object;II)V	HashMap.java	490
+0x45673a78	java/util/HashMap	get	(Ljava/lang/Object;)Ljava/lang/Object;	HashMap.java	-1
+0x45673c70	java/util/HashMap	put	(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;	HashMap.java	400
+0x45673488	java/util/HashMap	<init>	()V	HashMap.java	125
+0x45673680	java/util/HashMap	doubleCapacity	()[Ljava/util/HashMap$HashMapEntry;	HashMap.java	583
+0x456736f0	java/util/HashMap	makeTable	(I)[Ljava/util/HashMap$HashMapEntry;	HashMap.java	569
+0x45673808	java/util/HashMap	secondaryHash	(Ljava/lang/Object;)I	HashMap.java	350
+0x45688ee8	java/lang/AbstractStringBuilder	append0	(C)V	AbstractStringBuilder.java	131
+0x45688f58	java/lang/AbstractStringBuilder	append0	(Ljava/lang/String;)V	AbstractStringBuilder.java	138
+0x456896c8	java/lang/AbstractStringBuilder	toString	()Ljava/lang/String;	AbstractStringBuilder.java	-1
+0x45688d58	java/lang/AbstractStringBuilder	<init>	()V	AbstractStringBuilder.java	74
+0x45688d90	java/lang/AbstractStringBuilder	<init>	(I)V	AbstractStringBuilder.java	78
+0x45688dc8	java/lang/AbstractStringBuilder	<init>	(Ljava/lang/String;)V	AbstractStringBuilder.java	-1
+0x45688e00	java/lang/AbstractStringBuilder	enlargeBuffer	(I)V	AbstractStringBuilder.java	-1
+0x4572be00	android/app/ContextImpl$StaticServiceFetcher	getService	(Landroid/app/ContextImpl;)Ljava/lang/Object;	ContextImpl.java	253
+0x456e3538	android/app/Activity	getSystemService	(Ljava/lang/String;)Ljava/lang/Object;	Activity.java	4491
+0x456e63a8	android/content/ContextWrapper	getBaseContext	()Landroid/content/Context;	ContextWrapper.java	78
+0x456e6530	android/content/ContextWrapper	getDir	(Ljava/lang/String;I)Ljava/io/File;	ContextWrapper.java	224
+0x4563b138	java/lang/Class	getComponentType	()Ljava/lang/Class;	Class.java	-2
+0x4563b3a0	java/lang/Class	getDeclaringClass	()Ljava/lang/Class;	Class.java	-2
+0x4563b410	java/lang/Class	getEnclosingConstructor	()Ljava/lang/reflect/Constructor;	Class.java	-2
+0x4563b448	java/lang/Class	getEnclosingMethod	()Ljava/lang/reflect/Method;	Class.java	-2
+0x4563b678	java/lang/Class	getName	()Ljava/lang/String;	Class.java	860
+0x4563b7c8	java/lang/Class	getSimpleName	()Ljava/lang/String;	Class.java	876
+0x4563b8e0	java/lang/Class	isAnonymousClass	()Z	Class.java	-2
+0x4563b918	java/lang/Class	isArray	()Z	Class.java	1044
+0x4563ba30	java/lang/Class	isLocalClass	()Z	Class.java	-1
+0x4563ba68	java/lang/Class	isMemberClass	()Z	Class.java	1098
+0x4563ad40	java/lang/Class	getNameNative	()Ljava/lang/String;	Class.java	-2
+0x4563c218	java/lang/ClassLoader	findLoadedClass	(Ljava/lang/String;)Ljava/lang/Class;	ClassLoader.java	350
+0x4563c368	java/lang/ClassLoader	getParent	()Ljava/lang/ClassLoader;	ClassLoader.java	377
+0x4563c448	java/lang/ClassLoader	loadClass	(Ljava/lang/String;)Ljava/lang/Class;	ClassLoader.java	461
+0x4563c480	java/lang/ClassLoader	loadClass	(Ljava/lang/String;Z)Ljava/lang/Class;	ClassLoader.java	491
+0x4563bf70	java/lang/ClassLoader	getSystemClassLoader	()Ljava/lang/ClassLoader;	ClassLoader.java	125
+0x456e5bd8	android/view/ContextThemeWrapper	getSystemService	(Ljava/lang/String;)Ljava/lang/Object;	ContextThemeWrapper.java	111
+0x4563a670	java/lang/Throwable	fillInStackTrace	()Ljava/lang/Throwable;	Throwable.java	161
+0x4563a390	java/lang/Throwable	<init>	()V	Throwable.java	83
+0x4563a3c8	java/lang/Throwable	<init>	(Ljava/lang/String;)V	Throwable.java	95
+0x4563a518	java/lang/Throwable	nativeFillInStackTrace	()Ljava/lang/Object;	Throwable.java	-2
+0x4567ddc0	dalvik/system/BaseDexClassLoader	findClass	(Ljava/lang/String;)Ljava/lang/Class;	BaseDexClassLoader.java	51
+0x45671258	java/util/AbstractMap	<init>	()V	AbstractMap.java	171
+0x456cfe18	android/os/Debug	startMethodTracing	(Ljava/lang/String;)V	Debug.java	-1
+0x456cfe88	android/os/Debug	startMethodTracing	(Ljava/lang/String;II)V	Debug.java	491
+0x457a58f8	android/net/ConnectivityManager	<init>	(Landroid/net/IConnectivityManager;)V	ConnectivityManager.java	837
+0x45648cd0	java/lang/ref/FinalizerReference	<init>	(Ljava/lang/Object;Ljava/lang/ref/ReferenceQueue;)V	FinalizerReference.java	42
+0x45648d08	java/lang/ref/FinalizerReference	add	(Ljava/lang/Object;)V	FinalizerReference.java	54
+0x4565aa98	java/io/File	exists	()Z	File.java	363
+0x4565ab08	java/io/File	getAbsolutePath	()Ljava/lang/String;	File.java	375
+0x4565ac90	java/io/File	getPath	()Ljava/lang/String;	File.java	494
+0x4565ad70	java/io/File	isAbsolute	()Z	File.java	-1
+0x4565afd8	java/io/File	mkdir	()Z	File.java	872
+0x4565a3c8	java/io/File	<init>	(Ljava/io/File;Ljava/lang/String;)V	File.java	124
+0x4565a438	java/io/File	<init>	(Ljava/lang/String;Ljava/lang/String;)V	File.java	148
+0x4565a550	java/io/File	doAccess	(I)Z	File.java	283
+0x4565a5f8	java/io/File	fixSlashes	(Ljava/lang/String;)Ljava/lang/String;	File.java	184
+0x4565a668	java/io/File	join	(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;	File.java	-1
+0x4565a710	java/io/File	mkdirErrno	()V	File.java	881
+0x456805f0	android/util/Log	d	(Ljava/lang/String;Ljava/lang/String;)I	Log.java	138
+0x456807e8	android/util/Log	println_native	(IILjava/lang/String;Ljava/lang/String;)I	Log.java	-2
+0x456922f8	android/os/Parcel	readStrongBinder	()Landroid/os/IBinder;	Parcel.java	1494
+0x45692410	android/os/Parcel	recycle	()V	Parcel.java	311
+0x45692988	android/os/Parcel	writeInterfaceToken	(Ljava/lang/String;)V	Parcel.java	444
+0x45692c60	android/os/Parcel	writeString	(Ljava/lang/String;)V	Parcel.java	513
+0x45690bf8	android/os/Parcel	freeBuffer	()V	Parcel.java	2227
+0x45690e60	android/os/Parcel	nativeFreeBuffer	(I)V	Parcel.java	-2
+0x45691090	android/os/Parcel	nativeReadStrongBinder	(I)Landroid/os/IBinder;	Parcel.java	-2
+0x456912f8	android/os/Parcel	nativeWriteInterfaceToken	(ILjava/lang/String;)V	Parcel.java	-2
+0x45691368	android/os/Parcel	nativeWriteString	(ILjava/lang/String;)V	Parcel.java	-2
+0x456913d8	android/os/Parcel	obtain	()Landroid/os/Parcel;	Parcel.java	288
+0x4576b1b0	java/lang/StringBuffer	append	(C)Ljava/lang/StringBuffer;	StringBuffer.java	126
+0x4576b370	java/lang/StringBuffer	append	(Ljava/lang/String;)Ljava/lang/StringBuffer;	StringBuffer.java	219
+0x4576bc30	java/lang/StringBuffer	toString	()Ljava/lang/String;	StringBuffer.java	723
+0x4576afe8	java/lang/StringBuffer	<init>	(I)V	StringBuffer.java	69
+0x4563d360	java/lang/String	_getChars	(II[CI)V	String.java	903
+0x4563d398	java/lang/String	charAt	(I)C	String.java	-2
+0x4563d600	java/lang/String	endsWith	(Ljava/lang/String;)Z	String.java	731
+0x4563d638	java/lang/String	equals	(Ljava/lang/Object;)Z	String.java	-2
+0x4563d7c0	java/lang/String	hashCode	()I	String.java	907
+0x4563d7f8	java/lang/String	indexOf	(I)I	String.java	-1
+0x4563d8a0	java/lang/String	indexOf	(Ljava/lang/String;I)I	String.java	-1
+0x4563d910	java/lang/String	isEmpty	()Z	String.java	-2
+0x4563d948	java/lang/String	lastIndexOf	(I)I	String.java	1088
+0x4563da28	java/lang/String	length	()I	String.java	-2
+0x4563dad0	java/lang/String	regionMatches	(ILjava/lang/String;II)Z	String.java	-1
+0x4563dbb0	java/lang/String	replaceAll	(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;	String.java	1774
+0x4563dc20	java/lang/String	split	(Ljava/lang/String;)[Ljava/lang/String;	String.java	1813
+0x4563dc58	java/lang/String	split	(Ljava/lang/String;I)[Ljava/lang/String;	String.java	1831
+0x4563dc90	java/lang/String	startsWith	(Ljava/lang/String;)Z	String.java	1400
+0x4563dcc8	java/lang/String	startsWith	(Ljava/lang/String;I)Z	String.java	1417
+0x4563dd38	java/lang/String	substring	(I)Ljava/lang/String;	String.java	1432
+0x4563dd70	java/lang/String	substring	(II)Ljava/lang/String;	String.java	1456
+0x4563dda8	java/lang/String	toCharArray	()[C	String.java	1473
+0x4563de50	java/lang/String	toString	()Ljava/lang/String;	String.java	1510
+0x4563ca98	java/lang/String	<init>	(II[C)V	String.java	431
+0x4563ce50	java/lang/String	<init>	([CII)V	String.java	-1
+0x4563cf68	java/lang/String	fastIndexOf	(II)I	String.java	-2
+0x4572c400	android/app/ContextImpl$10	createStaticService	()Ljava/lang/Object;	ContextImpl.java	333
+0x4566e610	java/util/Collections	emptyList	()Ljava/util/List;	Collections.java	2409
+0x4563a008	java/lang/Object	<init>	()V	Object.java	136
+0x4567e558	dalvik/system/DexPathList	findClass	(Ljava/lang/String;)Ljava/lang/Class;	DexPathList.java	309
+0x4565ece0	java/util/regex/Matcher	appendReplacement	(Ljava/lang/StringBuffer;Ljava/lang/String;)Ljava/util/regex/Matcher;	Matcher.java	110
+0x4565ed18	java/util/regex/Matcher	appendTail	(Ljava/lang/StringBuffer;)Ljava/lang/StringBuffer;	Matcher.java	286
+0x4565ed50	java/util/regex/Matcher	end	()I	Matcher.java	524
+0x4565ed88	java/util/regex/Matcher	end	(I)I	Matcher.java	466
+0x4565edf8	java/util/regex/Matcher	find	()Z	Matcher.java	404
+0x4565eed8	java/util/regex/Matcher	groupCount	()I	Matcher.java	510
+0x4565f108	java/util/regex/Matcher	replaceAll	(Ljava/lang/String;)Ljava/lang/String;	Matcher.java	318
+0x4565f1b0	java/util/regex/Matcher	reset	()Ljava/util/regex/Matcher;	Matcher.java	162
+0x4565f1e8	java/util/regex/Matcher	reset	(Ljava/lang/CharSequence;)Ljava/util/regex/Matcher;	Matcher.java	177
+0x4565f220	java/util/regex/Matcher	start	()I	Matcher.java	500
+0x4565f258	java/util/regex/Matcher	start	(I)I	Matcher.java	450
+0x4565f300	java/util/regex/Matcher	usePattern	(Ljava/util/regex/Pattern;)Ljava/util/regex/Matcher;	Matcher.java	-1
+0x4565e8e8	java/util/regex/Matcher	<init>	(Ljava/util/regex/Pattern;Ljava/lang/CharSequence;)V	Matcher.java	88
+0x4565e920	java/util/regex/Matcher	appendEvaluated	(Ljava/lang/StringBuffer;Ljava/lang/String;)V	Matcher.java	128
+0x4565e990	java/util/regex/Matcher	ensureMatch	()V	Matcher.java	597
+0x4565ea00	java/util/regex/Matcher	findNextImpl	(JLjava/lang/String;[I)Z	Matcher.java	-2
+0x4565ea38	java/util/regex/Matcher	groupCountImpl	(J)I	Matcher.java	-2
+0x4565eb18	java/util/regex/Matcher	openImpl	(J)J	Matcher.java	-2
+0x4565ebc0	java/util/regex/Matcher	reset	(Ljava/lang/CharSequence;II)Ljava/util/regex/Matcher;	Matcher.java	-1
+0x4565ebf8	java/util/regex/Matcher	resetForInput	()V	Matcher.java	251
+0x4565ec30	java/util/regex/Matcher	setInputImpl	(JLjava/lang/String;II)V	Matcher.java	-2
+0x4565ec68	java/util/regex/Matcher	useAnchoringBoundsImpl	(JZ)V	Matcher.java	-2
+0x4565eca0	java/util/regex/Matcher	useTransparentBoundsImpl	(JZ)V	Matcher.java	-2
+0x457a70a0	android/net/IConnectivityManager$Stub	asInterface	(Landroid/os/IBinder;)Landroid/net/IConnectivityManager;	IConnectivityManager.java	27
+0x456d05f8	android/os/FileUtils	setPermissions	(Ljava/lang/String;III)I	FileUtils.java	-2
+0x4566f918	java/util/AbstractCollection	<init>	()V	AbstractCollection.java	36
+0x45664a40	libcore/io/Posix	access	(Ljava/lang/String;I)Z	Posix.java	-2
+0x456655a0	libcore/io/Posix	mkdir	(Ljava/lang/String;I)V	Posix.java	-2
+0x458d2460	dalvik/system/DexFile	loadClassBinaryName	(Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/lang/Class;	DexFile.java	211
+0x458d21f0	dalvik/system/DexFile	defineClass	(Ljava/lang/String;Ljava/lang/ClassLoader;I)Ljava/lang/Class;	DexFile.java	-2
+0x45640588	java/lang/Exception	<init>	()V	Exception.java	36
+0x456405c0	java/lang/Exception	<init>	(Ljava/lang/String;)V	Exception.java	47
+0x4567bfc8	libcore/io/ForwardingOs	access	(Ljava/lang/String;I)Z	ForwardingOs.java	39
+0x4567cb28	libcore/io/ForwardingOs	mkdir	(Ljava/lang/String;I)V	ForwardingOs.java	91
+0x4568d728	android/os/BinderProxy	queryLocalInterface	(Ljava/lang/String;)Landroid/os/IInterface;	Binder.java	414
+0x4568d760	android/os/BinderProxy	transact	(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z	Binder.java	-2
+0x4568d4f0	android/os/BinderProxy	<init>	()V	Binder.java	452
+0x4567f770	java/lang/VMClassLoader	findLoadedClass	(Ljava/lang/ClassLoader;Ljava/lang/String;)Ljava/lang/Class;	VMClassLoader.java	-2
+0x4567f8c0	java/lang/VMClassLoader	loadClass	(Ljava/lang/String;Z)Ljava/lang/Class;	VMClassLoader.java	-2
+0x4567e110	java/lang/BootClassLoader	findClass	(Ljava/lang/String;)Ljava/lang/Class;	ClassLoader.java	765
+0x4567e260	java/lang/BootClassLoader	loadClass	(Ljava/lang/String;Z)Ljava/lang/Class;	ClassLoader.java	822
+0x4567e0d0	java/lang/BootClassLoader	getInstance	()Ljava/lang/BootClassLoader;	ClassLoader.java	752
+0x4567ec28	dalvik/system/DexPathList$Element	access$000	(Ldalvik/system/DexPathList$Element;)Ldalvik/system/DexFile;	DexPathList.java	383
+0x45740bc0	android/app/LoadedApk	getDataDirFile	()Ljava/io/File;	LoadedApk.java	472
+0x457df918	android/os/ServiceManager	getIServiceManager	()Landroid/os/IServiceManager;	ServiceManager.java	34
+0x457df950	android/os/ServiceManager	getService	(Ljava/lang/String;)Landroid/os/IBinder;	ServiceManager.java	51
+0x45653e50	libcore/io/ErrnoException	<init>	(Ljava/lang/String;I)V	ErrnoException.java	31
+0x458ab110	com/android/internal/util/Preconditions	checkNotNull	(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;	Preconditions.java	51
+0x457dff08	android/os/ServiceManagerProxy	getService	(Ljava/lang/String;)Landroid/os/IBinder;	ServiceManagerNative.java	119
+0x45936ae0	it/necst/grabnrun/SecureLoaderFactory	createDexClassLoader	(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/ClassLoader;)Lit/necst/grabnrun/SecureDexClassLoader;	SecureLoaderFactory.java	106
+0x459369f8	it/necst/grabnrun/SecureLoaderFactory	<clinit>	()V	SecureLoaderFactory.java	25
+0x45936a30	it/necst/grabnrun/SecureLoaderFactory	<init>	(Landroid/content/ContextWrapper;)V	SecureLoaderFactory.java	50
+0x45671c90	java/util/ArrayList	add	(Ljava/lang/Object;)Z	ArrayList.java	-1
+0x45672080	java/util/ArrayList	size	()I	ArrayList.java	319
+0x456720f0	java/util/ArrayList	toArray	([Ljava/lang/Object;)[Ljava/lang/Object;	ArrayList.java	-1
+0x45671ac8	java/util/ArrayList	<init>	()V	ArrayList.java	81
+0x456495f8	dalvik/system/VMDebug	startClassPrep	()V	VMDebug.java	363
+0x45649710	dalvik/system/VMDebug	startMethodTracing	(Ljava/lang/String;II)V	VMDebug.java	170
+0x456497b8	dalvik/system/VMDebug	startMethodTracingNative	(Ljava/lang/String;Ljava/io/FileDescriptor;II)V	VMDebug.java	-2
+0x45673fb0	java/util/HashMap$HashMapEntry	<init>	(Ljava/lang/Object;Ljava/lang/Object;ILjava/util/HashMap$HashMapEntry;)V	HashMap.java	743
+0x4566f548	java/util/AbstractList	<init>	()V	AbstractList.java	376
+0x4565f898	java/util/regex/Pattern	matcher	(Ljava/lang/CharSequence;)Ljava/util/regex/Matcher;	Pattern.java	297
+0x4565f940	java/util/regex/Pattern	split	(Ljava/lang/CharSequence;I)[Ljava/lang/String;	Pattern.java	329
+0x4565f628	java/util/regex/Pattern	<init>	(Ljava/lang/String;I)V	Pattern.java	384
+0x4565f698	java/util/regex/Pattern	compile	(Ljava/lang/String;)Ljava/util/regex/Pattern;	Pattern.java	381
+0x4565f708	java/util/regex/Pattern	compile	()V	Pattern.java	394
+0x4565f740	java/util/regex/Pattern	compileImpl	(Ljava/lang/String;I)J	Pattern.java	-2
+0x4565f7b0	java/util/regex/Pattern	quote	(Ljava/lang/String;)Ljava/lang/String;	Pattern.java	431
+0x45688220	java/lang/StringBuilder	append	(C)Ljava/lang/StringBuilder;	StringBuilder.java	124
+0x456883e0	java/lang/StringBuilder	append	(Ljava/lang/String;)Ljava/lang/StringBuilder;	StringBuilder.java	216
+0x45688ca0	java/lang/StringBuilder	toString	()Ljava/lang/String;	StringBuilder.java	663
+0x45688020	java/lang/StringBuilder	<init>	()V	StringBuilder.java	54
+0x456880c8	java/lang/StringBuilder	<init>	(Ljava/lang/String;)V	StringBuilder.java	95
+0x457a83a0	android/net/IConnectivityManager$Stub$Proxy	<init>	(Landroid/os/IBinder;)V	IConnectivityManager.java	649
+0x45648ef8	java/lang/ref/Reference	<init>	(Ljava/lang/Object;Ljava/lang/ref/ReferenceQueue;)V	Reference.java	139
+0x4566d3e0	java/lang/ref/WeakReference	<init>	(Ljava/lang/Object;)V	WeakReference.java	95
+0x4565ca30	java/lang/System	arraycopy	(Ljava/lang/Object;ILjava/lang/Object;II)V	System.java	-2
+0x45936b98	it/necst/grabnrun/FileDownloader	<clinit>	()V	FileDownloader.java	26
+0x45936bd0	it/necst/grabnrun/FileDownloader	<init>	(Landroid/content/ContextWrapper;)V	FileDownloader.java	42
+0x45640d78	java/lang/ClassNotFoundException	<init>	(Ljava/lang/String;Ljava/lang/Throwable;)V	ClassNotFoundException.java	59
+*end
+SLOW   vŸÿ Q                 ¹—dE   Ç   —dE;   ï   ‰şlE]      şlE{   /   ø•dE²   f   HÄcEØ   •   €ÄcE  Ô   ÂcEB  ö   ĞàgEa     ÑàgE‹  >   p÷gE£  V   q÷gEÓ  †   ÂcEû  ¯   `âgE  Å   ÂcE-  á   ĞàgEH  ü   ÑàgEj     p÷gE~  1   q÷gE£  V   ÂcE¾  q   ágEÑ  „   ÀøgEì  Ÿ   ø•dE  È   ù•dE  Q   xdEğ  ­   ÀdE  Î   È£cE7  ê   £cER      cEn  !   	 cEŠ  =   æfE  Q   æfE¿  r   p¦cEÓ  …   ¥cEí      ¥cE  Ó   q¦cE<  ï   ‘£cEV  	   É£cEp  $   ÁdEŠ  =   ydE¥  X   ÁøgEÆ  ƒ   ágEû  ¯   bâgE  Á   ÀİgE$  ×   XågEB  ö   (ìgEb  	   )ìgE  5	   `$E–  I	   ğ!E²  f	   ø•dEÖ  ‰	   ù•dE˜  L
+   ñ!E·  j
+   a$EÓ  †
+   YågEï  ¢
+   ÁİgE
+  ¾
+   ÄcE%  Ø
+   IÄcE?  ò
+   ù•dES     øi“EÛ     È·cEû  ¯   ¹cE(	  Ü   8±cEL	  ÿ   9±cEk	     ¹cEˆ	  ;   x¶cE›	  N   @­cEÁ	  u   A­cEğ	  ¤   y¶cE
+  ¿   à¸cE
+  Ñ   á¸cEZ
+     hºcEn
+  !    ³cEˆ
+  <   ¡³cE±
+  ¯   iºcEG  ÿ   0ºcE`     H´cE|  9   I´cE¦  Y   ´cE¹  l   ´cEØ  ‹   1ºcEõ  ¨   HÙcE	  ¼   IÙcE=  ñ   8İcER     ˜ÊcEz  .    cE—  J   	 cE²  e   ™ÊcEÍ  €   9İcEè  œ   É·cE  ¶   ùi“E+  ß   0j“EO      cEk     	 cE†  9   ø•dE¶  j   HÄcEÌ     €ÄcEé  œ   ÂcE  ·   ĞàgE  Ò   ÑàgEA  ô   p÷gEU     q÷gEz  -   ÂcE•  H   `âgE©  \   ÂcEÃ  v   ĞàgEŞ  ‘   ÑàgEş  ²   p÷gE  Ä   q÷gE4  è   ÂcEP     ágEb     ÀøgE}  1   ø•dE¡  T   ù•dEÿ  ³   xdE,  ß   ÀdEJ  ı   È£cEf     £cE€  4    cEœ  O   	 cE¶  i   æfEÉ  |   æfEè  œ   p¦cEü  ¯   ¥cE  É   ¥cEC  ÷   q¦cE`     ‘£cEz  5   É£cE  R   ÁdE¹  l   ydEÓ  †   ÁøgEò  ¥   ágE  Ë   bâgE*  İ   ÀİgE?  ò   XågE\     (ìgE{  .   )ìgEš  M   `$E®  a   ğ!EÉ  |   ø•dEë     ù•dEz  .   ñ!E˜  L   a$E´  k   YågEÜ     ÁİgEø  ¬   ÄcE  Æ   IÄcE-  à   ù•dE@  ó   ˜k“E_     È·cE|  0   ¹cE—  K   8±cE²  e   9±cEĞ  ƒ   ¹cEì  Ÿ   x¶cEş  ±   @­cE  Í   A­cED  ø   y¶cE`  A   à¸cEÃ  >   á¸cE"  š   hºcE;  ±    ³cE]  Ó   ¡³cEƒ  ù   iºcE£     0ºcE¸  -   H´cEÔ  J   I´cE÷  m   ´cE
+  €   ´cE+  ¡   1ºcEH  ¾   HÙcE]  Ò   IÙcE¤      8İcEº  0    ˜ÊcEé  _     cE  ~    	 cE$  ™    ™ÊcEA  ¶    9İcE]  Ó    É·cEx  î    ™k“E«  !!   Ğk“Eß  Z!    cE  ‡!   	 cE1  §!   85nE‰   "   ¨cnEª   "   ©cnEÌ  B"   8ÖcEä  Y"   9ÖcEö  k"   8ÖcE	  ~"   9ÖcE  "   Ø[nE.  £"   8ÖcEL  Á"   9ÖcE]  Ò"   ˜ªrEq  æ"   x:gE  #   À×cE«  !#   Á×cEÍ  B#   y:gEğ  f#    ¾rE	  ‚#    ÄrEj  á#   Pù}E‹  $   x:gE©  $   À×cEÅ  :$   Á×cEå  [$   y:gE	  ~$   ù}E  ‘$   ù}E;  °$   ÿ}ER  Ç$   ØiEm  ã$   ÙiE’  %   ØiE¤  %   ÙiEÇ  =%   ˆ)iEÛ  P%   øiEö  k%   ùiEU  Ë%   ‰)iEq  ç%   `,iE„  ù%   hiE  &   iiEÔ  J&   a,iEğ  e&   `×hE  |&   a×hEA  M(   ø"iEY  b(   iEz  ƒ(   ğÔhEë  ÷(   dE    )   ĞŒdE>   H)   ødE\   e)    cEy   )   	 cE•   )   ùdE±   º)   ÑŒdEË   Ô)   	dEî   ÷)    cE!  *   	 cE!  '*   àÓfE8!  A*   ødET!  ]*    cEo!  x*   	 cEŠ!  ’*   ùdE¥!  ­*   áÓfE¿!  Ç*   ñÔhEÙ!  â*   ‘iEX"  b+   ù"iEv"  +   $iE‰"  ’+   øiE´"  ½+   `iEÒ"  Û+   aiEı"  ,   ùiE#  !,   $iE:#  C,   $iEM#  U,   øiEg#  p,   `iEƒ#  Œ,   aiE­#  ¶,   ùiEÈ#  Ñ,   $iEé#  ò,   	ÿ}E$  -   Qù}E$  (-    pzE^$  g-   (×hE$  ˆ-   )×hEŸ$  ¨-    ƒzE¸$  À-    cEÔ$  Ü-   	 cEï$  ÷-   ¡ƒzE	%  .   ¡pzE$%  -.   øXzEs%  |.    cE¦%  ¯.   	 cEÂ%  Ê.   ±ŠE*&  3/   ±ŠEM&  V/   ùXzEl&  u/   ÄrE’&  ›/   ¾rEÍ&  Ö/   ™ªrEé&  ñ/   Ù[nE'  0   95nE'  '0   ø•dE\'  f0   HÄcEr'  z0   €ÄcE'  ˜0   ÂcE«'  ´0   ĞàgEÇ'  Ï0   ÑàgEé'  ò0   p÷gEş'  1   q÷gE'(  01   ÂcEB(  K1   `âgEV(  ^1   ÂcEq(  y1   ĞàgE‹(  ”1   ÑàgE¬(  µ1   p÷gE¿(  Ç1   q÷gEã(  ì1   ÂcEÿ(  2   aâgE)  "2   ÄcE4)  =2   IÄcEN)  W2   ù•dEb)  j2   Ñk“EÕ)  Ş2   1j“Eñ)  ú2   ø•dEq*  {3   HÄcEˆ*  3   €ÄcE¥*  ®3   ÂcEÁ*  É3   ĞàgEÛ*  ä3   ÑàgEü*  4   p÷gE+  4   q÷gE7+  @4   ÂcER+  Z4   `âgEe+  n4   ÂcE€+  ˆ4   ĞàgEš+  ¢4   ÑàgEº+  Ã4   p÷gEÍ+  Õ4   q÷gEğ+  ù4   ÂcE,  5   aâgE%,  .5   ÄcE@,  H5   IÄcEZ,  b5   ù•dEm,  u5   ˆ4gE-  6   XgE3-  <6    cEO-  X6   	 cEk-  t6   YgE…-  6   ‰4gE£-  ¬6   ø•dE.  !7   HÄcE-.  57   €ÄcES.  ]7   ÂcEq.  y7   ĞàgE‹.  ”7   ÑàgE¬.  µ7   p÷gEÁ.  É7   q÷gEæ.  ï7   ÂcE/  
+8   `âgE/  8   ÂcE//  78   ĞàgEI/  R8   ÑàgEi/  q8   p÷gE|/  „8   q÷gEŸ/  ¨8   ÂcEº/  Â8   aâgEÔ/  İ8   ÄcEî/  ÷8   IÄcE0  9   ù•dE0  #9   p<gEW0  `9   8gEv0  9   À×cE’0  š9   Á×cE³0  »9   	8gEĞ0  Ø9   €6gEè0  ğ9   ğ6gE1  :   ñ6gE01  9:   6gEP1  Y:   €8gEd1  l:   °?gE„1  :    cE¦1  ¯:   	 cEÁ1  Ê:   ±?gEİ1  æ:   8gEø1  ;   q<gE2  ;   p¿cE&2  .;   q¿cEM2  W;   hÃcE`2  i;   iÃcE2  ‡;   àj“E‘2  ™;    €hE¶2  ¿;   XhEÑ2  Ú;    cEì2  õ;   	 cE3  <   YhE)3  2<   !€hEC3  K<   °ÛcE³3  Á<   ˜öeEÜ3  ñ<   (öeE"4  0=   dE`4  l=   ĞŒdE•4  £=   ødE¸4  Á=    cEÖ4  ã=   	 cE÷4   >   ùdE5  >   ÑŒdE.5  6>   	dEP5  Y>    cEe5  m>   	 cE€5  ‰>   ÷eE•5  >   @÷eE³5  ¼>   A÷eE9  ˜B   	÷eE±9  »B   )öeEÎ9  ×B   ™öeEê9  óB   ˜øeE	:  C   èèeE0:  9C   dEP:  YC   ĞŒdEq:  zC   ødE:  –C    cE©:  ²C   	 cEÄ:  ÍC   ùdEà:  éC   ÑŒdEú:  D   	dE;  &D    cE1;  :D   	 cEL;  UD    óeE`;  hD   ëeE;  ŠD   ëeE<  E   ØîeE<  #E   8êeE8<  AE   9êeE_<  iE   ÙîeE|<  …E   óeE¢<  «E   èñeE¶<  ¾E   (ÚcEÔ<  İE   )ÚcEô<  ıE   ÀëeE=  F   (ÚcE&=  /F   )ÚcEE=  NF   (ÚcEZ=  bF   )ÚcEx=  €F   PŞcE‹=  ”F   QŞcE¦=  ¯F   øëeEº=  ÃF   0ìeEØ=  áF   1ìeE+>  5G   hìeE@>  IG   iìeEf>  oG    ìeEy>  G   ¡ìeE>  ¦G   ùëeEº>  ÂG   ÁëeEÕ>  ŞG   éñeEñ>  ùG   éèeE?  H   ™øeE&?  /H   ñeE:?  BH   °ñeEU?  ^H   (ÚcEs?  {H   )ÚcE…?  H   ÀëeE˜?   H   (ÚcE¶?  ¿H   )ÚcEÕ?  ŞH   (ÚcEé?  ñH   )ÚcE@  I   PŞcE@  #I   QŞcE5@  >I   øëeEI@  RI   0ìeEt@  }I   1ìeE²@  »I   hìeEÆ@  ÏI   iìeEê@  óI    ìeEı@  J   ¡ìeEA  (J   ùëeEBA  KJ   ÁëeE^A  gJ   ±ñeEyA  ‚J   (ÚcE’A  ›J   )ÚcE¤A  ¬J   è¯vE·A  ÀJ   hEİA  æJ    cEûA  K   	 cEB  K   ‘hE8B  AK   é¯vESB  \K   øíeEfB  nK    êeEƒB  ŒK   êeED  'M   ùíeE@D  IM   íeEUD  ^M   pİcEtD  }M   qİcE•D  ŸM   p³vE©D  ²M   XhEÆD  ÏM   (ÚcEâD  ëM   )ÚcEôD  üM   `ÓcE
+E  N   0ÊeE(E  1N   1ÊeEKE  TN   aÓcEfE  pN   YhE‰E  ’N   q³vE¥E  ®N   íeEF  O   0¼vE*F  2O   È–hEGF  PO   ˜ÊcEpF  yO    cEF  –O   	 cE¨F  ±O   ™ÊcEÄF  ÍO   É–hEßF  èO   1¼vEûF  P   	ñeEG  P   ±ÛcE1G  :P   °ÛcE´G  ¾P   ˜öeEÔG  İP   (öeEöG  ÿP   dEH  Q   ĞŒdE7H  @Q   ødESH  \Q    cEoH  xQ   	 cEŠH  “Q   ùdE¥H  ®Q   ÑŒdEÀH  ÉQ   	dEãH  ìQ    cE÷H   R   	 cEI  R   ÷eE'I  /R   @÷eEEI  NR   A÷eEïI  úR   	÷eEJ  S   )öeE+J  4S   ™öeEFJ  OS   ˜øeEZJ  bS   èèeE{J  „S   dEšJ  £S   ĞŒdE»J  ÄS   ødE×J  àS    cEóJ  üS   	 cEK  T   ùdE2K  >T   ÑŒdEZK  fT   	dEK  T    cE°K  ½T   	 cEİK  ëT    óeEüK  U   ëeEL  (U   ëeEWL  aU   ØîeEmL  vU   8êeEŒL  •U   9êeE±L  ºU   ÙîeEÓL  áU   óeEM  V   èñeEM  V   (ÚcE4M  =V   )ÚcETM  ]V   ÀëeEgM  oV   (ÚcE–M  ŸV   )ÚcE¶M  ¿V   (ÚcEËM  ÔV   )ÚcEéM  òV   PŞcEıM  W   QŞcEN  !W   øëeE,N  5W   0ìeEJN  SW   1ìeEN  šW   hìeE¥N  ®W   iìeEÊN  ÓW    ìeEİN  æW   ¡ìeE O  	X   ùëeEO  %X   ÁëeE8O  AX   éñeESO  \X   éèeEnO  wX   ™øeE‰O  ’X   ñeEœO  ¤X   °ñeE·O  ÀX   (ÚcEÕO  ŞX   )ÚcEçO  ïX   ÀëeEúO  Y   (ÚcEP  !Y   )ÚcE7P  @Y   (ÚcEKP  TY   )ÚcEiP  rY   PŞcE}P  …Y   QŞcE˜P   Y   øëeE°P  ¼Y   0ìeEğP  ûY   1ìeE9Q  GZ   hìeEYQ  cZ   iìeEQ  ˜Z    ìeE£Q  ¬Z   ¡ìeEÓQ  ãZ   ùëeER  [   ÁëeE-R  8[   ±ñeEWR  d[   (ÚcEzR  ƒ[   )ÚcER  –[   è¯vE¢R  «[   hEÁR  Ë[    cEáR  ê[   	 cEşR  \   ‘hE)S  2\   é¯vEES  N\   øíeEXS  a\    êeEwS  €\   êeEU  ^   ùíeE@U  O^   àìeEU  ‰^    òeE¥U  ®^   XòeEÃU  Ì^   éeEáU  ê^   ‘éeEV  _   YòeE!V  +_   !òeE>V  G_   pİcERV  Z_   ˜ÊcE€V  ‰_    cEŸV  ¨_   	 cE»V  Ä_   ™ÊcEÙV  â_   qİcE÷V  `   p³vEW  `   XhE+W  4`   (ÚcEJW  S`   )ÚcE]W  e`   `ÓcEuW  }`   0ÊeE”W  `   1ÊeE·W  À`   aÓcEÒW  Û`   YhEîW  ÷`   q³vE
+X  a    éeEX  &a   (ÚcE9X  Ba   )ÚcEKX  Ta   ˜ÓcE^X  ga   ™ÓcEpX  ya   °±vE†X  a   èhE¢X  «a   éhEÅX  Îa   ±±vEáX  êa   (ÚcEõX  ıa   )ÚcEY  b   ˜ÓcEY  !b   ™ÓcE*Y  2b   °±vENY  Wb   èhElY  ub   éhEY  ˜b   ±±vE«Y  ´b   (ÚcE¿Y  Çb   )ÚcEĞY  Ùb   ˜ÓcEâY  ëb   ™ÓcEóY  üb   °±vEZ  c   èhE#Z  ,c   éhEDZ  Mc   ±±vE`Z  ic   (ÚcEsZ  |c   )ÚcE…Z  c   ˜ÓcE—Z  Ÿc   ™ÓcE¨Z  °c   °±vE»Z  Äc   èhE×Z  àc   éhEøZ  d   ±±vE[  d   (ÚcE([  0d   )ÚcE9[  Ad   ˜ÓcEK[  Sd   ™ÓcE\[  fd   °±vEw[  ƒd   èhE£[  °d   éhEÚ[  èd   ±±vE	\  e   (ÚcE+\  :e   )ÚcEH\  Xe   ˜ÓcEi\  we   ™ÓcE†\  ”e   °±vE©\  ·e   èhEİ\  ìe   éhE$]  Bf   ±±vEf]  uf   (ÚcE‰]  ˜f   )ÚcE§]  ¶f   ˜ÓcEÆ]  Óf   ™ÓcEà]  íf   °±vEù]  g   èhE^  3g   éhE[^  hg   ±±vE‡^  “g   (ÚcE£^  °g   )ÚcE¼^  Èg   !éeEñ^  şg   PíeE_  h   ˆíeE>_  Mh   éeEp_  €h   ‘éeE®_  ¼h   ‰íeEß_  ìh   QíeE`  
+i   áìeE`  &i   øíeE1`  :i    êeEP`  Yi   êeE,a  8j   ùíeERa  \j   íeEha  pj   pİcE‰a  “j   ˜ÊcE»a  Åj    cEÚa  ãj   	 cEöa  ÿj   ™ÊcEb  k   qİcE0b  8k   p³vEDb  Mk   XhEab  jk   (ÚcEb  ˆk   )ÚcE‘b  ™k   `ÓcE¨b  °k   0ÊeEÆb  Ïk   1ÊeEëb  ôk   aÓcEc  l   YhE"c  +l   q³vE?c  Gl   íeEZc  bl   0¼vEmc  ul   È–hEŠc  “l   ˜ÊcE´c  ½l    cEÑc  Úl   	 cEìc  õl   ™ÊcEd  m   É–hE$d  ,m   1¼vE?d  Hm   	ñeEZd  cm   ±ÛcEud  ~m   ø•dE¦d  °m   HÄcE¾d  Çm   €ÄcEÜd  åm   ÂcEe  n   ĞàgE$e  ,n   ÑàgEGe  Pn   p÷gE\e  en   q÷gE†e  n   ÂcE¢e  «n   `âgE·e  ¿n   ÂcEÒe  Ûn   ĞàgEíe  õn   ÑàgEf  o   p÷gE!f  *o   q÷gEFf  Oo   ÂcEbf  jo   aâgE}f  †o   ÄcE˜f  ¡o   IÄcE³f  »o   ù•dEÈf  Ğo   ø•dEmg  wp   HÄcEƒg  Œp   €ÄcE¢g  «p   ÂcE¾g  Çp   ĞàgEÙg  âp   ÑàgEüg  q   p÷gEh  q   q÷gE7h  @q   ÂcESh  [q   `âgEgh  pq   ÂcE‚h  ‹q   ĞàgEh  ¦q   ÑàgE¾h  Çq   p÷gEÑh  çq   q÷gEi  r   ÂcE i  )r   aâgE;i  Dr   ÄcEWi  `r   IÄcEqi  zr   ù•dE†i  r   °÷eEÖi  àr    €hEüi  s   XhEj  "s    cE5j  >s   	 cEQj  Zs   YhEuj  ~s   !€hEj  ™s   àƒhEÜj  æs   XhEûj  t   (ÚcEk   t   )ÚcE*k  2t   `ÓcE@k  It   0ÊeE^k  ft   1ÊeEk  ˆt   aÓcE›k  ¤t   YhE·k  Àt   áƒhEÓk  Ût    ØcEøk  u   ¡ØcEl  'u   8İcE3l  ;u   9İcERl  [u   àƒhEel  nu   XhEl  Šu   (ÚcEl  ¦u   )ÚcE¯l  ·u   `ÓcEm  v   0ÊeE2m  ;v   1ÊeEUm  ]v   aÓcEpm  yv   YhEŒm  •v   áƒhE§m  ¯v   àƒhE»m  Ãv   XhEÖm  ßv   (ÚcEñm  úv   )ÚcEn  w   `ÓcEn  !w   0ÊeE5n  >w   1ÊeEVn  ^w   aÓcEpn  yw   YhEŒn  •w   áƒhE§n  °w    ŒhEºn  Ãw   È–hEÖn  ßw   ˜ÊcEşn  x    cEo  $x   	 cE7o  @x   ™ÊcESo  \x   É–hEoo  xx   ¡ŒhEŠo  “x   ±÷eE¦o  ®x    ÜcEºo  Âx   XÜcEÕo  Şx   0çgEño  ùx   (ÚcEp  "y   )ÚcE-p  5y   ˜ÓcE?p  Hy   ™ÓcEQp  Zy   1çgEop  xy   ˜öeE…p  y   (öeE¶p  ¿y   dEÙp  ây   ĞŒdEûp  z   ødEq   z    cE3q  <z   	 cEOq  Xz   ùdEjq  sz   ÑŒdE…q  z   	dE©q  ²z    cE¾q  Çz   	 cEÙq  âz   ÷eEîq  öz   @÷eEr  {   A÷eEZs  d|   	÷eE{s  …|   )öeE—s   |   ™öeE²s  »|   @ùeEÆs  Ï|   PŞcEãs  ì|   QŞcEÿs  }    çgEt  }   0çgE.t  7}   (ÚcEJt  S}   )ÚcE\t  e}   ˜ÓcEot  w}   ™ÓcE€t  ²~   1çgEÑu  Û~   ÙcEçu  ï~   ÙcEùu     ÈgEv     HõfE5v  =   ùfERv  Z    cEov  x   	 cE‹v  ”   ùfE¦v  ¯   IõfEÁv  Ê   ÉgEŞv  ç   èèeEıv  €   dE+w  4€   ĞŒdENw  W€   ødEjw  s€    cEˆw  “€   	 cE¦w  ®€   ùdEÁw  Ê€   ÑŒdEÜw  å€   	dEx  
+    cEx      	 cE2x  ;    óeEFx  N   ëeEjx  ƒ   ëeEÄx  Î   ØîeEÜx  ä   8êeEúx  ‚   9êeE y  )‚   ÙîeE=y  F‚   óeEey  n‚   èñeExy  ‚   (ÚcE˜y  ¡‚   )ÚcE·y  À‚   ÀëeEÊy  Ó‚   (ÚcEéy  ò‚   )ÚcEz  ƒ   (ÚcEz  $ƒ   )ÚcE:z  Bƒ   PŞcEMz  Vƒ   QŞcEiz  qƒ   øëeE}z  …ƒ   0ìeEšz  £ƒ   1ìeEêz  óƒ   hìeEşz  „   iìeE${  -„    ìeE7{  @„   ¡ìeEZ{  c„   ùëeEw{  €„   ÁëeE”{  œ„   éñeE¯{  ¸„   éèeEÊ{  Ó„   € gEİ{  å„    gEü{  …   øíeE|  …    êeE.|  7…   êeE~|  ˆ…   ùíeE|  ¦…   hçgE±|  ¹…   (ÚcEÍ|  Ö…   )ÚcEß|  ç…   8İcEò|  û…   9İcE}  †   gE&}  /†   0ÊeEM}  V†   1ÊeEp}  y†   ‘gE“}  œ†   € gE§}  ¯†    gEÆ}  Ï†   ğ gEà}  è†   0ÊeEı}  ‡   1ÊeE!~  *‡   ñ gE=~  F‡   içgEY~  b‡   ¡çgEu~  }‡   AùeE~  ™‡   YÜcE¬~  ´‡   !ÜcEÆ~  Ï‡   ÜcEß~  è‡   ÈÜcEû~  ˆ   ĞÚcE   ˆ   ÑÚcEE  Nˆ   ÉÜcE`  iˆ   ‘ÜcE{  „ˆ   ÜcE  ˜ˆ   ÈÜcE«  Áˆ   ĞÚcEÖ  ßˆ   ÑÚcE€  ‰   ÉÜcE€  '‰   ‘ÜcE9€  L‰   °ÛcEX€  `‰   ˜öeEt€  }‰   (öeE–€  Ÿ‰   dE¶€  ¿‰   ĞŒdEØ€  á‰   ødEô€  ı‰    cE  Š   	 cE,  4Š   ùdEG  PŠ   ÑŒdEb  kŠ   	dE…  Š    cEš  ¢Š   	 cEµ  ¾Š   ÷eEÉ  ÒŠ   @÷eEè  ñŠ   A÷eE‡‚  ’‹   	÷eE¨‚  ±‹   )öeEÃ‚  Ì‹   ™öeEß‚  ç‹   ˜øeEò‚  û‹   èèeEƒ  Œ   dE3ƒ  <Œ   ĞŒdETƒ  ]Œ   ødEpƒ  xŒ    cE‹ƒ  ”Œ   	 cE¦ƒ  ¯Œ   ùdEÂƒ  ËŒ   ÑŒdEİƒ  æŒ   	dEşƒ      cE„     	 cE9„  B    óeEM„  V   ëeEm„  v   ëeE „  ©   ØîeEµ„  ¾   8êeEÔ„  Ü   9êeEø„     ÙîeE…     óeE;…  D   èñeEN…  W   (ÚcEl…  u   )ÚcEŒ…  •   ÀëeEŸ…  §   (ÚcE½…  Æ   )ÚcEÜ…  å   (ÚcEğ…  ù   )ÚcE†     PŞcE#†  +   QŞcE>†  G   øëeER†  [   0ìeEp†  y   1ìeE¼†  É   hìeEÚ†  è   iìeE‡      ìeE ‡  )   ¡ìeED‡  M   ùëeEb‡  j   ÁëeE~‡  ‡   éñeEš‡  £   éèeE¶‡  ¾   ™øeEÑ‡  Ú   ñeEå‡  í   °ñeEˆ  
+‘   (ÚcE-ˆ  7‘   )ÚcE@ˆ  H‘   ÀëeESˆ  [‘   (ÚcErˆ  {‘   )ÚcE“ˆ  ›‘   (ÚcE§ˆ  ¯‘   )ÚcEÆˆ  Ï‘   PŞcEÙˆ  â‘   QŞcEõˆ  ş‘   øëeE	‰  ’   0ìeE(‰  1’   1ìeEg‰  p’   hìeE{‰  „’   iìeE ‰  ©’    ìeE³‰  ¼’   ¡ìeE×‰  à’   ùëeEô‰  ı’   ÁëeEŠ  “   ±ñeE,Š  5“   (ÚcEEŠ  N“   )ÚcEWŠ  `“   è¯vEjŠ  s“   hEˆŠ  ‘“    cE¥Š  ®“   	 cEÁŠ  Ê“   ‘hEäŠ  í“   é¯vE ‹  ”   øíeE‹  ”    êeE0‹  9”   êeEv‹  €”   ùíeE–‹  Ÿ”   íeEª‹  ³”   pİcEÈ‹  Ñ”   qİcEé‹  ü”   p³vEŒ  •   XhE%Œ  .•   (ÚcEAŒ  J•   )ÚcESŒ  \•   `ÓcEhŒ  q•   0ÊeE†Œ  •   1ÊeE¨Œ  ±•   aÓcEÄŒ  Í•   YhEàŒ  é•   q³vEüŒ  –   íeE   –   0¼vE+  3–   È–hEG  P–   ˜ÊcEm  v–    cEŠ  “–   	 cE¦  ¯–   ™ÊcEÂ  Ë–   É–hEŞ  ç–   1¼vEú  —   	ñeE  —   ±ÛcE1  :—   °ÛcEE  N—   ˜öeEa  j—   (öeE‚  ‹—   dE¡  ª—   ĞŒdEÃ  Ì—   ødEß  è—    cEû  ˜   	 cE  ˜   ùdE2  ;˜   ÑŒdEM  [˜   	dEu  ~˜    cE‰  ’˜   	 cE¥  ®˜   ÷eEº  Â˜   @÷eEá  î˜   A÷eE~  ˆ™   	÷eE  §™   )öeE»  Ã™   ™öeEÖ  ß™   ˜øeEé  ò™   èèeE‘  š   dE*‘  3š   ĞŒdEK‘  Tš   ødEg‘  pš    cEƒ‘  Œš   	 cE‘  §š   ùdEº‘  Ãš   ÑŒdEÕ‘  Şš   	dEö‘  ÿš    cE
+’  ›   	 cE%’  .›    óeE9’  A›   ëeEX’  a›   ëeE‡’  ‘›   ØîeE’  ¥›   8êeEº’  Ã›   9êeEŞ’  ç›   ÙîeEû’  œ   óeE$“  1œ   èñeEB“  Oœ   (ÚcEf“  oœ   )ÚcE•“  œ   ÀëeE©“  ±œ   (ÚcE8”  E   )ÚcEh”  x   (ÚcEˆ”  ‘   )ÚcE«”  ´   PŞcE¿”  È   QŞcEÜ”  å   øëeEñ”  ù   0ìeE•     1ìeEU•  _   hìeEi•  r   iìeE•  ˜    ìeE¢•  ª   ¡ìeEÆ•  Ï   ùëeEã•  ì   ÁëeEÿ•  Ÿ   éñeE–  #Ÿ   éèeE5–  >Ÿ   ™øeEP–  YŸ   ñeEd–  lŸ   °ñeE€–  ‰Ÿ   (ÚcE–  ¦Ÿ   )ÚcE¯–  ·Ÿ   ÀëeEÂ–  ÊŸ   (ÚcEà–  éŸ   )ÚcEÿ–      (ÚcE—      )ÚcE1—  :    PŞcEE—  M    QŞcE`—  i    øëeEu—  }    0ìeE’—  ›    1ìeEß—  é    hìeEô—  ı    iìeE˜  "¡    ìeE-˜  5¡   ¡ìeEP˜  Z¡   ùëeEn˜  w¡   ÁëeE‹˜  ”¡   ±ñeE§˜  °¡   (ÚcEÁ˜  Ê¡   )ÚcEÓ˜  Ü¡   è¯vEæ˜  ï¡   hE™  ¢    cE!™  *¢   	 cE>™  G¢   ‘hEc™  l¢   é¯vE™  ˆ¢   øíeE’™  š¢    êeE°™  ¹¢   êeEš  £   ùíeE%š  .£   àìeE9š  A£    òeEUš  ^£   XòeEqš  z£   éeEš  –£   ‘éeE­š  ¶£   YòeEÊš  Ó£   !òeEæš  î£   pİcEùš  ¤   ˜ÊcE›  '¤    cE;›  D¤   	 cEV›  _¤   ™ÊcEr›  {¤   qİcE˜›  ¢¤   p³vE­›  ¶¤   XhEÊ›  Ó¤   (ÚcEæ›  ï¤   )ÚcEø›   ¥   `ÓcEœ  ¥   0ÊeE*œ  3¥   1ÊeEKœ  T¥   aÓcEfœ  o¥   YhE‚œ  ‹¥   q³vEœ  ¦¥    éeE°œ  ¸¥   (ÚcEÌœ  Õ¥   )ÚcEŞœ  æ¥   ˜ÓcEğœ  ù¥   ™ÓcE  
+¦   °±vE  ¦   èhE2  ;¦   éhEU  ]¦   ±±vEp  y¦   (ÚcE„  Œ¦   )ÚcE•  ¦   ˜ÓcE§  °¦   ™ÓcE¸  Á¦   °±vEÌ  Õ¦   èhEè  ñ¦   éhE
+  §   ±±vE%  .§   (ÚcE9  A§   )ÚcEJ  S§   ˜ÓcE\  e§   ™ÓcEm  v§   °±vE  ‰§   èhE  ¥§   éhE¾  Ç§   ±±vEÙ  â§   (ÚcEí  û§   )ÚcEŸ  ¨   ˜ÓcEŸ  ¨   ™ÓcE'Ÿ  0¨   °±vE;Ÿ  C¨   èhEWŸ  `¨   éhE€Ÿ  ‰¨   ±±vEŸ  ¦¨   (ÚcE±Ÿ  ¹¨   )ÚcEÂŸ  Ê¨   ˜ÓcEÔŸ  Ü¨   ™ÓcEåŸ  í¨   °±vEùŸ  ©   èhE   ©   éhE6   ?©   ±±vER   ^©   (ÚcEm   y©   )ÚcE…   ‘©   ˜ÓcE¡   ª©   ™ÓcE³   ¼©   °±vEÈ   Ğ©   èhEå   î©   éhE¡  ª   ±±vE#¡  ,ª   (ÚcE7¡  @ª   )ÚcEH¡  Qª   ˜ÓcE[¡  cª   ™ÓcEk¡  tª   °±vE¡  ˆª   èhE›¡  ¤ª   éhE¼¡  Åª   ±±vEØ¡  àª   (ÚcEë¡  ôª   )ÚcEı¡  «   ˜ÓcE¢  «   ™ÓcE¢  («   °±vE3¢  ;«   èhEN¢  W«   éhEo¢  x«   ±±vE‹¢  ”«   (ÚcE¢  §«   )ÚcE°¢  ¸«   !éeEË¢  Ô«   PíeEŞ¢  ç«   ˆíeEú¢  ¬   éeE£  ¬   ‘éeE5£  >¬   ‰íeES£  [¬   QíeEy£  ‚¬   áìeE–£  ¬   øíeE©£  ±¬    êeEÆ£  Ï¬   êeE¤  ­   ùíeE&¤  /­   íeE:¤  C­   pİcEW¤  `­   ˜ÊcE|¤  …­    cE™¤  ¢­   	 cE´¤  ½­   ™ÊcEĞ¤  Ù­   qİcEì¤  õ­   p³vEÿ¤  ®   XhE¥  $®   (ÚcE7¥  @®   )ÚcEH¥  Q®    hE]¥  e®   0ÊeEƒ¥  Œ®   1ÊeE¥¥  ®®   hEÁ¥  Ê®   `ÓcEÕ¥  İ®   0ÊeEñ¥  ú®   1ÊeE¦  ¯   aÓcE+¦  4¯   YhEG¦  P¯   q³vEc¦  k¯   íeE~¦  †¯   0¼vE¦  ™¯   È–hE­¦  ¶¯   PÎcEÑ¦  Û¯    cEî¦  ÷¯   	 cE	§  °   0ÊeE&§  .°   1ÊeEN§  X°   QÎcEj§  s°   É–hE†§  °   1¼vE¢§  «°   	ñeE½§  Æ°   ±ÛcE×§  à°   0enEî§  ÷°   §rE¨  ±    €hE/¨  8±   XhEK¨  T±    cEf¨  o±   	 cE¨  Š±   YhE¢¨  «±   !€hE¼¨  Å±   àƒhEÑ¨  Ù±   XhEì¨  õ±   (ÚcE©  ²   )ÚcE©  "²   `ÓcE/©  7²   0ÊeEK©  T²   1ÊeEk©  t²   aÓcE†©  ²   YhE¡©  ª²   áƒhE¼©  Å²   àƒhEÏ©  Ø²   XhEê©  ó²   (ÚcEª  ³   )ÚcEª  ³    hE+ª  4³   0ÊeEOª  X³   1ÊeEoª  x³   hE‹ª  ”³   `ÓcEª  §³   0ÊeE»ª  Ã³   1ÊeEÚª  ã³   aÓcEôª  ı³   YhE«  ´   áƒhE1«  ;´    ŒhEF«  N´   È–hEb«  k´   ˜ÊcE†«  ´    cE£«  «´   	 cE¾«  Ç´   ™ÊcEÙ«  â´   É–hEô«  ı´   ¡ŒhE¬  µ   œrE#¬  +µ   ÀtE@¬  Iµ   ÁtE`¬  iµ   ‘œrEz¬  ƒµ   àrE¬  –µ   ø×cE«¬  ´µ   hÏcEÈ¬  Ñµ   iÏcEè¬  ñµ   ù×cE­  ¶   È£eE­  &¶   ¬eE:­  C¶   ‘¬eEY­  b¶   8¤eEm­  u¶    cEˆ­  ‘¶   	 cE£­  ¬¶   ÙcE¶­  ¿¶   ÙcEÈ­  Ñ¶   ÙcEÚ­  ã¶   ÙcEë­  ô¶   h¦eEş­  ·   (ÚcE®  "·   )ÚcE+®  3·   ˜ÓcE>®  F·   ™ÓcEO®  W·   (ÚcEc®  l·   )ÚcEu®  }·   ˜ÓcE‡®  ·   ™ÓcE£®  ¬·    €hEÆ®  Ï·   XhEâ®  ë·    cEı®  ¸   	 cE ¯  )¸   YhEB¯  K¸   !€hE\¯  e¸   àƒhEn¯  w¸   XhEˆ¯  ‘¸   (ÚcE£¯  ¬¸   )ÚcE´¯  ¼¸    hEÇ¯  Ğ¸   0ÊeES°  \¹   1ÊeEu°  }¹   hE°  ™¹   `ÓcE£°  ¬¹   0ÊeEÀ°  È¹   1ÊeEŞ°  ç¹   aÓcEø°  º   YhE±  º   áƒhE-±  5º    ‚hE@±  Hº   èhEZ±  bº    hEv±  º   0ÊeEš±  ¢º   1ÊeE¹±  Âº   hEÔ±  Üº   éhEï±  øº   !‚hE	²  »   àƒhE²  $»   XhE6²  >»   (ÚcEP²  Y»   )ÚcEb²  j»   `ÓcEv²  ~»   0ÊeE’²  š»   1ÊeE°²  ¹»   aÓcEÊ²  Ò»   YhEå²  í»   áƒhE´  ½    ŒhE$´  ,½   È–hE?´  G½   ˜ÊcEc´  l½    cE´  ˆ½   	 cEš´  ¢½   ™ÊcEµ´  ½½   É–hEÏ´  Ø½   ¡ŒhEé´  ò½   i¦eEµ  ¾   ø¥eEµ  ¾   ¨İcE1µ  9¾   0ÊeEQµ  Z¾   1ÊeEqµ  z¾   ©İcE‹µ  ”¾   ù¥eEõµ  ş¾   9¤eE¶  ¿   É£eE+¶  3¿   árEE¶  M¿   ˜ªeEX¶  `¿   P¥eEt¶  }¿   È¿gE’¶  š¿   @JfE¯¶  ·¿   P>eEa·  kÀ   ˆdE·  ŠÀ   £cE·  ¦À    cE¸·  ÁÀ   	 cEÒ·  ÛÀ   æfEæ·  îÀ   æfE¸  Á   p¦cE¸   Á   ¥cE2¸  ;Á   ¥cEd¸  mÁ   q¦cE€¸  ‰Á   ‘£cEš¸  ¢Á   ‰dE³¸  ¼Á   Q>eEÎ¸  ÖÁ   AJfE¹  Â   Ê¿gE/¹  8Â   Q¥eEN¹  WÂ   ™ªeEi¹  qÂ   Ø¯eE}¹  …Â   §eE˜¹  ¡Â   (ËgE¶¹  ¿Â    UfEÓ¹  ÛÂ   ¡UfE*»  4Ä   )ËgEH»  QÄ   §eEc»  lÄ   Ù¯eE~»  ‡Ä   ¬eE‘»  šÄ   ‘¬eE±»  ¹Ä   ˆrEÄ»  ÍÄ   ømEã»  ëÄ   ùmEš¼  ¤Å   ‰rE¶¼  ¿Å   §rEÑ¼  ÚÅ   1enEì¼  õÅ   È€hE ½  )Æ   ÈhE=½  FÆ    cEY½  bÆ   	 cEt½  |Æ   (ÚcE†½  Æ   )ÚcE—½  ŸÆ   `ÓcE±½  ¹Æ   0ÊeEÎ½  ×Æ   1ÊeEï½  ÷Æ   aÓcE	¾  Ç   ÉhE#¾  +Ç   É€hEB¾  KÇ   «eEU¾  ]Ç   p­eEp¾  xÇ   (ÚcE‹¾  “Ç   )ÚcEœ¾  ¤Ç   ˜ÓcE·¾  ÀÇ   ™ÓcEÉ¾  ÑÇ   q­eEå¾  îÇ   	«eE ¿  	È   àƒhE¿  È   XhE-¿  6È   (ÚcEH¿  QÈ   )ÚcEY¿  aÈ    hEm¿  uÈ   0ÊeE‘¿  ™È   1ÊeE°¿  ¹È   hEÌ¿  ÕÈ   `ÓcEß¿  çÈ   0ÊeEû¿  É   1ÊeEÀ  #É   aÓcE4À  <É   YhEOÀ  WÉ   áƒhEiÀ  qÉ    ŒhE{À  ƒÉ   È–hE•À  É   ˜ÊcE¹À  ÂÉ    cEÕÀ  İÉ   	 cEïÀ  øÉ   ™ÊcE
+Á  Ê   É–hE$Á  -Ê   ¡ŒhE>Á  GÊ   ğhEQÁ  ZÊ   èhEmÁ  vÊ   éhE9Â  ¾Ë   ñhEeÂ  äË   şlE™Â  Ì   ˆşlE½Â  ;Ì   ˜ÓcEÜÂ  [Ì   ™ÓcEğÂ  nÌ    €hEÃ  ‰Ì   XhE(Ã  §Ì    cEFÃ  ÄÌ   	 cEbÃ  àÌ   YhE…Ã  Í   !€hE Ã  Í   àƒhE¶Ã  3Í   XhEÑÃ  OÍ   (ÚcEìÃ  jÍ   )ÚcEşÃ  |Í   `ÓcEÄ  “Í   0ÊeE3Ä  ±Í   1ÊeEWÄ  ÕÍ   aÓcEqÄ  ğÍ   YhEÄ  Î   áƒhE¨Ä  &Î   àƒhE¼Ä  9Î   XhEÖÄ  TÎ   (ÚcEñÄ  oÎ   )ÚcEÅ  €Î    hEÅ  ”Î   0ÊeE;Å  ¹Î   1ÊeE[Å  ÚÎ   hEwÅ  õÎ   `ÓcE‹Å  Ï   0ÊeE§Å  %Ï   1ÊeEÆÅ  DÏ   aÓcEáÅ  _Ï   YhEüÅ  zÏ   áƒhE Æ  Ï    ŒhE3Æ  °Ï   È–hENÆ  ÌÏ   ˜ÊcEsÆ  ñÏ    cEÆ  Ğ   	 cEªÆ  (Ğ   ™ÊcEÆÆ  DĞ   É–hEàÆ  ^Ğ   ¡ŒhEûÆ  yĞ    ÖcEÇ  ŒĞ   ĞÚcE+Ç  ©Ğ   ÑÚcEXÇ  !Ñ   ÖcEÔÇ  kÑ    €hEÈ  Ñ   XhE5È  ³Ñ    cEQÈ  ÏÑ   	 cElÈ  êÑ   YhEÈ  Ò   !€hE§È  %Ò   àƒhEºÈ  7Ò   XhEÔÈ  RÒ   (ÚcEïÈ  mÒ   )ÚcEÉ  ~Ò    hEÉ  ’Ò   0ÊeE8É  ¶Ò   1ÊeEXÉ  ×Ò   hEtÉ  òÒ   `ÓcE‡É  Ó   0ÊeE£É  !Ó   1ÊeEÂÉ  @Ó   aÓcEÜÉ  ZÓ   YhEÊ  €Ó   áƒhEÊ  ›Ó   àƒhE0Ê  ®Ó   XhEKÊ  ÉÓ   (ÚcEfÊ  äÓ   )ÚcEwÊ  õÓ    hE‹Ê  	Ô   0ÊeE¯Ê  -Ô   1ÊeEÏÊ  MÔ   hEëÊ  iÔ   `ÓcEşÊ  {Ô   0ÊeEË  ˜Ô   1ÊeE9Ë  ·Ô   aÓcESË  ÑÔ   YhEoË  íÔ   áƒhE‰Ë  Õ    ŒhEœË  Õ   È–hE¶Ë  4Õ   ˜ÊcEÚË  XÕ    cEöË  tÕ   	 cEÌ  Õ   ™ÊcE,Ì  ªÕ   É–hEGÌ  ÅÕ   ¡ŒhEaÌ  àÕ   —dEuÌ  òÕ   ¸—dEÌ  Ö  
