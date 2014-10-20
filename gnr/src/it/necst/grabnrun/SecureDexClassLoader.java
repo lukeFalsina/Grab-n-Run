@@ -31,7 +31,8 @@ import javax.security.auth.x500.X500Principal;
 import android.content.ContextWrapper;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
-import android.os.Debug;
+//import android.os.Trace;
+//import android.os.Debug;
 import android.util.Log;
 import dalvik.system.DexClassLoader;
 
@@ -88,6 +89,9 @@ public class SecureDexClassLoader {
 	// passes all the checks..
 	private DexClassLoader mDexClassLoader;
 	
+	// The Certificate Factory instance
+	private CertificateFactory cf;
+	
 	private Map<String, String> packageNameToCertificateMap, packageNameToContainerPathMap;
 	
 	// Final name of the folder user to store certificates for the verification
@@ -113,6 +117,13 @@ public class SecureDexClassLoader {
 		mFileDownloader = new FileDownloader(parentContextWrapper);
 		
 		hasBeenWipedOut = false;
+		
+		// Initialize the certificate factory
+		try {
+			cf = CertificateFactory.getInstance("X.509");
+		} catch (CertificateException e) {
+			e.printStackTrace();
+		}
 		
 		// Map initialization
 		packageNameToCertificateMap = null;
@@ -313,7 +324,8 @@ public class SecureDexClassLoader {
 		String containerPath = packageNameToContainerPathMap.get(packageName);
 		if(containerPath == null) return null;
 		
-		Debug.startMethodTracing("Import Certificate");
+		//Trace.beginSection("Import Certificate");
+		Log.i("Profile","[Start]	Import Certificate: " + System.currentTimeMillis() + " ms.");
 		
 		// Instantiate a certificate object used to check 
 		// the signature of .apk or .jar container
@@ -331,9 +343,11 @@ public class SecureDexClassLoader {
 			// No matching certificate or an expired one was found 
 			// locally and so it's necessary to download the 
 			// certificate through an Https request.
-			Debug.startMethodTracing("Download Certificate");
+			//Trace.beginSection("Download Certificate");
+			Log.i("Profile","[Start]	Download Certificate: " + System.currentTimeMillis() + " ms.");
 			boolean isCertificateDownloadSuccessful = downloadCertificateRemotelyViaHttps(packageName);
-			Debug.stopMethodTracing(); // end of "Download Certificate" section
+			Log.i("Profile","[End]	Download Certificate: " + System.currentTimeMillis() + " ms.");
+			//Trace.endSection(); // end of "Download Certificate" section
 			
 			if (isCertificateDownloadSuccessful) {
 				
@@ -344,7 +358,8 @@ public class SecureDexClassLoader {
 			}
 		}
 		
-		Debug.stopMethodTracing(); // end of "Import Certificate" section
+		Log.i("Profile","[End]	Import Certificate: " + System.currentTimeMillis() + " ms.");
+		//Trace.endSection(); // end of "Import Certificate" section
 		
 		if (verifiedCertificate != null) {
 				
@@ -354,7 +369,8 @@ public class SecureDexClassLoader {
 			// Now it's time to check whether this certificate
 			// was used to sign the class to be loaded.
 			
-			Debug.startMethodTracing("Verify Signature");
+			//Trace.beginSection("Verify Signature");
+			Log.i("Profile","[Start]	Verify Signature: " + System.currentTimeMillis() + " ms.");
 			
 			// Retrieve the correct apk or jar file containing the class that we should load
 			// Check whether the selected resource is a jar or apk container
@@ -385,7 +401,7 @@ public class SecureDexClassLoader {
 								
 								// Recreate the certificate starting from this signature
 								inStream = new ByteArrayInputStream(sign.toByteArray());
-								CertificateFactory cf = CertificateFactory.getInstance("X.509");
+								//CertificateFactory cf = CertificateFactory.getInstance("X.509");
 								certFromSign = (X509Certificate) cf.generateCertificate(inStream);
 								
 								// Check that the reconstructed certificate is not expired..
@@ -451,7 +467,8 @@ public class SecureDexClassLoader {
 				
 			}
 			
-			Debug.stopMethodTracing(); // end of "Verify Signature" section
+			Log.i("Profile","[End]	Verify Signature: " + System.currentTimeMillis() + " ms.");
+			//Trace.endSection(); // end of "Verify Signature" section
 			
 			// Signature verification result..
 			if (signatureCheckIsSuccessful) {
@@ -591,7 +608,7 @@ public class SecureDexClassLoader {
 				// name, either no one or exactly one matching certificate file will
 				// be found.
 				inStream = new FileInputStream(certMatchingFiles[0]);
-			    CertificateFactory cf = CertificateFactory.getInstance("X.509");
+			    //CertificateFactory cf = CertificateFactory.getInstance("X.509");
 			    verifiedCertificate = (X509Certificate) cf.generateCertificate(inStream);
 					    
 			} catch (FileNotFoundException e) {

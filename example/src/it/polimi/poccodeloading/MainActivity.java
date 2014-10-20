@@ -36,7 +36,7 @@ import android.widget.AdapterView.OnItemClickListener;
 public class MainActivity extends Activity {
 	
 	// Variable used to activate profiling settings
-	private static final boolean PROFILING_ON = true;
+	private static final boolean PROFILING_ON = false;
 
 	// This array of strings contains the list of all the implemented
 	// techniques for external code loading that should be visualized.
