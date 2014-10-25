@@ -17,9 +17,11 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -133,37 +135,48 @@ public class SecureDexClassLoader {
 		
 		for (String currentPath : pathStrings) {
 			
-			String packageName = getPackageNameFromContainerPath(currentPath);
+			// In jar containers you may have classes from different package names, while in apk
+			// there is usually only one of those.
+			List<String> packageNameList = getPackageNamesFromContainerPath(currentPath);
 			
-			if (packageName != null) {
+			if (packageNameList != null && !packageNameList.isEmpty()) {
 				
-				// This is a valid entry so it must be added to packageNameToContainerPathMap
-				String previousPath = packageNameToContainerPathMap.put(packageName, currentPath);
-				
-				// If previous path is not null, it means that one of the previous analyzed
-				// path had the same package name (this is a possibility for JAR containers..)
-				if (previousPath != null) {
+				for (String packageName : packageNameList) {
 					
-					// TODO Up to now only a warning message is registered in the logs
-					Log.w(	TAG_SECURE_DEX_CLASS_LOADER, "Package Name " + packageName + " is not unique!\n Previous path: " 
-							+ previousPath + ";\n New path: " + currentPath + ";" );
+					// This is a valid entry so it must be added to packageNameToContainerPathMap
+					String previousPath = packageNameToContainerPathMap.put(packageName, currentPath);
+					
+					// If previous path is not null, it means that one of the previous analyzed
+					// path had the same package name (this is a possibility for JAR containers..)
+					if (previousPath != null) {
+						
+						// TODO Up to now only a warning message is registered in the logs and the most
+						// fresh of the two references is kept
+						Log.w(	TAG_SECURE_DEX_CLASS_LOADER, "Package Name " + packageName + " is not unique!\n Previous path: " 
+								+ previousPath + ";\n New path: " + currentPath + ";" );
+					}
 				}
 			}
 		}
 	}
 
-	private String getPackageNameFromContainerPath(String containerPath) {
+	private List<String> getPackageNamesFromContainerPath(String containerPath) {
 		
 		// Check whether the selected resource is a container (jar or apk)
 		int extensionIndex = containerPath.lastIndexOf(".");
 		String extension = containerPath.substring(extensionIndex);
 		
+		List<String> packageNameList = new ArrayList<String>();
+		
 		if (extension.equals(".apk")) {
 			
 			// APK container case:
 			// Use PackageManager to retrieve the package name of the APK container
-			if (mPackageManager.getPackageArchiveInfo(containerPath, 0) != null)
-				return mPackageManager.getPackageArchiveInfo(containerPath, 0).packageName;
+			if (mPackageManager.getPackageArchiveInfo(containerPath, 0) != null) {
+
+				packageNameList.add(mPackageManager.getPackageArchiveInfo(containerPath, 0).packageName);
+				return packageNameList;
+			}
 			
 			return null;
 		}
@@ -175,9 +188,14 @@ public class SecureDexClassLoader {
 			// 2. Scan all the entries till one .java is found
 			// 3. Retrieve package name from this entry class name
 			
-			String packageName = null;
+			// String packageName = null;
 			boolean isAValidJar = false;
 			JarFile containerJar = null;
+			
+			// Since in a jar there may be different package names for each class
+			// but at the same time I want to keep just one record for each package
+			// name, a set data structure fits well while processing.
+			Set<String> packageNameSet = new HashSet<String>();
 			
 			try {
 				
@@ -201,8 +219,11 @@ public class SecureDexClassLoader {
 							fullClassName = fullClassName.substring(1, fullClassName.length());
 						
 						int lastIndexPackageName = fullClassName.lastIndexOf(File.separator);
-						if (lastIndexPackageName != -1)
-							packageName = fullClassName.substring(0, lastIndexPackageName).replaceAll(File.separator, ".");
+						if (lastIndexPackageName != -1) {
+							
+							String packageName = fullClassName.substring(0, lastIndexPackageName).replaceAll(File.separator, ".");
+							packageNameSet.add(packageName);
+						}
 						
 					} else {
 						
@@ -224,8 +245,17 @@ public class SecureDexClassLoader {
 					}
 			}
 			
-			if (isAValidJar)
-				return packageName;
+			if (isAValidJar) {
+
+				// Populate the final list with the package names
+				// contained in the set.
+				Iterator<String> packageNameSetIterator = packageNameSet.iterator();
+				
+				while (packageNameSetIterator.hasNext())					
+					packageNameList.add(packageNameSetIterator.next());
+				
+				return packageNameList;
+			}
 			
 			// If classes.dex is not present in the jar, the jar container is not valid
 			return null;			
