@@ -6,8 +6,11 @@ import java.net.URL;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Pattern;
+import android.annotation.SuppressLint;
 //import android.content.Context;
 import android.content.ContextWrapper;
+//import android.os.Trace;
+//import android.os.Debug;
 //import android.net.ConnectivityManager;
 //import android.net.NetworkInfo;
 import android.util.Log;
@@ -95,6 +98,7 @@ public class SecureLoaderFactory {
 	 *  the parent class loader
 	 * @return secureDexClassLoader
 	 */
+	@SuppressLint("NewApi")
 	public SecureDexClassLoader createDexClassLoader(	String dexPath, 
 														String libraryPath, 
 														Map<String, String> packageNameToCertificateMap, 
@@ -134,8 +138,11 @@ public class SecureLoaderFactory {
 			if (path.startsWith("http//") || path.startsWith("https//")) {
 				
 				// Used to fix previous workaround on remote URL..
-				String fixedPath = path.replaceAll("http//", "http://");
-				fixedPath = fixedPath.replaceAll("https//", "https://");
+				//String fixedPath = path.replaceAll("http//", "http://");
+				//fixedPath = fixedPath.replaceAll("https//", "https://");
+				String fixedPath;
+				if (path.startsWith("http//")) fixedPath = "http:" + path.substring(4);
+				else fixedPath = "https:" + path.substring(5);
 				
 				// A new resource should be retrieved from the web..
 				// Check whether the final directory for downloaded resources
@@ -148,7 +155,11 @@ public class SecureLoaderFactory {
 					isResourceFolderInitialized = true;
 				}
 				
+				//Trace.beginSection("Download Container");
+				Log.i("Profile","[Start]	Download Container: " + System.currentTimeMillis() + " ms.");
 				String downloadedContainerPath = downloadContainerIntoFolder(fixedPath, resDownloadDir);
+				Log.i("Profile","[End]	Download Container: " + System.currentTimeMillis() + " ms.");
+				//Trace.endSection(); // end of "Download Container" section
 				
 				if (downloadedContainerPath != null) {
 					
@@ -166,8 +177,9 @@ public class SecureLoaderFactory {
 			}
 		}
 		
-		// Finally remove the last unnecessary separator from finalDexPath
-		finalDexPath.deleteCharAt(finalDexPath.lastIndexOf(File.pathSeparator));
+		// Finally remove the last unnecessary separator from finalDexPath (if finalDexPath has at least one path inside)
+		if (finalDexPath.lastIndexOf(File.pathSeparator) != -1)
+			finalDexPath.deleteCharAt(finalDexPath.lastIndexOf(File.pathSeparator));
 		
 		// Now the location of the final loaded classes is created.
 		// Since it is assumed that the developer do not care where

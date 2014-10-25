@@ -13,6 +13,7 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
@@ -33,6 +34,9 @@ import android.widget.AdapterView.OnItemClickListener;
  *
  */
 public class MainActivity extends Activity {
+	
+	// Variable used to activate profiling settings
+	private static final boolean PROFILING_ON = false;
 
 	// This array of strings contains the list of all the implemented
 	// techniques for external code loading that should be visualized.
@@ -109,7 +113,10 @@ public class MainActivity extends Activity {
 					case SECURE_DEX_CLASS_LOADER_APK:
 						effectiveSecureDexClassLoader = true;
 						Log.d(TAG_MAIN, "SecureDexClassLoader from apk case should start.");
-						setUpSecureDexClassLoader();
+						if (PROFILING_ON) 
+							setUpProfileSecureDexClassLoader();
+						else
+							setUpSecureDexClassLoader();
 						effectiveSecureDexClassLoader = false;
 						break;
 
@@ -140,6 +147,95 @@ public class MainActivity extends Activity {
 		};
 
 		listView.setOnItemClickListener(mMessageClickedHandler);
+		
+	}
+
+	protected void setUpProfileSecureDexClassLoader() {
+		
+		// First check: this operation can only start after 
+		// that the proper button has just been pressed..
+		if (!effectiveSecureDexClassLoader) return;
+						
+		Log.d(TAG_MAIN, "Setting up SecureDexClassLoader for profiling..");
+		// For the profiling test with SecureDexClassLoader I consider the worst performance scenario and so:
+		// 1. The container is in a remote location and must be downloaded first
+		// 2. The certificate, as well it's not cached but found at a remote URL and then imported
+		// 3. The container in the end is correct so the full signature verification step is performed
+		// 4. After the loading operation, the method to wipe out both the certificate and the container is invoked
+		
+		Debug.startMethodTracing("SecureDexClassLoader");
+		
+		Debug.startMethodTracing("SecureDexFactory Preparation");
+		
+		// Create an instance of SecureLoaderFactory..
+		// It needs as a parameter a Context object (an Activity is an extension of such a class..)
+		SecureLoaderFactory mSecureLoaderFactory = new SecureLoaderFactory(this);
+		
+		SecureDexClassLoader mSecureDexClassLoader;
+		
+		// Creating the apk paths list (only one path to a remote container in this case)
+		String listAPKPaths = "https://dl.dropboxusercontent.com/u/28681922/NasaDailyImageSigned.apk";
+		
+		// Filling the associative map to link package name and certificate..
+		Map<String, String> packageNamesToCertMap = new HashMap<String, String>();
+		// 1st Entry: valid REMOTE certificate location
+		packageNamesToCertMap.put("headfirstlab.nasadailyimage", "https://dl.dropboxusercontent.com/u/28681922/test_cert.pem");
+		
+		// Instantiation of SecureDexClassLoader
+		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	listAPKPaths, 
+																			null, 
+																			packageNamesToCertMap, 
+																			ClassLoader.getSystemClassLoader().getParent());
+		
+		Debug.stopMethodTracing(); // end of "SecureDexFactory Preparation" section
+		
+		try {
+			
+			// Attempt to load dynamically the target class.. 
+			Debug.startMethodTracing("Load Operation");
+			Class<?> loadedClass = mSecureDexClassLoader.loadClass(classNameInAPK);
+			Debug.stopMethodTracing(); // end of "Load Operation" section
+			
+			// Immediately wipe out all the cached data (certificate, container)
+			Debug.startMethodTracing("Wipe Cached Data");
+			mSecureDexClassLoader.wipeOutPrivateAppCachedData(true, true);
+			Debug.stopMethodTracing(); // end of "Wipe Cached Data" section
+			
+			Debug.stopMethodTracing(); // end of "SecureDexClassLoader" section
+			
+			if (loadedClass != null) {
+				
+				final Activity NasaDailyActivity = (Activity) loadedClass.newInstance();
+				
+				Log.i(TAG_MAIN, "Found valid class: " + loadedClass.getSimpleName() + "; APK path: " + exampleSignedAPKPath.toString() + "; Success!");
+				
+				toastHandler.post(new Runnable() {
+
+					@Override
+					public void run() {
+						Toast.makeText(MainActivity.this,
+								"SecureDexClassLoader was successful! Found activity: " + NasaDailyActivity.getClass().getName(),
+								Toast.LENGTH_SHORT).show();
+					}
+					
+				});
+				
+			} else {
+				
+				Log.w(TAG_MAIN, "This time the chosen class should pass the security checks!");
+			}
+			
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			Log.w(TAG_MAIN, "Class should be present in the provided path!!");
+		} catch (InstantiationException e) {
+			Log.w(TAG_MAIN, "Error while instanciating the loaded class!!");
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			Log.w(TAG_MAIN, "Error while instanciating the loaded class!!");
+			e.printStackTrace();
+		}
+		
 		
 	}
 
@@ -329,6 +425,8 @@ public class MainActivity extends Activity {
 		
 		Log.d(TAG_MAIN, "Setting up DexClassLoader..");
 		
+		if (PROFILING_ON) Debug.startMethodTracing("DexClassLoader");
+		
 		File dexOutputDir = getDir("dex", MODE_PRIVATE);
 		DexClassLoader mDexClassLoader = new DexClassLoader(	exampleTestAPKPath, 
 																dexOutputDir.getAbsolutePath(), 
@@ -339,6 +437,9 @@ public class MainActivity extends Activity {
 			
 			// Load NasaDailyImage Main Activity..
 			Class<?> loadedClass = mDexClassLoader.loadClass(classNameInAPK);
+			
+			if (PROFILING_ON) Debug.stopMethodTracing(); // end of "DexClassLoader" trace
+			
 			final Activity NasaDailyActivity = (Activity) loadedClass.newInstance();
 			
 			// Note that in this case loading class operation was performed even if the APK which contains
