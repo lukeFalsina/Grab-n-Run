@@ -6,11 +6,8 @@ import java.net.URL;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Pattern;
-import android.annotation.SuppressLint;
 //import android.content.Context;
 import android.content.ContextWrapper;
-//import android.os.Trace;
-//import android.os.Debug;
 //import android.net.ConnectivityManager;
 //import android.net.NetworkInfo;
 import android.util.Log;
@@ -98,7 +95,6 @@ public class SecureLoaderFactory {
 	 *  the parent class loader
 	 * @return secureDexClassLoader
 	 */
-	@SuppressLint("NewApi")
 	public SecureDexClassLoader createDexClassLoader(	String dexPath, 
 														String libraryPath, 
 														Map<String, String> packageNameToCertificateMap, 
@@ -156,9 +152,9 @@ public class SecureLoaderFactory {
 				}
 				
 				//Trace.beginSection("Download Container");
-				Log.i("Profile","[Start]	Download Container: " + System.currentTimeMillis() + " ms.");
+				// Log.i("Profile","[Start]	Download Container: " + System.currentTimeMillis() + " ms.");
 				String downloadedContainerPath = downloadContainerIntoFolder(fixedPath, resDownloadDir);
-				Log.i("Profile","[End]	Download Container: " + System.currentTimeMillis() + " ms.");
+				// Log.i("Profile","[End]	Download Container: " + System.currentTimeMillis() + " ms.");
 				//Trace.endSection(); // end of "Download Container" section
 				
 				if (downloadedContainerPath != null) {

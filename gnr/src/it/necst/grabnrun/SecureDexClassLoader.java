@@ -31,8 +31,6 @@ import javax.security.auth.x500.X500Principal;
 import android.content.ContextWrapper;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
-//import android.os.Trace;
-//import android.os.Debug;
 import android.util.Log;
 import dalvik.system.DexClassLoader;
 
@@ -325,7 +323,7 @@ public class SecureDexClassLoader {
 		if(containerPath == null) return null;
 		
 		//Trace.beginSection("Import Certificate");
-		Log.i("Profile","[Start]	Import Certificate: " + System.currentTimeMillis() + " ms.");
+		// Log.i("Profile","[Start]	Import Certificate: " + System.currentTimeMillis() + " ms.");
 		
 		// Instantiate a certificate object used to check 
 		// the signature of .apk or .jar container
@@ -344,9 +342,9 @@ public class SecureDexClassLoader {
 			// locally and so it's necessary to download the 
 			// certificate through an Https request.
 			//Trace.beginSection("Download Certificate");
-			Log.i("Profile","[Start]	Download Certificate: " + System.currentTimeMillis() + " ms.");
+			// Log.i("Profile","[Start]	Download Certificate: " + System.currentTimeMillis() + " ms.");
 			boolean isCertificateDownloadSuccessful = downloadCertificateRemotelyViaHttps(packageName);
-			Log.i("Profile","[End]	Download Certificate: " + System.currentTimeMillis() + " ms.");
+			// Log.i("Profile","[End]	Download Certificate: " + System.currentTimeMillis() + " ms.");
 			//Trace.endSection(); // end of "Download Certificate" section
 			
 			if (isCertificateDownloadSuccessful) {
@@ -358,7 +356,7 @@ public class SecureDexClassLoader {
 			}
 		}
 		
-		Log.i("Profile","[End]	Import Certificate: " + System.currentTimeMillis() + " ms.");
+		// Log.i("Profile","[End]	Import Certificate: " + System.currentTimeMillis() + " ms.");
 		//Trace.endSection(); // end of "Import Certificate" section
 		
 		if (verifiedCertificate != null) {
@@ -370,7 +368,7 @@ public class SecureDexClassLoader {
 			// was used to sign the class to be loaded.
 			
 			//Trace.beginSection("Verify Signature");
-			Log.i("Profile","[Start]	Verify Signature: " + System.currentTimeMillis() + " ms.");
+			// Log.i("Profile","[Start]	Verify Signature: " + System.currentTimeMillis() + " ms.");
 			
 			// Retrieve the correct apk or jar file containing the class that we should load
 			// Check whether the selected resource is a jar or apk container
@@ -467,7 +465,7 @@ public class SecureDexClassLoader {
 				
 			}
 			
-			Log.i("Profile","[End]	Verify Signature: " + System.currentTimeMillis() + " ms.");
+			// Log.i("Profile","[End]	Verify Signature: " + System.currentTimeMillis() + " ms.");
 			//Trace.endSection(); // end of "Verify Signature" section
 			
 			// Signature verification result..
