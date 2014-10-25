@@ -19,6 +19,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -90,7 +91,7 @@ public class SecureDexClassLoader {
 	private DexClassLoader mDexClassLoader;
 	
 	// The Certificate Factory instance
-	private CertificateFactory cf;
+	private CertificateFactory certificateFactory;
 	
 	private Map<String, String> packageNameToCertificateMap, packageNameToContainerPathMap;
 	
@@ -101,15 +102,27 @@ public class SecureDexClassLoader {
 	// been performed.
 	private boolean hasBeenWipedOut;
 	
+	// Variable used to understand whether SecureDexClassLoader will immediately verify all
+	// the incoming containers or if it will just verify each one of those lazily when the
+	// loadClass() method will be invoked.
+	private boolean performLazyEvaluation;
+	
+	// TODO Should this collection be thread safe?
+	// Helper cache set used in lazy mode in order to check only once that the container
+	// associated to a package name is valid (This works fine since each used container is
+	// previously imported in an application-private folder).
+	private Set<String> lazyAlreadyVerifiedPackageNameSet;
+	
 	SecureDexClassLoader(	String dexPath, String optimizedDirectory,
 							String libraryPath, ClassLoader parent,
-							ContextWrapper parentContextWrapper) {
+							ContextWrapper parentContextWrapper,
+							boolean performLazyEvaluation) {
 		
 		// Initialization of the linked internal DexClassLoader
 		mDexClassLoader = new DexClassLoader(dexPath, optimizedDirectory, libraryPath, parent);
 		
 		certificateFolder = parentContextWrapper.getDir(CERTIFICATE_DIR, ContextWrapper.MODE_PRIVATE);
-		resDownloadFolder = parentContextWrapper.getDir(SecureLoaderFactory.RES_DOWNLOAD_DIR, ContextWrapper.MODE_PRIVATE);
+		resDownloadFolder = parentContextWrapper.getDir(SecureLoaderFactory.CONT_IMPORT_DIR, ContextWrapper.MODE_PRIVATE);
 		
 		//mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);
 		mPackageManager = parentContextWrapper.getPackageManager();
@@ -118,16 +131,20 @@ public class SecureDexClassLoader {
 		
 		hasBeenWipedOut = false;
 		
+		this.performLazyEvaluation = performLazyEvaluation;
+		
+		lazyAlreadyVerifiedPackageNameSet = new HashSet<String>();
+		
 		// Initialize the certificate factory
 		try {
-			cf = CertificateFactory.getInstance("X.509");
+			certificateFactory = CertificateFactory.getInstance("X.509");
 		} catch (CertificateException e) {
 			e.printStackTrace();
 		}
 		
 		// Map initialization
 		packageNameToCertificateMap = null;
-		packageNameToContainerPathMap = new HashMap<String, String>();
+		packageNameToContainerPathMap = new LinkedHashMap<String, String>();
 		
 		// Analyze each path in dexPath, find its package name and 
 		// populate packageNameToContainerPathMap accordingly
@@ -296,6 +313,13 @@ public class SecureDexClassLoader {
 						"; Certificate Remote Location: " + certificateRemoteURL + ";");
 			}
 		}
+		
+		if (!performLazyEvaluation) {
+			
+			// If an eager approach is chosen now it is time to verify all the containers
+			// and remove the invalid ones.
+			verifyAllContainersSignature();
+		}
 	}
 
 	private String revertPackageNameToURL(String packageName) {
@@ -328,6 +352,83 @@ public class SecureDexClassLoader {
 				+ "/certificate.pem";
 		
 	}
+	
+	// This method is invoked only in the case of an eager evaluation.
+	// It will check that all the provided containers successfully
+	// execute the signature verification step against the certificate associated
+	// to those. Containers which fail the test will be removed.
+	private void verifyAllContainersSignature() {
+		
+		// This map is used to check whether one container has been already verified and the
+		// result of the signature verification process.
+		Map<String, Boolean> alreadyCheckedContainerMap = new HashMap<String, Boolean>();
+		
+		// Analyze all the package names which are linked to a container.
+		Iterator<String> packageNamesIterator = packageNameToContainerPathMap.keySet().iterator();
+		
+		// TODO Check that the remove() call on the iterator actually modifies the keySet
+		// in packageNameToContainerPathMap.
+		
+		while (packageNamesIterator.hasNext()) {
+			
+			String currentPackageName = packageNamesIterator.next();
+			String containerPath = packageNameToContainerPathMap.get(currentPackageName);
+			
+			// At first check whether the signature verification on this container has been already performed
+			if (alreadyCheckedContainerMap.containsKey(containerPath)) {
+				
+				// In this case depending on the previous verification result
+				// decide whether this package name should be removed or not
+				if (!alreadyCheckedContainerMap.get(containerPath))
+					packageNamesIterator.remove();
+			}
+			else {
+				
+				// A complete signature verification on the container must be performed and 
+				// depending on the final result the alreadyCheckedContainerMap will be updated.
+				
+				// Try to find and import the certificate used to check the signature of .apk or .jar container
+				X509Certificate verifiedCertificate = importCertificateFromPackageName(currentPackageName);
+				
+				// Relevant only if a verified certificate object is found.
+				boolean signatureCheckIsSuccessful = true;
+				
+				if (verifiedCertificate != null) {
+					
+					// We were able to get a valid certificate either directly from the local cache directory or after having 
+					// downloaded it from the web securely.
+					// Now it's time to check whether this certificate was used to sign the class to be loaded.
+					
+					signatureCheckIsSuccessful = verifyContainerSignatureAgainstCertificate(containerPath, verifiedCertificate);
+					
+					// Signature verification result..
+					if (signatureCheckIsSuccessful) {
+						
+						// This container is valid so all of those package names which load
+						// classes from it should be successful when loadClass() is called.
+						alreadyCheckedContainerMap.put(containerPath, Boolean.valueOf(true));
+					}
+				}
+				
+				if ((verifiedCertificate == null) || ((verifiedCertificate != null) && (signatureCheckIsSuccessful == false))) {
+					
+					// In this case the map must be updated stating that this container has been
+					// already checked and it fails the signature verification.
+					alreadyCheckedContainerMap.put(containerPath, Boolean.valueOf(false));
+					
+					// Then the container should be erased.
+					File containerToRemove = new File(containerPath);
+					if (!containerToRemove.delete())
+						Log.w(TAG_SECURE_DEX_CLASS_LOADER, "It was impossible to delete " + containerPath);
+					
+					// Finally this package name should be removed from the map of those
+					// which are allowed to load classes.
+					packageNamesIterator.remove();
+				}
+			}
+		}
+		
+	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.ClassLoader#loadClass(java.lang.String)
@@ -352,22 +453,85 @@ public class SecureDexClassLoader {
 		String containerPath = packageNameToContainerPathMap.get(packageName);
 		if(containerPath == null) return null;
 		
+		if (performLazyEvaluation) {
+			
+			// If SecureDexClassLoader is running in LAZY mode, now it is time 
+			// to verify the signature of the container associated with the class to load..
+			
+			// At first check whether this package name has been already verified..
+			if (lazyAlreadyVerifiedPackageNameSet.contains(packageName)) {
+				
+				// This package name has been already verified once so classes
+				// belonging to it can be immediately loaded.
+				return mDexClassLoader.loadClass(className);
+			}
+			else {
+				
+				// This branch represents those classes, whose package name and related container has not been analyzed yet..
+				
+				// Try to find and import the certificate used to check the signature of .apk or .jar container
+				X509Certificate verifiedCertificate = importCertificateFromPackageName(packageName);
+				
+				if (verifiedCertificate != null) {
+					
+					// We were able to get a valid certificate either directly from the local cache directory or after having 
+					// downloaded it from the web securely.
+					// Now it's time to check whether this certificate was used to sign the class to be loaded.
+					
+					boolean signatureCheckIsSuccessful = verifyContainerSignatureAgainstCertificate(containerPath, verifiedCertificate);
+					
+					// Signature verification result..
+					if (signatureCheckIsSuccessful) {
+						
+						// The signature of the related .apk or .jar container
+						// was successfully verified against the valid certificate.
+						// Integrity was granted and the class can be loaded.
+						// Before doing so this package name is stored into the set of 
+						// those which have been already successfully verified.
+						lazyAlreadyVerifiedPackageNameSet.add(packageName);
+						return mDexClassLoader.loadClass(className);
+					}
+					
+					// The signature of the .apk or .jar container was not valid when compared against the selected certificate.
+					// No class loading should be allowed and the container should be removed as well.
+					File containerToRemove = new File(containerPath);
+					if (!containerToRemove.delete())
+						Log.w(TAG_SECURE_DEX_CLASS_LOADER, "It was impossible to delete " + containerPath);
+					packageNameToContainerPathMap.remove(packageName);
+					
+					return null;
+				}
+				
+				// Download procedure fails and the required
+				// certificate has not been cached locally.
+				// No class should be loaded since its signature
+				// can't be verified..
+				return null;
+			}
+			
+		}
+
+		// If SecureDexClassLoader is running in EAGER mode, all the required checks
+		// on the containers signatures have been already performed so we can simply 
+		// invoke the super method loadClass() of DexClassLoader.
+		return mDexClassLoader.loadClass(className);
+	}
+
+	// Given a package name, at first try to locate the associated certificate from the cached
+	// certificate directory. If this check fails, try to download and store on the device the 
+	// certificate provided by the developer. If one of the two ways is successful return 
+	// a certificate instance.
+	private X509Certificate importCertificateFromPackageName(String packageName) {
+		
 		//Trace.beginSection("Import Certificate");
-		// Log.i("Profile","[Start]	Import Certificate: " + System.currentTimeMillis() + " ms.");
-		
-		// Instantiate a certificate object used to check 
-		// the signature of .apk or .jar container
-		X509Certificate verifiedCertificate;
-		
-		// TODO Decide the policy to apply with cached certificates
-		// i.e. Always keep them, cancel when the VM is terminated..
+		// Log.i("Profile","[Start]	Import Certificate: " + System.currentTimeMillis() + " ms.");		
 		
 		// At first check if the correct certificate has been 
 		// already imported in the application-private certificate directory.
-		verifiedCertificate = importCertificateFromAppPrivateDir(packageName);
-		
+		X509Certificate verifiedCertificate = importCertificateFromAppPrivateDir(packageName);
+				
 		if (verifiedCertificate == null) {
-			
+					
 			// No matching certificate or an expired one was found 
 			// locally and so it's necessary to download the 
 			// certificate through an Https request.
@@ -376,9 +540,9 @@ public class SecureDexClassLoader {
 			boolean isCertificateDownloadSuccessful = downloadCertificateRemotelyViaHttps(packageName);
 			// Log.i("Profile","[End]	Download Certificate: " + System.currentTimeMillis() + " ms.");
 			//Trace.endSection(); // end of "Download Certificate" section
-			
+					
 			if (isCertificateDownloadSuccessful) {
-				
+						
 				// Download procedure works fine and the new 
 				// certificate should now be in the local folder.
 				// So let's try to retrieve it once again..
@@ -389,144 +553,116 @@ public class SecureDexClassLoader {
 		// Log.i("Profile","[End]	Import Certificate: " + System.currentTimeMillis() + " ms.");
 		//Trace.endSection(); // end of "Import Certificate" section
 		
-		if (verifiedCertificate != null) {
-				
-			// We were able to get a valid certificate either directly
-			// from the local cache directory or after having 
-			// downloaded it from the web securely.
-			// Now it's time to check whether this certificate
-			// was used to sign the class to be loaded.
-			
-			//Trace.beginSection("Verify Signature");
-			// Log.i("Profile","[Start]	Verify Signature: " + System.currentTimeMillis() + " ms.");
-			
-			// Retrieve the correct apk or jar file containing the class that we should load
-			// Check whether the selected resource is a jar or apk container
-			int extensionIndex = containerPath.lastIndexOf(".");
-			String extension = containerPath.substring(extensionIndex);
-				
-			boolean signatureCheckIsSuccessful = false;
-				
-			// Depending on the container extension the process for
-			// signature verification changes
-			if (extension.equals(".apk")) {
-					
-				// APK container case:
-				// At first look for the certificates used to sign the apk
-				// and check whether at least one of them is the verified one..
-				
-				// Use PackageManager field to retrieve the certificates used to sign the apk
-				Signature[] signatures = mPackageManager.getPackageArchiveInfo(containerPath, PackageManager.GET_SIGNATURES).signatures;
-				
-				if (signatures != null) {
-					for (Signature sign : signatures) {
-						if (sign != null) {
-							
-							X509Certificate certFromSign = null;
-							InputStream inStream = null;
-							
-							try {
-								
-								// Recreate the certificate starting from this signature
-								inStream = new ByteArrayInputStream(sign.toByteArray());
-								//CertificateFactory cf = CertificateFactory.getInstance("X.509");
-								certFromSign = (X509Certificate) cf.generateCertificate(inStream);
-								
-								// Check that the reconstructed certificate is not expired..
-								certFromSign.checkValidity();
-								
-								// Check whether the reconstructed certificate and the trusted one match
-								// Please note that certificates may be self-signed but it's not an issue..
-								if (certFromSign.equals(verifiedCertificate))
-									// This a necessary but not sufficient condition to
-									// prove that the apk container has not been repackaged..
-									signatureCheckIsSuccessful = true;
-
-							} catch (CertificateException e) {
-								// If this branch is reached certificateFromSign is not valid..
-							} finally {
-							     if (inStream != null) {
-							         try {
-										inStream.close();
-									} catch (IOException e) {
-										e.printStackTrace();
-									}
-							     }
-							}
-							
-						}
-					}
-				}	
-			}
-			
-			// This branch must be taken by all jar containers and by those apk containers
-			// whose certificates list contains also the trusted verified certificate.
-			if (extension.equals(".jar") || (extension.equals(".apk") && signatureCheckIsSuccessful == true)) {
-				
-				// Verify that each entry of the container has been signed properly
-				JarFile containerToVerify = null;
-				
-				try {
-					
-					containerToVerify = new JarFile(containerPath);
-					// This method will throw an IOException whenever
-					// the JAR container was not signed with the trusted certificate
-					// N.B. apk are an extension of a jar container..
-					verifyJARContainer(containerToVerify, verifiedCertificate);
-					
-					// No exception raised so the signature 
-					// verification succeeded
-					signatureCheckIsSuccessful = true;
-					
-				} catch (Exception e) {
-					// Signature process failed since it triggered
-					// an exception (either an IOException or a SecurityException)
-					signatureCheckIsSuccessful = false;
-					
-				} finally {
-					if (containerToVerify != null)
-						try {
-							containerToVerify.close();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					
-				}
-				
-			}
-			
-			// Log.i("Profile","[End]	Verify Signature: " + System.currentTimeMillis() + " ms.");
-			//Trace.endSection(); // end of "Verify Signature" section
-			
-			// Signature verification result..
-			if (signatureCheckIsSuccessful) {
-					
-				// The signature of the related .apk or .jar container
-				// was successfully verified against the valid certificate.
-				// Integrity was granted and the class can be loaded.
-				return mDexClassLoader.loadClass(className);
-			}
-				
-			// The signature of the .apk or .jar container
-			// was not valid when compared against the selected certificate.
-			// No class loading should be allowed and the container 
-			// should be removed as well.
-			// TODO NO PERMISSION REQUIRED IN THE MANIFEST TILL NOW --> It won't erase data on external storage..
-			//File containerToRemove = new File(containerPath);
-			//if (!containerToRemove.delete())
-				//Log.w(TAG_SECURE_DEX_CLASS_LOADER, "It was impossible to delete " + containerPath);
-			packageNameToContainerPathMap.remove(packageName);
-				
-			return null;
-		}
-		
-		// Download procedure fails and the required
-		// certificate has not been cached locally.
-		// No class should be loaded since its signature
-		// can't be verified..
-		return null;
+		return verifiedCertificate;
 	}
 	
+	// Given the path to a jar/apk container and a valid certificate instance this method returns
+	// whether the container is signed properly against the verified certificate.
+	private boolean verifyContainerSignatureAgainstCertificate(String containerPath, X509Certificate verifiedCertificate) {
+		
+		//Trace.beginSection("Verify Signature");
+		// Log.i("Profile","[Start]	Verify Signature: " + System.currentTimeMillis() + " ms.");
+		
+		// Retrieve the correct apk or jar file containing the class that we should load
+		// Check whether the selected resource is a jar or apk container
+		int extensionIndex = containerPath.lastIndexOf(".");
+		String extension = containerPath.substring(extensionIndex);
+			
+		boolean signatureCheckIsSuccessful = false;
+			
+		// Depending on the container extension the process for
+		// signature verification changes
+		if (extension.equals(".apk")) {
+				
+			// APK container case:
+			// At first look for the certificates used to sign the apk
+			// and check whether at least one of them is the verified one..
+			
+			// Use PackageManager field to retrieve the certificates used to sign the apk
+			Signature[] signatures = mPackageManager.getPackageArchiveInfo(containerPath, PackageManager.GET_SIGNATURES).signatures;
+			
+			if (signatures != null) {
+				for (Signature sign : signatures) {
+					if (sign != null) {
+						
+						X509Certificate certFromSign = null;
+						InputStream inStream = null;
+						
+						try {
+							
+							// Recreate the certificate starting from this signature
+							inStream = new ByteArrayInputStream(sign.toByteArray());
+							certFromSign = (X509Certificate) certificateFactory.generateCertificate(inStream);
+							
+							// Check that the reconstructed certificate is not expired..
+							certFromSign.checkValidity();
+							
+							// Check whether the reconstructed certificate and the trusted one match
+							// Please note that certificates may be self-signed but it's not an issue..
+							if (certFromSign.equals(verifiedCertificate))
+								// This a necessary but not sufficient condition to
+								// prove that the apk container has not been repackaged..
+								signatureCheckIsSuccessful = true;
+
+						} catch (CertificateException e) {
+							// If this branch is reached certificateFromSign is not valid..
+						} finally {
+						     if (inStream != null) {
+						         try {
+									inStream.close();
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+						     }
+						}
+						
+					}
+				}
+			}	
+		}
+		
+		// This branch must be taken by all jar containers and by those apk containers
+		// whose certificates list contains also the trusted verified certificate.
+		if (extension.equals(".jar") || (extension.equals(".apk") && signatureCheckIsSuccessful == true)) {
+			
+			// Verify that each entry of the container has been signed properly
+			JarFile containerToVerify = null;
+			
+			try {
+				
+				containerToVerify = new JarFile(containerPath);
+				// This method will throw an IOException whenever
+				// the JAR container was not signed with the trusted certificate
+				// N.B. apk are an extension of a jar container..
+				verifyJARContainer(containerToVerify, verifiedCertificate);
+				
+				// No exception raised so the signature 
+				// verification succeeded
+				signatureCheckIsSuccessful = true;
+				
+			} catch (Exception e) {
+				// Signature process failed since it triggered
+				// an exception (either an IOException or a SecurityException)
+				signatureCheckIsSuccessful = false;
+				
+			} finally {
+				if (containerToVerify != null)
+					try {
+						containerToVerify.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				
+			}
+			
+		}
+		
+		// Log.i("Profile","[End]	Verify Signature: " + System.currentTimeMillis() + " ms.");
+		//Trace.endSection(); // end of "Verify Signature" section
+
+		return signatureCheckIsSuccessful;
+	}
+
 	private void verifyJARContainer(JarFile jarFile, X509Certificate trustedCert) throws IOException {
 		
 		// Sanity checking
@@ -637,7 +773,7 @@ public class SecureDexClassLoader {
 				// be found.
 				inStream = new FileInputStream(certMatchingFiles[0]);
 			    //CertificateFactory cf = CertificateFactory.getInstance("X.509");
-			    verifiedCertificate = (X509Certificate) cf.generateCertificate(inStream);
+			    verifiedCertificate = (X509Certificate) certificateFactory.generateCertificate(inStream);
 					    
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
@@ -792,7 +928,7 @@ public class SecureDexClassLoader {
 				if (file.delete())
 					Log.i(TAG_SECURE_DEX_CLASS_LOADER, filePath + " has been erased.");
 				else
-					Log.w(TAG_SECURE_DEX_CLASS_LOADER, filePath + " was NOT erased.");
+					Log.i(TAG_SECURE_DEX_CLASS_LOADER, filePath + " was NOT erased.");
 			}
 		}
 		

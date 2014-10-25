@@ -1,13 +1,22 @@
 package it.necst.grabnrun;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Pattern;
 //import android.content.Context;
 import android.content.ContextWrapper;
+import android.util.Base64;
 //import android.net.ConnectivityManager;
 //import android.net.NetworkInfo;
 import android.util.Log;
@@ -32,8 +41,12 @@ public class SecureLoaderFactory {
 	// Object used for retrieving file from remote URL
 	private FileDownloader mFileDownloader;
 	
-	// Final name of the folder user to store downloaded remote containers
-	static final String RES_DOWNLOAD_DIR = "downloaded_res";
+	// Final name of the folder user to store imported containers (both coming from remote or local resources)
+	static final String CONT_IMPORT_DIR = "imported_cont";
+	
+	// Used to compute the finger print on different containers 
+	// in order to check which has been already cached.
+	private MessageDigest messageDigest;
 	
 	/**
 	 * Creates a {@code SecureLoaderFactory} used to check and generate instances 
@@ -51,6 +64,13 @@ public class SecureLoaderFactory {
 		mContextWrapper = parentContextWrapper;
 		//mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);
 		mFileDownloader = new FileDownloader(mContextWrapper);
+		
+		try {
+			messageDigest = MessageDigest.getInstance("SHA-1");
+		} catch (NoSuchAlgorithmException e) {
+			Log.e(TAG_SECURE_FACTORY, "Wrong algorithm choice for message digest!");
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -86,7 +106,7 @@ public class SecureLoaderFactory {
 	 *  connectivity is available, the resource will be imported in a private-application 
 	 *  directory before being used.
 	 * @param libraryPath
-	 *  the list of directories containing native libraries; it may be null
+	 *  the list of directories containing native libraries; it may be null.
 	 * @param packageNameToCertificateMap
 	 *  a map that couples each package name to a URL which contains the certificate
 	 *  that must be used to validate all the classes that belong to that package
@@ -99,6 +119,64 @@ public class SecureLoaderFactory {
 														String libraryPath, 
 														Map<String, String> packageNameToCertificateMap, 
 														ClassLoader parent) {
+		
+		// The default behavior by now is using LAZY evaluation.
+		// In order to change it, simply modify the last boolean parameter from "true" to "false".
+		return createDexClassLoader(dexPath, libraryPath, packageNameToCertificateMap, parent, true);
+		
+	}
+	
+	/**
+	 * This method returns a SecureDexClassLoader instance in the same way as it is 
+	 * explained in the previous createDexClassLoader() method.
+	 * 
+	 * In addition it is possible to specify the mode in which the signature verification
+	 * process will be carried.
+	 * 
+	 * In particular by setting the performLazyEvaluation parameter on true, 
+	 * a lazy verification process will be chosen. This means that the signature
+	 * of the single container associated with the target class will be evaluated 
+	 * only when the loadClass() method will be invoked on {@link SecureDexClassLoader} 
+	 * object. If this check succeeds the target class will be loaded.
+	 * 
+	 * On the other hand, by setting the parameter performLazyEvaluation to false 
+	 * an eager evaluation will be carried out. This means that before returning this 
+	 * object, the signature verification procedure will be carried out on all the 
+	 * provided containers and all of those that do not succeed in the process will
+	 * be blocked from loading their classes in the following loadClass() calls.
+	 * 
+	 * The use of one mode in stead of the other is merely a performance-related choice.
+	 * If you do not care that much about it, just invoke the overloaded method 
+	 * createDexClassLoader() which does not require to provide the performLazyEvaluation
+	 * parameter. Otherwise as a general guideline, prefer the lazy mode whenever you
+	 * need to load classes from many and heavy containers; use the eager mode when
+	 * the number of involved containers is small and so the penalty for evaluating all
+	 * of them immediately in one shot won't be so high. 
+	 * 
+	 * @param dexPath
+	 *  the list of jar/apk files containing classes and resources; these paths could
+	 *  be either local URLs pointing to a location in the device or URLs that links
+	 *  to a resource stored in the web via HTTP/HTTPS. In the latter case, if Internet
+	 *  connectivity is available, the resource will be imported in a private-application 
+	 *  directory before being used.
+	 * @param libraryPath
+	 *  the list of directories containing native libraries; it may be null.
+	 * @param packageNameToCertificateMap
+	 *  a map that couples each package name to a URL which contains the certificate
+	 *  that must be used to validate all the classes that belong to that package
+	 *  before launching them at run time.
+	 * @param parent
+	 *  the parent class loader
+	 * @param performLazyEvaluation
+	 *  the mode in which the verification will be handled. True for lazy verification;
+	 *  false for the eager one.
+	 * @return secureDexClassLoader
+	 */
+	public SecureDexClassLoader createDexClassLoader(	String dexPath, 
+														String libraryPath, 
+														Map<String, String> packageNameToCertificateMap, 
+														ClassLoader parent,
+														boolean performLazyEvaluation) {
 		
 		// Final dex path list will be constructed incrementally
 		// while scanning dexPath variable
@@ -126,8 +204,10 @@ public class SecureLoaderFactory {
 		// into an internal application private directory.
 		String[] strings = tempPath.split(Pattern.quote(File.pathSeparator));
 		
-		File resDownloadDir = null;
-		boolean isResourceFolderInitialized = false;
+		// New container resources should be imported or cached from an application private folder..
+		// Initialize directory for imported containers.
+		File importedContainerDir = mContextWrapper.getDir(CONT_IMPORT_DIR, ContextWrapper.MODE_PRIVATE);
+		Log.d(TAG_SECURE_FACTORY, "Download Resource Dir has been mounted at: " + importedContainerDir.getAbsolutePath());
 		
 		for (String path : strings) {
 			
@@ -140,20 +220,9 @@ public class SecureLoaderFactory {
 				if (path.startsWith("http//")) fixedPath = "http:" + path.substring(4);
 				else fixedPath = "https:" + path.substring(5);
 				
-				// A new resource should be retrieved from the web..
-				// Check whether the final directory for downloaded resources
-				// has been already initialized
-				if (!isResourceFolderInitialized) {
-					
-					// TODO Policy for dismissing this folder and its contents???
-					resDownloadDir = mContextWrapper.getDir(RES_DOWNLOAD_DIR, ContextWrapper.MODE_PRIVATE);
-					Log.d(TAG_SECURE_FACTORY, "Download Resource Dir has been mounted at: " + resDownloadDir.getAbsolutePath());
-					isResourceFolderInitialized = true;
-				}
-				
 				//Trace.beginSection("Download Container");
 				// Log.i("Profile","[Start]	Download Container: " + System.currentTimeMillis() + " ms.");
-				String downloadedContainerPath = downloadContainerIntoFolder(fixedPath, resDownloadDir);
+				String downloadedContainerPath = downloadContainerIntoFolder(fixedPath, importedContainerDir);
 				// Log.i("Profile","[End]	Download Container: " + System.currentTimeMillis() + " ms.");
 				//Trace.endSection(); // end of "Download Container" section
 				
@@ -168,8 +237,86 @@ public class SecureLoaderFactory {
 			}
 			else {
 				
-				// Simply copy current path into the final dex path list
-				finalDexPath.append(path + File.pathSeparator);
+				//if (performLazyEvaluation) {
+
+					// In lazy evaluation it is not required to import the container on external
+					// storage into the library private directory for containers.
+					// So simply copy current path into the final dex path list
+					//finalDexPath.append(path + File.pathSeparator);
+				//}
+				//else {
+					
+				//}
+				
+				// On the other hand when the developer provides a local URI for the container 
+				// SecureLoaderFactory has to import this file into an application private folder on the device.
+				
+				// At first compute the digest on the provided local container.
+				String encodedContainerDigest = computeDigestFromFilePath(path);
+				
+				// Take this branch if the digest was correctly computed on the container..
+				if (encodedContainerDigest != null) {
+					
+					// Check if a file whose name is "encodedContainerDigest.(jar/apk)" is already present in
+					// the cached certificate folder.
+					int extensionIndex = path.lastIndexOf(".");
+					String extension = path.substring(extensionIndex);
+					
+					File[] matchingContainerArray = importedContainerDir.listFiles(new FileFilterByName(encodedContainerDigest, extension));
+					
+					if (matchingContainerArray != null && matchingContainerArray.length > 0) {
+						
+						// A cached version of the container already exists.
+						// So simply use that cached version
+						finalDexPath.append(matchingContainerArray[0].getAbsolutePath() + File.pathSeparator);
+					}
+					else {
+						
+						// No cached copy of the container in the directory.
+						// So it is necessary to import the container into the application folder
+						// before using it.
+						InputStream inStream = null;
+						OutputStream outStream = null;
+						String cachedContainerPath = importedContainerDir.getAbsolutePath() + File.separator + encodedContainerDigest + extension;
+						
+						try {
+							
+							inStream = new FileInputStream(path);
+							outStream = new FileOutputStream(cachedContainerPath);
+							
+							byte[] buf = new byte[8192];
+						    int length;
+						    
+						    // Copying the external container into the application
+						    // private folder.
+						    while ((length = inStream.read(buf)) > 0) {
+						    	outStream.write(buf, 0, length);
+						    }
+							
+						    // In the end add the internal path of the container
+						    finalDexPath.append(cachedContainerPath + File.pathSeparator);
+						    
+						} catch (FileNotFoundException e) {
+							Log.w(TAG_SECURE_FACTORY, "Problem in locating container to import in the application private folder!");
+						} catch (IOException e) {
+							Log.w(TAG_SECURE_FACTORY, "Problem while importing a local container into the application private folder!");
+						} finally {
+							
+							try {
+								
+								if (inStream != null) {
+									inStream.close();
+								}
+								if (outStream != null) {
+									outStream.close();
+								}
+							
+							} catch (IOException e) {
+								Log.w(TAG_SECURE_FACTORY, "Issue in closing file streams while importing a container!");
+							}
+						}	
+					}
+				}
 			}
 		}
 		
@@ -200,12 +347,56 @@ public class SecureLoaderFactory {
 																				dexOutputDir.getAbsolutePath(),
 																				libraryPath,
 																				parent,
-																				mContextWrapper);
+																				mContextWrapper,
+																				performLazyEvaluation);
 		
 		// Provide packageNameToCertificateMap to mSecureDexClassLoader..
 		if (mSecureDexClassLoader != null) mSecureDexClassLoader.setCertificateLocationMap(santiziedPackageNameToCertificateMap);
 		
 		return mSecureDexClassLoader;
+	}
+	
+	// Given the path of a file this function returns the encoded base 64 of SHA-1 digest of the file.
+	private String computeDigestFromFilePath(String filePath) {
+		
+		FileInputStream inStream = null;
+		String digestString = null;
+		
+		try {
+			// A stream used to parse the bytes of the file
+			inStream = new FileInputStream(filePath);
+			
+			byte[] buffer = new byte[8192];
+		    int length;
+		    while( (length = inStream.read(buffer)) != -1 ) {
+		    	
+		    	// File is loaded by considering chunks of it..
+		    	messageDigest.update(buffer, 0, length);
+		    }
+		    // The digest is finally computed..
+		    byte[] digestBytes = messageDigest.digest();
+		    
+		    // ..and translated into a human readable string through Base64 encoding.
+		    digestString = new String(Base64.encode(digestBytes, Base64.DEFAULT));
+		    
+		} catch (FileNotFoundException e) {
+			Log.w(TAG_SECURE_FACTORY, "No file found at " + filePath);
+		} catch (IOException e) {
+			Log.w(TAG_SECURE_FACTORY, "Something went wrong while calculating the digest!");
+		} finally {
+			
+			if (inStream != null) {
+				try {
+					inStream.close();
+				} catch (IOException e) {
+					Log.w(TAG_SECURE_FACTORY, "Issue while closing file stream in message digest computation!");
+				}
+			}
+		}
+		
+		// Finally return the digest string..
+		return digestString;
+		
 	}
 
 	private Map<String, String> sanitizePackageNameToCertificateMap(Map<String, String> packageNameToCertificateMap) {
