@@ -211,6 +211,10 @@ public class SecureLoaderFactory {
 		
 		for (String path : strings) {
 			
+			// Compute the extension of the file (Useful for later operations)
+			int extensionIndex = path.lastIndexOf(".");
+			String extension = path.substring(extensionIndex);
+			
 			if (path.startsWith("http//") || path.startsWith("https//")) {
 				
 				// Used to fix previous workaround on remote URL..
@@ -228,11 +232,44 @@ public class SecureLoaderFactory {
 				
 				if (downloadedContainerPath != null) {
 					
-					// In such a case the download was successful and so
-					// it is necessary to replace the current web-like path 
-					// to access the resource with the new local version.
-					finalDexPath.append(downloadedContainerPath + File.pathSeparator);
-					Log.d(TAG_SECURE_FACTORY, "Dex Path has been modified into: " + finalDexPath);
+					// In such a case the download was successful.
+					// Now the downloaded container is renamed according to its finger print.
+					String containerDigest = computeDigestFromFilePath(downloadedContainerPath);
+					
+					File downloadedContainer = new File(downloadedContainerPath);
+					
+					if (containerDigest == null) {
+						
+						// Fingerprint computation fails. Delete the resource container and do not add
+						// this file to the path
+						if (!downloadedContainer.delete())
+							Log.w(TAG_SECURE_FACTORY, "Issue while deleting " + downloadedContainerPath);
+					}
+					else {
+
+						// Rename the previous container file according to the containerDigest and its extension.
+						String downloadedContainerFinalPath = importedContainerDir.getAbsolutePath() + containerDigest + extension;
+						
+						File downloadContainerFinalPosition = new File(downloadedContainerFinalPath);
+						
+						if (downloadContainerFinalPosition.exists())
+							downloadContainerFinalPosition.delete();
+						
+						if (downloadedContainer.renameTo(downloadContainerFinalPosition)) {
+							
+							// Successful renaming..
+							// It is necessary to replace the current web-like path to access the resource with the new local version.
+							finalDexPath.append(downloadedContainerFinalPath + File.pathSeparator);
+							Log.d(TAG_SECURE_FACTORY, "Dex Path has been modified into: " + finalDexPath);
+						}
+						else {
+							// Renaming operation failed..
+							// Erase downloaded container.
+							if (!downloadedContainer.delete())
+								Log.w(TAG_SECURE_FACTORY, "Issue while deleting " + downloadedContainerPath);
+						}
+					
+					}	
 				}
 			}
 			else {
@@ -258,10 +295,7 @@ public class SecureLoaderFactory {
 				if (encodedContainerDigest != null) {
 					
 					// Check if a file whose name is "encodedContainerDigest.(jar/apk)" is already present in
-					// the cached certificate folder.
-					int extensionIndex = path.lastIndexOf(".");
-					String extension = path.substring(extensionIndex);
-					
+					// the cached certificate folder.					
 					File[] matchingContainerArray = importedContainerDir.listFiles(new FileFilterByName(encodedContainerDigest, extension));
 					
 					if (matchingContainerArray != null && matchingContainerArray.length > 0) {
