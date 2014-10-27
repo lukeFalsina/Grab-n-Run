@@ -253,7 +253,8 @@ public class SecureLoaderFactory {
 						File downloadContainerFinalPosition = new File(downloadedContainerFinalPath);
 						
 						if (downloadContainerFinalPosition.exists())
-							downloadContainerFinalPosition.delete();
+							if (!downloadContainerFinalPosition.delete())
+								Log.w(TAG_SECURE_FACTORY, "Issue while deleting " + downloadedContainerFinalPath);
 						
 						if (downloadedContainer.renameTo(downloadContainerFinalPosition)) {
 							

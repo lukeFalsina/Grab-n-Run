@@ -25,8 +25,7 @@ public final class FileDownloader {
 	// Unique identifier used for Log entries
 	private static final String TAG_FILE_DOWNLOADER = FileDownloader.class.getSimpleName();
 	
-	@SuppressWarnings("unused")
-	private ContextWrapper mContextWrapper;
+	// private ContextWrapper mContextWrapper;
 	
 	// Objects used to check availability of Internet connection
 	private ConnectivityManager mConnectivityManager;
@@ -34,15 +33,15 @@ public final class FileDownloader {
 	
 	// Used to avoid users from clicking while downloading 
 	// other components..
-	//private ProgressDialog dialog;
+	// private ProgressDialog dialog;
 	
 	// Used to dismiss the dialog
-	//private Handler handler;
+	// private Handler handler;
 
 	FileDownloader(ContextWrapper parentContextWrapper) {
 		
 		//handler = new Handler();
-		mContextWrapper = parentContextWrapper;
+		// mContextWrapper = parentContextWrapper;
 		mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);		
 	}
 	
