@@ -403,9 +403,8 @@ public class MainActivity extends Activity {
 			e.printStackTrace();
 		}
 		
-		// Remove only the cached certificates, since no container was downloaded
-		// from the web in test cases 2, 3 and 4.
-		mSecureDexClassLoader.wipeOutPrivateAppCachedData(false, true);
+		// Remove the cached certificates and the certificate..
+		mSecureDexClassLoader.wipeOutPrivateAppCachedData(true, true);
 		Log.d(TAG_MAIN, "Cached data of SecureDexClassLoader have been wiped out..");
 	}
 

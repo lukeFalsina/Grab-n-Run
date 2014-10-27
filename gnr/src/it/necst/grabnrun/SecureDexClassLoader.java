@@ -168,7 +168,7 @@ public class SecureDexClassLoader {
 					if (previousPath != null) {
 						
 						// TODO Up to now only a warning message is registered in the logs and the most
-						// fresh of the two references is kept
+						// fresh of the two references is stored.
 						Log.w(	TAG_SECURE_DEX_CLASS_LOADER, "Package Name " + packageName + " is not unique!\n Previous path: " 
 								+ previousPath + ";\n New path: " + currentPath + ";" );
 					}
@@ -178,6 +178,9 @@ public class SecureDexClassLoader {
 	}
 
 	private List<String> getPackageNamesFromContainerPath(String containerPath) {
+		
+		// Filter empty or missing path input
+		if (containerPath == null || containerPath.isEmpty()) return null;
 		
 		// Check whether the selected resource is a container (jar or apk)
 		int extensionIndex = containerPath.lastIndexOf(".");
@@ -807,7 +810,6 @@ public class SecureDexClassLoader {
 						Log.d(TAG_SECURE_DEX_CLASS_LOADER, verifiedCertificate.getKeyUsage().toString());
 					}
 					
-					// TODO Need to be tested!!
 					// Check whether the certificate used to verify is the one 
 					// used by Android in Debug Mode. If so, discard this certificate
 					// since it's not secure.

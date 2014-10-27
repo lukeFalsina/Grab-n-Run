@@ -321,7 +321,10 @@ public class SecureLoaderFactory {
 				// SecureLoaderFactory has to import this file into an application private folder on the device.
 				
 				// At first compute the digest on the provided local container.
-				String encodedContainerDigest = computeDigestFromFilePath(path);
+				String encodedContainerDigest = null;
+				
+				// If a container exists on the device storage, compute its digest.
+				if (new File(path).exists()) encodedContainerDigest = computeDigestFromFilePath(path);
 				
 				// Take this branch if the digest was correctly computed on the container..
 				if (encodedContainerDigest != null) {
@@ -445,8 +448,8 @@ public class SecureLoaderFactory {
 		    // The digest is finally computed..
 		    byte[] digestBytes = messageDigest.digest();
 		    
-		    // ..and translated into a human readable string through Base64 encoding.
-		    digestString = new String(Base64.encode(digestBytes, Base64.DEFAULT));
+		    // ..and translated into a human readable string through Base64 encoding (Url safe).
+		    digestString = new String(Base64.encode(digestBytes, Base64.URL_SAFE));
 		    
 		} catch (FileNotFoundException e) {
 			Log.w(TAG_SECURE_FACTORY, "No file found at " + filePath);
