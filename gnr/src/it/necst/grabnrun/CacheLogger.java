@@ -36,7 +36,7 @@ public final class CacheLogger {
 	// Field to record whether this class has been already finalized
 	private boolean hasBeenAlreadyFinalized;
 	
-	// private String cacheDirectoryPath;
+	private String cacheDirectoryPath;
 	// private int daysTillConsideredFresh;
 	
 	private Map<String, String> remoteURLToLocalFileMap;
@@ -69,7 +69,7 @@ public final class CacheLogger {
 		this.remoteURLToLocalFileMap = new HashMap<String, String>();
 		this.remoteURLToCreationTimestamp = new HashMap<String, Long>();
 		
-		// this.cacheDirectoryPath = cacheDirectoryPath;
+		this.cacheDirectoryPath = cacheDirectoryPath;
 		
 		hasBeenAlreadyFinalized = false;
 		
@@ -142,7 +142,8 @@ public final class CacheLogger {
 		// If the remote URL is contained in the map, return the
 		// linked fresh local container
 		if (remoteURLToLocalFileMap.containsKey(remoteURL))
-			return remoteURLToLocalFileMap.get(remoteURL);
+			if (new File(cacheDirectoryPath + File.separator + remoteURLToLocalFileMap.get(remoteURL)).exists())
+				return remoteURLToLocalFileMap.get(remoteURL);
 		
 		// Otherwise no cached entry..
 		return null;
@@ -197,6 +198,8 @@ public final class CacheLogger {
 				
 				if (mPrintWriter.checkError())
 					throw new IOException();
+				
+				Log.d(TAG_FILE_CACHE_LOGGER, "Helper file was correctly stored on the device.");
 				
 			} catch (IOException e) {
 				Log.w(TAG_FILE_CACHE_LOGGER, "Problem while updating helper file!");

@@ -49,6 +49,16 @@ public class SecureLoaderFactory {
 	private MessageDigest messageDigest;
 	
 	/**
+	 * When a remote container URL is encountered, this field specifies the time interval, 
+	 * expressed in days, before which a local copy of a remote container, stored in an 
+	 * application-private directory, will be considered fresh and so cached.
+	 * 
+	 * On the other hand, all of those containers, whose life time is greater than this
+	 * field value, will be immediately erased from the device storage in stead of being cached.
+	 */
+	public static int DAYS_BEFORE_CACHE_EXPIRATION = 5;
+	
+	/**
 	 * Creates a {@code SecureLoaderFactory} used to check and generate instances 
 	 * from secure dynamic code loader classes.
 	 * 
@@ -209,6 +219,8 @@ public class SecureLoaderFactory {
 		File importedContainerDir = mContextWrapper.getDir(CONT_IMPORT_DIR, ContextWrapper.MODE_PRIVATE);
 		Log.d(TAG_SECURE_FACTORY, "Download Resource Dir has been mounted at: " + importedContainerDir.getAbsolutePath());
 		
+		CacheLogger mCacheLogger = new CacheLogger(importedContainerDir.getAbsolutePath(), DAYS_BEFORE_CACHE_EXPIRATION);
+		
 		for (String path : strings) {
 			
 			// Compute the extension of the file (Useful for later operations)
@@ -220,58 +232,77 @@ public class SecureLoaderFactory {
 				// Used to fix previous workaround on remote URL..
 				//String fixedPath = path.replaceAll("http//", "http://");
 				//fixedPath = fixedPath.replaceAll("https//", "https://");
-				String fixedPath;
-				if (path.startsWith("http//")) fixedPath = "http:" + path.substring(4);
-				else fixedPath = "https:" + path.substring(5);
+				String fixedRemotePath;
+				if (path.startsWith("http//")) fixedRemotePath = "http:" + path.substring(4);
+				else fixedRemotePath = "https:" + path.substring(5);
 				
-				//Trace.beginSection("Download Container");
-				// Log.i("Profile","[Start]	Download Container: " + System.currentTimeMillis() + " ms.");
-				String downloadedContainerPath = downloadContainerIntoFolder(fixedPath, importedContainerDir);
-				// Log.i("Profile","[End]	Download Container: " + System.currentTimeMillis() + " ms.");
-				//Trace.endSection(); // end of "Download Container" section
+				String cachedContainerFileName = mCacheLogger.checkForCachedEntry(fixedRemotePath);
 				
-				if (downloadedContainerPath != null) {
+				if (cachedContainerFileName != null) {
 					
-					// In such a case the download was successful.
-					// Now the downloaded container is renamed according to its finger print.
-					String containerDigest = computeDigestFromFilePath(downloadedContainerPath);
+					// A valid and fresh enough cached copy of the remote container is present
+					// on the device storage, so this copy can be used in stead of downloading 
+					// the remote container again.
+					finalDexPath.append(importedContainerDir.getAbsolutePath() + File.separator + cachedContainerFileName + File.pathSeparator);
+					Log.d(TAG_SECURE_FACTORY, "Dex Path has been modified into: " + finalDexPath);
+				}
+				else {
 					
-					File downloadedContainer = new File(downloadedContainerPath);
-					
-					if (containerDigest == null) {
-						
-						// Fingerprint computation fails. Delete the resource container and do not add
-						// this file to the path
-						if (!downloadedContainer.delete())
-							Log.w(TAG_SECURE_FACTORY, "Issue while deleting " + downloadedContainerPath);
-					}
-					else {
+					// No cached copy so it is necessary to download the remote resource from the web.
 
-						// Rename the previous container file according to the containerDigest and its extension.
-						String downloadedContainerFinalPath = importedContainerDir.getAbsolutePath() + containerDigest + extension;
+					//Trace.beginSection("Download Container");
+					// Log.i("Profile","[Start]	Download Container: " + System.currentTimeMillis() + " ms.");
+					String downloadedContainerPath = downloadContainerIntoFolder(fixedRemotePath, importedContainerDir);
+					// Log.i("Profile","[End]	Download Container: " + System.currentTimeMillis() + " ms.");
+					//Trace.endSection(); // end of "Download Container" section
+					
+					if (downloadedContainerPath != null) {
 						
-						File downloadContainerFinalPosition = new File(downloadedContainerFinalPath);
+						// In such a case the download was successful.
+						// Now the downloaded container is renamed according to its finger print.
+						String containerDigest = computeDigestFromFilePath(downloadedContainerPath);
 						
-						if (downloadContainerFinalPosition.exists())
-							if (!downloadContainerFinalPosition.delete())
-								Log.w(TAG_SECURE_FACTORY, "Issue while deleting " + downloadedContainerFinalPath);
+						File downloadedContainer = new File(downloadedContainerPath);
 						
-						if (downloadedContainer.renameTo(downloadContainerFinalPosition)) {
+						if (containerDigest == null) {
 							
-							// Successful renaming..
-							// It is necessary to replace the current web-like path to access the resource with the new local version.
-							finalDexPath.append(downloadedContainerFinalPath + File.pathSeparator);
-							Log.d(TAG_SECURE_FACTORY, "Dex Path has been modified into: " + finalDexPath);
-						}
-						else {
-							// Renaming operation failed..
-							// Erase downloaded container.
+							// Fingerprint computation fails. Delete the resource container and do not add
+							// this file to the path
 							if (!downloadedContainer.delete())
 								Log.w(TAG_SECURE_FACTORY, "Issue while deleting " + downloadedContainerPath);
 						}
-					
-					}	
+						else {
+							
+							// Rename the previous container file according to the containerDigest and its extension.
+							String downloadedContainerFinalPath = importedContainerDir.getAbsolutePath() + containerDigest + extension;
+							
+							File downloadContainerFinalPosition = new File(downloadedContainerFinalPath);
+							
+							if (downloadContainerFinalPosition.exists())
+								if (!downloadContainerFinalPosition.delete())
+									Log.w(TAG_SECURE_FACTORY, "Issue while deleting " + downloadedContainerFinalPath);
+							
+							if (downloadedContainer.renameTo(downloadContainerFinalPosition)) {
+								
+								// Successful renaming..
+								// It is necessary to replace the current web-like path to access the resource with the new local version.
+								finalDexPath.append(downloadedContainerFinalPath + File.pathSeparator);
+								Log.d(TAG_SECURE_FACTORY, "Dex Path has been modified into: " + finalDexPath);
+								
+								// It is also relevant to add this resource to the Log file of the cached remote containers.
+								mCacheLogger.addCachedEntryToLog(fixedRemotePath, containerDigest + extension);
+							}
+							else {
+								// Renaming operation failed..
+								// Erase downloaded container.
+								if (!downloadedContainer.delete())
+									Log.w(TAG_SECURE_FACTORY, "Issue while deleting " + downloadedContainerPath);
+							}
+							
+						}	
+					}
 				}
+				
 			}
 			else {
 				
@@ -358,6 +389,9 @@ public class SecureLoaderFactory {
 		// Finally remove the last unnecessary separator from finalDexPath (if finalDexPath has at least one path inside)
 		if (finalDexPath.lastIndexOf(File.pathSeparator) != -1)
 			finalDexPath.deleteCharAt(finalDexPath.lastIndexOf(File.pathSeparator));
+		
+		// Finalize the CacheLogger object and update the helper file on the device
+		mCacheLogger.finalizeLog();
 		
 		// Now the location of the final loaded classes is created.
 		// Since it is assumed that the developer do not care where
