@@ -86,7 +86,7 @@ public final class CacheLogger {
 			try {
 				
 				// Open the helper file and parse it through a Scanner.
-				in = new Scanner(helperFile);
+				in = new Scanner(helperFile).useDelimiter(";\n");
 				
 				while (in.hasNext()) {
 				
@@ -96,7 +96,7 @@ public final class CacheLogger {
 					
 					if (lineTokens.length == ELEMENTS_PER_LOG_LINE) {
 						
-						File checkContainerFile = new File(cacheDirectoryPath + lineTokens[LOCAL_FILE_NAME]);
+						File checkContainerFile = new File(cacheDirectoryPath + File.separator + lineTokens[LOCAL_FILE_NAME]);
 						
 						if (checkContainerFile.exists()) {
 							
@@ -192,7 +192,7 @@ public final class CacheLogger {
 						
 						// A valid entry is saved into a line of the Log helper file with the following format:
 						// Remote URL + blank space + Local File Name + blank space + Creation Timestamp
-						mPrintWriter.println(currentRemoteURL + " " + remoteURLToLocalFileMap.get(currentRemoteURL) + " " + remoteURLToCreationTimestamp.get(currentRemoteURL));
+						mPrintWriter.println(currentRemoteURL + " " + remoteURLToLocalFileMap.get(currentRemoteURL) + " " + remoteURLToCreationTimestamp.get(currentRemoteURL) + ";");
 					}
 				}
 				

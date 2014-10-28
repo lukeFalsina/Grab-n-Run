@@ -274,7 +274,7 @@ public class SecureLoaderFactory {
 						else {
 							
 							// Rename the previous container file according to the containerDigest and its extension.
-							String downloadedContainerFinalPath = importedContainerDir.getAbsolutePath() + containerDigest + extension;
+							String downloadedContainerFinalPath = importedContainerDir.getAbsolutePath() + File.separator + containerDigest + extension;
 							
 							File downloadContainerFinalPosition = new File(downloadedContainerFinalPath);
 							
