@@ -1,7 +1,8 @@
+
 Quick start and tutorial
 ========================
 
-In this section you will learn how to *retrieve and include Grab'n Run library* into your project (either by using Android Development Tool or Android Studio). After this setup a **brief tutorial** will explain how to use different classes in the library to **secure** the *dynamic code loading operations*.
+In this section you will see how to *retrieve and include Grab'n Run library* into your project (either by using Android Development Tool or Android Studio). After this setup step a **brief tutorial** will explain how to use classes in the library to **secure** the *dynamic code loading operations*.
 
 Since this section is **introductory** and more descriptive, it should be read by those who are not familiar with this library or more in general with *class loading* in Android. On the other hand the :doc:`javaAPI/packages` section provides a more complete and detailed view on Grab'n Run library and its insights, while :doc:`example` shows a simple use case of the concepts introduced here.
 
@@ -34,11 +35,11 @@ Using standard DexClassLoader to load code dynamically
 
 Let us pretend that you want to dynamically load an external class through `DexClassLoader <http://developer.android.com/reference/dalvik/system/DexClassLoader.html>`_, a class in the *Android API* used to load classes from *jar* and *apk* files containing a **classes.dex** entry. This is a convenient way to execute code not installed as part of an application package.
 
-Let's assume, for example, that you want to load an instance of ``com.example.MyClass`` located in the container *examplejar*, stored in the *Download* folder of the sd_card on the target phone.
+Let's assume, for example, that you want to load an instance of ``com.example.MyClass`` located in the container *exampleJar.jar*, stored in the *Download* folder of the sd_card on the target phone.
 A snippet of code to achieve this goal is the following::
 
 		MyClass myClassInstance = null;
-		String jarContainerPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/examplejar";
+		String jarContainerPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/exampleJar.jar";
 		File dexOutputDir = getDir("dex", MODE_PRIVATE);
 		DexClassLoader mDexClassLoader = new DexClassLoader(	jarContainerPath, 
 									dexOutputDir.getAbsolutePath(), 
@@ -48,6 +49,10 @@ A snippet of code to achieve this goal is the following::
 		try {
 			Class<?> loadedClass = mDexClassLoader.loadClass("com.example.MyClass");
 			myClassInstance = (MyClass) loadedClass.newInstance();
+
+			// Do something with the loaded object myClassInstance
+			// i.e. myClassInstance.doSomething();
+
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (InstantiationException e) {
@@ -56,7 +61,7 @@ A snippet of code to achieve this goal is the following::
 			e.printStackTrace();
 		}
 
-The String ``jarContainerPath`` contains the path to *examplejar*, while ``dexOutputDir`` is an **application-private, writable** directory to cache optimized classes into *examplejar*.
+The String ``jarContainerPath`` contains the path to *examplejar*, while ``dexOutputDir`` is an **application-private**, writable directory to cache optimized *dex* classes into *examplejar*. As reported in ``DexClassLoader`` documentation, you can retrieve ``dexOutputDir`` in different ways but it is fundamental that this cache folder is application-private; otherwise your application may be subjected to **code injection attacks**. And by the way this kind of attack is *prevented* if you choose to use ``SecureDexClassLoader`` as explained later on in this guide.
 
 The object ``mDexClassLoader`` is then initialized as a ``DexClassLoader`` instance, which loads all the classes
 into *examplejar* and caches their optimized version into ``dexOutputDir``. No native library is included
@@ -66,12 +71,12 @@ Finally the designated class is, at first, loaded by invoking the ``loadClass()`
 casting to ``MyClass``. The three different **catch blocks** are used to handle different exceptions that may be raised during the process.
 
 .. note::
-	Notice that a **full class name** is required and so the complete package name separated by dots must precede the class name.
-	So in the example the full class name is ``com.example.MyClass`` and not just the short class name ``MyClass``.
-	In case that a short class name is provided, it is likely that a ``ClassNotFoundException`` will be raised at runtime.
+	Notice that a **full class name** is required to successfully load a class and so the **complete package name** separated by dots must **precede** the **class name**.
+	Referred to the example, full class name is ``com.example.MyClass`` and not just the short class name ``MyClass``, which would produce a failure in the class loading operation.
+	In particular if it is the case that a short class name is provided in stead of a full one, it is likely that a ``ClassNotFoundException`` will be raised at runtime.
 
 This snippet of code is perfectly fine and working but it is **not completely secure** since neither integrity on the container of the classes, neither authentication on the developer of the container are checked before executing the code.
-And here comes ``SecureDexClassLoader`` to solve all of these issues.  
+And here comes ``SecureDexClassLoader`` to solve these issues.  
 
 Using SecureDexClassLoader to load dynamic code securely 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -109,8 +114,8 @@ Since here you just want to load ``com.example.MyClass`` the following snippet o
 	represented by the **Android Debug Certificate**, a certificate used to sign applications before
 	running them in debug mode and not safe to use during production phase.
 	``SecureDexClassLoader`` has been instructed to automatically reject class loading for classes 
-	whose package name has been associated to the **Android Debug Certificate** and so **DO NOT USE IT**
-	to check the signature of your containers.
+	whose package name has been associated for signature verification to the **Android Debug Certificate** 
+	and so **DO NOT USE IT** to check the signature of your containers.
 
 .. note::
 	You may want to insert more than one entry into the associative map. This is useful whenever you want to
@@ -121,8 +126,8 @@ Since here you just want to load ``com.example.MyClass`` the following snippet o
 
 .. note::
 	For each entry of the map only an **HTTPS** link will be accepted. This is necessary in order to 
-	**avoid MITM (Man-In-The-Middle)** attacks while retrieving the certificate. In case that an **HTTP**
-	link is inserted, ``SecureLoaderFactory`` will enforce HTTPS protocol on it and in any case whenever 
+	**avoid MITM (Man-In-The-Middle)** attacks while retrieving the *trusted* certificate. In case that an **HTTP**
+	link is inserted, ``SecureLoaderFactory`` will enforce *HTTPS protocol* on it and in any case whenever 
 	no certificate is found at the provided URL, no dynamic class loading will succeed for any class of 
 	the related package so **take care to verify** that certificate URL is correctly spelled and working.
 
@@ -140,41 +145,57 @@ an application private certificate folder. Also notice that in this case no dire
 since ``SecureDexClassLoader`` will automatically reserve such a folder.
 
 .. note::
-	As stated in the API documentation ``jarContainerPath`` may link many different containers separated by ``:`` and 
+	As stated in the `API documentation <http://developer.android.com/reference/dalvik/system/DexClassLoader.html#DexClassLoader(java.lang.String, java.lang.String, java.lang.String, java.lang.ClassLoader)>`_ ``jarContainerPath`` may link many *different containers* separated by ``:`` and 
 	for such a reason the **developer is responsible** of filling the associative map of the certificates location
 	accordingly with all the entries needed to cover all the package names of the classes to be loaded.
 
 .. note::
 	``DexClassLoader``, the standard class from Android API, is able to parse and import only those *jar* and *apk* 
-	containers listed in ``jarContainerPath`` as resources stored on the mobile device. In addition to this 
-	``SecureDexClassLoader`` is also capable of **downloading containers** directly stored on the web 
+	containers listed in ``jarContainerPath`` which are directly saved on the mobile device storage. In addition to this 
+	``SecureDexClassLoader`` is also capable of **downloading remote containers** from the web 
 	(i.e. **HTTP or HTTPS URL**) and to import them into an application-private directory to avoid code injections 
 	from attackers.
 	
 	Example::
 
-		jarContainerPath = "http://something.somethingelse.com/dev/examplejar"
+		jarContainerPath = "http://something.somethingelse.com/dev/exampleJar.jar";
 
 	This ``jarContainerPath`` will retrieve no resource when used in the constructor of ``DexClassLoader`` but it 
-	is perfectly fine as first parameter of the ``mSecureLoaderFactory.createDexClassLoader()`` call.
+	is perfectly fine as a first parameter of the ``mSecureLoaderFactory.createDexClassLoader()`` call, as long as
+	a *jar* container is actually stored at the remote location.
 
-Finally you can use the resulting ``mSecureDexClassLoader`` to load the desired class by means of this call::
+Finally you can use the resulting ``mSecureDexClassLoader`` to load the desired class in a similar fashion to ``DexClassLoader``::
 
 	 	try {
 			Class<?> loadedClass = mSecureDexClassLoader.loadClass("com.example.MyClass");
-			myClassInstance = (MyClass) loadedClass.newInstance();
+
+			// Check whether the signature verification process succeeds
+			if (loadedClass == null) {
+
+				// One of the security constraints was violated so no class
+				// loading was allowed..
+			}
+			else {
+
+				// Class loading was successful and performed in a safe way.
+				myClassInstance = (MyClass) loadedClass.newInstance();
+
+				// Do something with the loaded object myClassInstance
+				// i.e. myClassInstance.doSomething();
+			}
+
 		} catch (ClassNotFoundException e) {
+			// This exception will be raised when the container of the target class
+			// is genuine but this class file is missing..
 			e.printStackTrace();
 		} catch (InstantiationException e) {
-			// Handle this exception since now it is not necessary an error
-			// but it may be a security constraint being violated..
+			e.printStackTrace();
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
 		}
 
-It is important to remember that the ``mSecureDexClassLoader.loadClass()`` call will return ``null`` not only if
-no class matching the provided name is found (as it happens in ``DexClassLoader``) but also whenever **at least one 
-of the following security constraints is violated**:
+It is important to notice that, differently from ``DexClassLoader``, the ``mSecureDexClassLoader.loadClass()`` call will 
+return ``null``  whenever **at least one of the following security constraints is violated**:
 
 * The *package name* of the class used as a parameter of ``loadClass()`` was **not previously included in the associative
   map** and so it do not exist any certificate that could be used to validate this class.
@@ -187,37 +208,133 @@ of the following security constraints is violated**:
 * At least one of the **entry** of the *container file* do **not match its signature** even if the certificate used to sign
   the container file is the trusted one. [Possibility of repackaged container]
 
-For all of these reasons you should always pay attention in **handling exceptions** thrown in this case since they may 
-be a clue to **establish security violation**. *Informative and debug messages* will be generated in the logs by the 
-classes of the Grab'n Run library in order to help you figure out what it is happening.
+For all of these reasons you should always check and pay attention when a **null** pointer is returned after a 
+``mSecureDexClassLoader.loadClass()`` call since this is a clear clue to establish either a wrong set up of 
+``SecureLoaderFactoty`` and ``SecureDexClassLoader`` or a security violation. 
+*Informative and debug messages* will be generated in the logs by the classes of the Grab'n Run library in order 
+to help you figure out what it is happening.
 
 .. note::
-	Every time that ``SecureDexClassLoader`` finds out a repackaged container, it will immediately delete this file
-	from the device since a fresh and genuine copy of the container should be retrieved instead.
+	Every time that ``SecureDexClassLoader`` finds out a (possibly repackaged) **invalid container**, it will immediately 
+	**delete** this file from its **application-private directory**. Nevertheless if this container is *stored on your device* 
+	it may be a good idea for you, as a developer, after having double checked that you have properly set up ``SecureDexClassLoader``, 
+	to **look for a fresh copy** of the container or at least **not to trust** and delete this container from the phone.
+
+Please notice, on the other hand, that the three exceptions caught in the try-catch block surrounding the ``loadClass()`` method 
+behaves and are thrown in the same way as it would happen with ``DexClassLoader``.
+
+Finally for clarity the full snippet of code presented in this section is reported here::
+
+		MyClass myClassInstance = null;
+		jarContainerPath = "http://something.somethingelse.com/dev/exampleJar.jar";
+
+		Map<String, String> packageNamesToCertMap = new HashMap<String, String>();
+		packageNamesToCertMap.put("com.example", "https://something.somethelse.com/example_cert.pem");
+
+		SecureLoaderFactory mSecureLoaderFactory = new SecureLoaderFactory(this);
+		SecureDexClassLoader mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
+													null, 
+													packageNamesToCertMap, 
+													getClass().getClassLoader());
+
+		try {
+			Class<?> loadedClass = mSecureDexClassLoader.loadClass("com.example.MyClass");
+
+			// Check whether the signature verification process succeeds
+			if (loadedClass == null) {
+
+				// One of the security constraints was violated so no class
+				// loading was allowed..
+			}
+			else {
+
+				// Class loading was successful and performed in a safe way.
+				myClassInstance = (MyClass) loadedClass.newInstance();
+				
+				// Do something with the loaded object myClassInstance
+				// i.e. myClassInstance.doSomething();
+			}
+
+		} catch (ClassNotFoundException e) {
+			// This exception will be raised when the container of the target class
+			// is genuine but this class file is missing..
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		}											
+
 
 Wiping out cached containers and certificates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In order to *improve performance* and offer the possibility to *partially work also when connectivity is limited*, 
-``SecureDexClassLoader`` will store certificates retrieved from the web into an **application-private directory**.
+``SecureDexClassLoader`` will store certificates retrieved from the web and all containers into specific **application-private directories**.
 
-Every time that a certificate is needed to verify a class, ``SecureDexClassLoader`` will at first look for it
-inside this directory and then, if no match is found, possibly download it from the web.
+Every time that a **resource** (container or certificate) is needed to load or verify a class, ``SecureDexClassLoader`` will at first 
+look for it inside its private directories and then, if no match is found, possibly attempt to download it from the web or found it 
+at a specified location on the device (this last option is applicable only for containers).
 
-It was also stated into `Using SecureDexClassLoader to load dynamic code securely`_ that, differently from
-``DexClassLoader``, ``SecureDexClassLoader`` is also able to **download and import remote containers** into an
-*application-private folder*.
+.. It was also stated into `Using SecureDexClassLoader to load dynamic code securely`_ that, differently from
+.. ``DexClassLoader``, ``SecureDexClassLoader`` is also able to **download and import remote containers** into an
+.. *application-private folder*.
 
-Because of this features it may come useful to the developer the possibility to easily delete either downloaded containers 
-or certificates or both of them imported by a ``SecureDexClassLoader`` object. In order to do so a call to the
-``wipeOutPrivateAppCachedData()`` is sufficient.
+Even if these **caching features** may come really useful and *speed up* significantly ``SecureDexClassLoader`` execution,
+it would be also nice for the developer to have the possibility to **choose** whether a **fresh or cached copy** of either a 
+certificate or a container should be used for the *dynamic loading operations*. And that is the reason why ``SecureDexClassLoader``
+provides a method called ``wipeOutPrivateAppCachedData()`` to manage this choice.
 
-Let us consider again the previous scenario: after having tried to load ``com.example.MyClass``, if you want to *cancel
-both the certificates and the containers* used by the related ``mSecureDexClassLoader``, the code to insert is::
+To present this method let us consider again the previous scenario shown in `Using SecureDexClassLoader to load dynamic code securely`_: 
+after having tried to load ``com.example.MyClass``, if you want to *delete both the cached certificates and the containers* used by the 
+related ``mSecureDexClassLoader``, in order to impose for the next loading operation the retrieval of **fresh resources**, the call to 
+perform is the following::
 
 		mSecureDexClassLoader.wipeOutPrivateAppCachedData(true, true);
 
 .. note::
-	After that you *have canceled at least one between the certificates and the containers*, ``mSecureDexClassLoader``
-	will always return ``null`` to any invocation of the ``loadClass()`` method. So it will be **necessary** for you
-	to require a **new** ``SecureDexClassLoader`` instance to ``SecureLoaderFactory``.
+	After that you *have erased at least one cached resource between the certificates and the containers*, ``mSecureDexClassLoader``
+	will always return ``null`` for **consistency reason** to any invocation of the ``loadClass()`` method. 
+	So it will be **necessary** for you to require a **new** ``SecureDexClassLoader`` instance to ``SecureLoaderFactory``
+	through the invocation of the ``createDexClassLoader()`` method before being able to dynamically and securely load other classes.
+
+Advanced topics
+---------------
+
+In the end of this pages a couple of not so trivial use cases of *Grab'n Run* are presented. This section will not introduce new core concepts but it may help the developer to handle some **tricky situations**. For such a reason feel free to **skip this part** and eventually **come back later** to revise it whenever you will encounter one of the following situation while using the library.
+
+Handling containers whose classes come from different package names
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Even if it is not such a common situation it is possible for a *jar* archive to *contain classes which belongs to different package names*.
+This situation, on the other hand, is **not practical** for *apk* containers since, in order to be **published** on Google Market, 
+an application needs to have a **single** package name which more over must **not change** during its whole life cycle.
+
+Anyway let us try to sketch the case of the previous cited jar archive and how to handle it with ``SecureDexClassLoader``. As an example we can consider the 
+scenario in which the goal is loading two classes, whose full class names are respectively ``com.example.MyFirstClass`` and ``com.test.MySecondClass`` and so 
+which **differs** in the **package name** but are **both stored** in the **same container** ``exampleJar.jar``.
+It is also supposed that this container has being signed with a *valid self-signed certificate*, remotely located at ``https://something.somethelse.com/example_cert.pem``.
+
+In order to handle this situation correctly the developer is required to fill the **associative map** which links package names and certificates
+with **two entries**, one per each package name, which will *point to the same remote certificate*. This is exemplified in the following snippet of code::
+
+		Map<String, String> packageNamesToCertMap = new HashMap<String, String>();
+		packageNamesToCertMap.put("com.example", "https://something.somethelse.com/example_cert.pem");
+		packageNamesToCertMap.put("com.test", "https://something.somethelse.com/example_cert.pem");
+
+For the rest the developer may proceed as shown in `Using SecureDexClassLoader to load dynamic code securely`_ and this procedure grants to succeed in the loading
+process for any of the two classes independently on the order in which they are attempted to be loaded.
+
+.. note::
+	By design ``SecureDexClassLoader`` assumes that **each package name** is intrinsically related to a **single container**, while it is not necessary true the opposite.
+	This means that attempting to *load a class*, whose **package name** is associated with **more than one container** provided in *dexPath* (i.e. each one of the two 
+	containers contains at least one class with the same package name), will generate an **unpredictable behavior** since ``SecureDexClassLoader`` will associate 
+	that package name with just one of the two containers.
+
+	So it is a **developer responsibility** to check the containers in order to avoid the occurrence of this unpleasant situation.
+
+
+Perform dynamic code loading concurrently
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO

@@ -10,12 +10,11 @@ Grab'n Run is a **simple** and **effective** Java Library that you can add to yo
 
 For a **quick start** on how to include the library and how to use it in your projects give a look at :doc:`tutorial`.
 
-For a brief explanation on the **issue** of *unsecure dynamic class loading* and on Grab'n Run purpose check the :doc:`security` section.
+For a brief explanation on the **issue** of *insecure dynamic class loading* and on Grab'n Run purpose check the :doc:`security` section.
 
-A concise **example** of use of the library is provided into an Android toy-application `here <http://link.me>`_. A *full explanation* of this code is 
-given into the :doc:`example` section.
+A concise **example** of use of the library is provided into an Android toy-application `here <http://link.me>`_. A *full explanation* of key extracts of this code is given into the :doc:`example` section.
 
-Finally for more technicisms on Grab'n Run **API** please refer to the :doc:`javaAPI/packages`.
+Finally for more technicalities and a schematic description on Grab'n Run **API** please refer to the :doc:`javaAPI/packages`.
 
 .. toctree::
    :maxdepth: 2
