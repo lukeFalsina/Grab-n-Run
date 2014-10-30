@@ -6,7 +6,7 @@
 
     <uses-sdk
         android:minSdkVersion="16"
-        android:targetSdkVersion="19" />
+        android:targetSdkVersion="20" />
     
     <uses-permission android:name="android.permission.INTERNET"></uses-permission>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"></uses-permission>

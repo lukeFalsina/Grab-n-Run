@@ -491,7 +491,26 @@ public class SecureDexClassLoader {
 						// Integrity was granted and the class can be loaded.
 						// Before doing so this package name is stored into the set of 
 						// those which have been already successfully verified.
-						lazyAlreadyVerifiedPackageNameSet.add(packageName);
+						// lazyAlreadyVerifiedPackageNameSet.add(packageName);
+						
+						// Look for all the package names linked to the same container.
+						// Since the verification steps is performed on the whole container, 
+						// all the package names linked to it will automatically succeed on the
+						// signature verification and so they need to be stored into the set of 
+						// those package names which have been already successfully verified..
+						Iterator<String> packageNamesIterator = packageNameToContainerPathMap.keySet().iterator();
+						
+						while (packageNamesIterator.hasNext()) {
+							
+							String currentPackageName = packageNamesIterator.next();
+							
+							if (packageNameToContainerPathMap.get(currentPackageName).equals(containerPath)) {
+								
+								// This collection won't be modified if it already contains the current analyzed package name..
+								lazyAlreadyVerifiedPackageNameSet.add(currentPackageName);
+							}		
+						}
+						
 						return mDexClassLoader.loadClass(className);
 					}
 					
@@ -500,15 +519,26 @@ public class SecureDexClassLoader {
 					File containerToRemove = new File(containerPath);
 					if (!containerToRemove.delete())
 						Log.w(TAG_SECURE_DEX_CLASS_LOADER, "It was impossible to delete " + containerPath);
-					packageNameToContainerPathMap.remove(packageName);
+					
+					// packageNameToContainerPathMap.remove(packageName);
+					// Remove from the associative map all of those package names which are linked to this container.
+					// In fact since this container fails the verification steps, all the classes inside of it won't be loaded.
+					Iterator<String> packageNamesIterator = packageNameToContainerPathMap.keySet().iterator();
+					
+					while (packageNamesIterator.hasNext()) {
+						
+						String currentPackageName = packageNamesIterator.next();
+						
+						if (packageNameToContainerPathMap.get(currentPackageName).equals(containerPath))
+							packageNamesIterator.remove();
+					}
 					
 					return null;
 				}
 				
-				// Download procedure fails and the required
-				// certificate has not been cached locally.
-				// No class should be loaded since its signature
-				// can't be verified..
+				// Download procedure fails and the required certificate has not been cached locally.
+				// No class should be loaded since its signature can't be verified..
+				// But on the other hand this do not imply that the container is necessarly malicious.
 				return null;
 			}
 			
