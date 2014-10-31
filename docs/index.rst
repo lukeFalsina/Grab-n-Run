@@ -14,7 +14,7 @@ For a brief explanation on the **issue** of *insecure dynamic class loading* and
 
 A concise **example** of use of the library is provided into an Android toy-application `here <http://link.me>`_. A *full explanation* of key extracts of this code is given into the :doc:`example` section.
 
-Finally for more technicalities and a schematic description on Grab'n Run **API** please refer to the :doc:`javaAPI/packages`.
+Finally for more technicalities and a schematic description on Grab'n Run **API** please refer to the `API documentation <file:../../javaDoc/index.html>`_. 
 
 .. toctree::
    :maxdepth: 2
@@ -22,7 +22,7 @@ Finally for more technicalities and a schematic description on Grab'n Run **API*
    tutorial
    security
    example
-   javaAPI/packages
+..   javaAPI/packages
 
 Indices and tables
 ==================
