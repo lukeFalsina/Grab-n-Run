@@ -10,7 +10,7 @@ import java.io.FileFilter;
  * 
  * @author Luca Falsina
  */
-public final class FileFilterByName implements FileFilter {
+final class FileFilterByName implements FileFilter {
 
 	private String name;
 	private String extension;

@@ -20,7 +20,7 @@ import android.net.NetworkInfo;
 //import android.os.Handler;
 import android.util.Log;
 
-public final class FileDownloader {
+final class FileDownloader {
 	
 	// Unique identifier used for Log entries
 	private static final String TAG_FILE_DOWNLOADER = FileDownloader.class.getSimpleName();

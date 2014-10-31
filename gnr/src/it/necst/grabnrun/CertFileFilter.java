@@ -12,7 +12,7 @@ import java.io.FileFilter;
  * 
  * @author Luca Falsina
  */
-public final class CertFileFilter implements FileFilter {
+final class CertFileFilter implements FileFilter {
 
 	private final String[] okCertsExtensions = new String[] {".pem"};
 	

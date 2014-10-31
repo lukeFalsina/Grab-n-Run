@@ -22,7 +22,7 @@ import android.util.Log;
  * 
  * @author Luca Falsina
  */
-public final class CacheLogger {
+final class CacheLogger {
 
 	// Unique identifier used for Log entries
 	private static final String TAG_FILE_CACHE_LOGGER = CacheLogger.class.getSimpleName();
