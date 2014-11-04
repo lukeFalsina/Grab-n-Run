@@ -15,6 +15,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -133,7 +134,7 @@ public class SecureDexClassLoader {
 		
 		this.performLazyEvaluation = performLazyEvaluation;
 		
-		lazyAlreadyVerifiedPackageNameSet = new HashSet<String>();
+		lazyAlreadyVerifiedPackageNameSet = Collections.synchronizedSet(new HashSet<String>());
 		
 		// Initialize the certificate factory
 		try {
@@ -144,7 +145,8 @@ public class SecureDexClassLoader {
 		
 		// Map initialization
 		packageNameToCertificateMap = null;
-		packageNameToContainerPathMap = new LinkedHashMap<String, String>();
+		// packageNameToContainerPathMap = new LinkedHashMap<String, String>();
+		packageNameToContainerPathMap = Collections.synchronizedMap(new LinkedHashMap<String, String>());
 		
 		// Analyze each path in dexPath, find its package name and 
 		// populate packageNameToContainerPathMap accordingly
@@ -453,16 +455,29 @@ public class SecureDexClassLoader {
 		
 		// Retrieve the path of the container from package name.
 		// If there is not such a path, then no class can be loaded.
-		String containerPath = packageNameToContainerPathMap.get(packageName);
+		String containerPath;
+		
+		synchronized (packageNameToContainerPathMap) {
+			
+			containerPath = packageNameToContainerPathMap.get(packageName);
+		}
+		
 		if(containerPath == null) return null;
 		
 		if (performLazyEvaluation) {
 			
 			// If SecureDexClassLoader is running in LAZY mode, now it is time 
 			// to verify the signature of the container associated with the class to load..
+			boolean alreadyVerifiedPackageName;
 			
-			// At first check whether this package name has been already verified..
-			if (lazyAlreadyVerifiedPackageNameSet.contains(packageName)) {
+			// Force synchronization on this check on the set..
+			synchronized (lazyAlreadyVerifiedPackageNameSet) {
+			
+				// At first check whether this package name has been already verified..
+				alreadyVerifiedPackageName = lazyAlreadyVerifiedPackageNameSet.contains(packageName);
+			}
+			
+			if (alreadyVerifiedPackageName) {
 				
 				// This package name has been already verified once so classes
 				// belonging to it can be immediately loaded.
@@ -498,18 +513,22 @@ public class SecureDexClassLoader {
 						// all the package names linked to it will automatically succeed on the
 						// signature verification and so they need to be stored into the set of 
 						// those package names which have been already successfully verified..
-						Iterator<String> packageNamesIterator = packageNameToContainerPathMap.keySet().iterator();
 						
-						while (packageNamesIterator.hasNext()) {
+						synchronized (lazyAlreadyVerifiedPackageNameSet) {
 							
-							String currentPackageName = packageNamesIterator.next();
+							Iterator<String> packageNamesIterator = packageNameToContainerPathMap.keySet().iterator();
 							
-							if (packageNameToContainerPathMap.get(currentPackageName).equals(containerPath)) {
+							while (packageNamesIterator.hasNext()) {
 								
-								// This collection won't be modified if it already contains the current analyzed package name..
-								lazyAlreadyVerifiedPackageNameSet.add(currentPackageName);
-							}		
-						}
+								String currentPackageName = packageNamesIterator.next();
+								
+								if (packageNameToContainerPathMap.get(currentPackageName).equals(containerPath)) {
+									
+									// This collection won't be modified if it already contains the current analyzed package name..
+									lazyAlreadyVerifiedPackageNameSet.add(currentPackageName);
+								}		
+							}
+						}						
 						
 						return mDexClassLoader.loadClass(className);
 					}
@@ -518,21 +537,24 @@ public class SecureDexClassLoader {
 					// No class loading should be allowed and the container should be removed as well.
 					File containerToRemove = new File(containerPath);
 					if (!containerToRemove.delete())
-						Log.w(TAG_SECURE_DEX_CLASS_LOADER, "It was impossible to delete " + containerPath);
+						Log.i(TAG_SECURE_DEX_CLASS_LOADER, "It was impossible to delete " + containerPath);
 					
 					// packageNameToContainerPathMap.remove(packageName);
 					// Remove from the associative map all of those package names which are linked to this container.
 					// In fact since this container fails the verification steps, all the classes inside of it won't be loaded.
-					Iterator<String> packageNamesIterator = packageNameToContainerPathMap.keySet().iterator();
+					synchronized (packageNameToContainerPathMap) {
 					
-					while (packageNamesIterator.hasNext()) {
+						Iterator<String> packageNamesIterator = packageNameToContainerPathMap.keySet().iterator();
 						
-						String currentPackageName = packageNamesIterator.next();
-						
-						if (packageNameToContainerPathMap.get(currentPackageName).equals(containerPath))
-							packageNamesIterator.remove();
+						while (packageNamesIterator.hasNext()) {
+							
+							String currentPackageName = packageNamesIterator.next();
+							
+							if (packageNameToContainerPathMap.get(currentPackageName).equals(containerPath))
+								packageNamesIterator.remove();
+						}
 					}
-					
+										
 					return null;
 				}
 				

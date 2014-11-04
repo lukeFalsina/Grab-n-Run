@@ -233,8 +233,10 @@ public class SecureLoaderFactory {
 				//String fixedPath = path.replaceAll("http//", "http://");
 				//fixedPath = fixedPath.replaceAll("https//", "https://");
 				String fixedRemotePath;
-				if (path.startsWith("http//")) fixedRemotePath = "http:" + path.substring(4);
-				else fixedRemotePath = "https:" + path.substring(5);
+				if (path.startsWith("http//"))
+					fixedRemotePath = "http:" + path.substring(4);
+				else
+					fixedRemotePath = "https:" + path.substring(5);
 				
 				String cachedContainerFileName = mCacheLogger.checkForCachedEntry(fixedRemotePath);
 				
@@ -245,8 +247,7 @@ public class SecureLoaderFactory {
 					// the remote container again.
 					finalDexPath.append(importedContainerDir.getAbsolutePath() + File.separator + cachedContainerFileName + File.pathSeparator);
 					Log.d(TAG_SECURE_FACTORY, "Dex Path has been modified into: " + finalDexPath);
-				}
-				else {
+				} else {
 					
 					// No cached copy so it is necessary to download the remote resource from the web.
 
@@ -270,8 +271,7 @@ public class SecureLoaderFactory {
 							// this file to the path
 							if (!downloadedContainer.delete())
 								Log.w(TAG_SECURE_FACTORY, "Issue while deleting " + downloadedContainerPath);
-						}
-						else {
+						} else {
 							
 							// Rename the previous container file according to the containerDigest and its extension.
 							String downloadedContainerFinalPath = importedContainerDir.getAbsolutePath() + File.separator + containerDigest + extension;
@@ -291,8 +291,7 @@ public class SecureLoaderFactory {
 								
 								// It is also relevant to add this resource to the Log file of the cached remote containers.
 								mCacheLogger.addCachedEntryToLog(fixedRemotePath, containerDigest + extension);
-							}
-							else {
+							} else {
 								// Renaming operation failed..
 								// Erase downloaded container.
 								if (!downloadedContainer.delete())
@@ -441,7 +440,6 @@ public class SecureLoaderFactory {
 			byte[] buffer = new byte[8192];
 		    int length;
 		    while( (length = inStream.read(buffer)) != -1 ) {
-		    	
 		    	// File is loaded by considering chunks of it..
 		    	messageDigest.update(buffer, 0, length);
 		    }
@@ -449,14 +447,17 @@ public class SecureLoaderFactory {
 		    byte[] digestBytes = messageDigest.digest();
 		    
 		    // ..and translated into a human readable string through Base64 encoding (Url safe).
-		    digestString = new String(Base64.encode(digestBytes, Base64.URL_SAFE));
+		    // Also remove the last /n part of the string
+		    // digestString = new String(Base64.encode(digestBytes, Base64.URL_SAFE));
+		    digestString = Base64.encodeToString(digestBytes, Base64.URL_SAFE);
 		    
+		    // Log.w(TAG_SECURE_FACTORY, digestString);
+		    // Log.w(TAG_SECURE_FACTORY, digestString.substring(0, digestString.length() - 3));
 		} catch (FileNotFoundException e) {
 			Log.w(TAG_SECURE_FACTORY, "No file found at " + filePath);
 		} catch (IOException e) {
 			Log.w(TAG_SECURE_FACTORY, "Something went wrong while calculating the digest!");
 		} finally {
-			
 			if (inStream != null) {
 				try {
 					inStream.close();

@@ -345,7 +345,7 @@ public class MainActivity extends Activity {
 				Log.w(TAG_MAIN, "No class should be loaded!");
 			} else {
 				
-				Log.i(TAG_MAIN, "This time the chosen class should find a certificate but the" +
+				Log.i(TAG_MAIN, "This time the chosen class should find a certificate but the " +
 						"apk container signatures do not match all properly and so no class loading! CORRECT!");
 			}
 			
