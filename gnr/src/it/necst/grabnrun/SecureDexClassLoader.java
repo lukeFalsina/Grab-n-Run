@@ -37,6 +37,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.util.Log;
 import dalvik.system.DexClassLoader;
+import dalvik.system.DexFile;
 
 /**
  * A class that provides an extension of default {@link DexClassLoader} 
@@ -206,55 +207,21 @@ public class SecureDexClassLoader {
 		if (extension.equals(".jar")) {
 				
 			// JAR container case:
-			// 1. Open jar file
-			// 2. Scan all the entries till one .java is found
-			// 3. Retrieve package name from this entry class name
+			// 1. Open the jar file.
+			// 2. Look for the "classes.dex" entry inside the container.
+			// 3. If it is present, retrieve package names by parsing it as a DexFile.
 			
-			// String packageName = null;
 			boolean isAValidJar = false;
 			JarFile containerJar = null;
 			
-			// Since in a jar there may be different package names for each class
-			// but at the same time I want to keep just one record for each package
-			// name, a set data structure fits well while processing.
-			Set<String> packageNameSet = new HashSet<String>();
-			
 			try {
 				
+				// Open the jar container..
 				containerJar = new JarFile(containerPath);
-				Enumeration<JarEntry> entries = containerJar.entries();
 				
-				// Scan all the entries in the jar archive
-				while (entries.hasMoreElements()) {
-				
-					JarEntry currentEntry = entries.nextElement();
-					
-					if (currentEntry.getName().endsWith(".java")) {
-						
-						// A valid java file of a class was found so 
-						// package name could be extracted from here
-						String fullClassName = currentEntry.getName();
-						
-						// Cancel white spaces before processing the full class name..
-						// It may happen to find them while parsing JarEntry objects..
-						while (fullClassName.startsWith(" "))
-							fullClassName = fullClassName.substring(1, fullClassName.length());
-						
-						int lastIndexPackageName = fullClassName.lastIndexOf(File.separator);
-						if (lastIndexPackageName != -1) {
-							
-							String packageName = fullClassName.substring(0, lastIndexPackageName).replaceAll(File.separator, ".");
-							packageNameSet.add(packageName);
-						}
-						
-					} else {
-						
-						// It is necessary that the jar container has an entry "classes.dex" in 
-						// order to be correctly executed by a DexClassLoader..
-						if (currentEntry.getName().endsWith("classes.dex")) 
-							isAValidJar = true;
-					}
-				}
+				// Look for the "classes.dex" entry inside the container.
+				if (containerJar.getJarEntry("classes.dex") != null)
+					isAValidJar = true;
 				
 			} catch (IOException e) {
 				return null;
@@ -269,6 +236,54 @@ public class SecureDexClassLoader {
 			
 			if (isAValidJar) {
 
+				// Use a DexFile object to parse the classes inside of the jar container and retrieve package names..
+				DexFile dexFile = null;
+				
+				// Since in a jar there may be different package names for each class
+				// but at the same time I want to keep just one record for each package
+				// name, a set data structure fits well while processing.
+				Set<String> packageNameSet = new HashSet<String>();
+				
+				try {
+					
+					// Temporary file location for the loaded classes inside of the jar container
+					String outputDexTempPath = containerPath.substring(0, extensionIndex) + ".odex";
+					
+					// Load the dex classes inside the temporary file.
+					dexFile = DexFile.loadDex(containerPath, outputDexTempPath, 0);
+					
+					Enumeration<String> dexEntries = dexFile.entries();
+					
+					while (dexEntries.hasMoreElements()) {
+						
+						// Full class name, used to extract a valid package name.
+						String fullClassName = dexEntries.nextElement();
+						//Log.i(TAG_SECURE_DEX_CLASS_LOADER, fullClassName);
+						
+						// Cancel white spaces before processing the full class name..
+						// It may happen to find them while parsing class names..
+						while (fullClassName.startsWith(" "))
+							fullClassName = fullClassName.substring(1, fullClassName.length());
+						
+						int lastIndexPackageName = fullClassName.lastIndexOf(".");
+						
+						if (lastIndexPackageName != -1) {
+							
+							String packageName = fullClassName.substring(0, lastIndexPackageName);
+							packageNameSet.add(packageName);
+						}
+						
+					}
+					
+					// Finally erase the .odex file since it's not necessary anymore..
+					new File(outputDexTempPath).delete();
+					
+				} catch (IOException e) {
+					// Problem parsing the attached classes.dex so no valid package name
+					return null;
+				}
+				
+				
 				// Populate the final list with the package names
 				// contained in the set.
 				Iterator<String> packageNameSetIterator = packageNameSet.iterator();
