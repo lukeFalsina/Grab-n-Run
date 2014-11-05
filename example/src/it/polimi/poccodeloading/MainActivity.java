@@ -4,6 +4,8 @@ import it.necst.grabnrun.SecureDexClassLoader;
 import it.necst.grabnrun.SecureLoaderFactory;
 
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -177,15 +179,20 @@ public class MainActivity extends Activity {
 		String listAPKPaths = "https://dl.dropboxusercontent.com/u/28681922/NasaDailyImageSigned.apk";
 		
 		// Filling the associative map to link package name and certificate..
-		Map<String, String> packageNamesToCertMap = new HashMap<String, String>();
+		Map<String, URL> packageNamesToCertMap = new HashMap<String, URL>();
 		// 1st Entry: valid REMOTE certificate location
-		packageNamesToCertMap.put("headfirstlab.nasadailyimage", "https://dl.dropboxusercontent.com/u/28681922/test_cert.pem");
+		try {
+			packageNamesToCertMap.put("headfirstlab.nasadailyimage", new URL("https://dl.dropboxusercontent.com/u/28681922/test_cert.pem"));
+		} catch (MalformedURLException e) {
+			// An invalid URL was provided for remote certificate location
+			Log.e(TAG_MAIN, "Invalid URL for remote certificate location!");
+		}
 		
 		// Instantiation of SecureDexClassLoader
 		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	listAPKPaths, 
 																			null, 
-																			packageNamesToCertMap, 
-																			ClassLoader.getSystemClassLoader().getParent());
+																			ClassLoader.getSystemClassLoader().getParent(),
+																			packageNamesToCertMap);
 		
 		Debug.stopMethodTracing(); // end of "SecureDexFactory Preparation" section
 		
@@ -266,7 +273,7 @@ public class MainActivity extends Activity {
 								//+ ":http://jdbc.postgresql.org/download/postgresql-9.2-1002.jdbc4.jar";
 		
 		Log.i(TAG_MAIN, "1st Test: Fetch the certificate by reverting package name with no associative map..");
-		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(listAPKPaths, null, null, ClassLoader.getSystemClassLoader().getParent());		
+		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(listAPKPaths, null, ClassLoader.getSystemClassLoader().getParent(), null);		
 		
 		try {
 			
@@ -292,120 +299,131 @@ public class MainActivity extends Activity {
 		// between package name and certificate --> FAIL cause the apk
 		// was signed with the DEBUG ANDROID certificate
 		
-		// Filling the associative map to link package names and certificates..
-		Map<String, String> packageNamesToCertMap = new HashMap<String, String>();
-		// 1st Entry: valid remote certificate location
-		// packageNamesToCertMap.put("headfirstlab.nasadailyimage", "https://github.com/lukeFalsina/test/test_cert.pem");
-		packageNamesToCertMap.put("headfirstlab.nasadailyimage", "https://dl.dropboxusercontent.com/u/28681922/test_cert.pem");
-		// 2nd Entry: inexistent certificate -> This link will be enforced to https but still there is no certificate at the final pointed URL
-		packageNamesToCertMap.put("it.polimi.example", "http://google.com/test_cert.pem");
-		// 3rd Entry: misspelled and so invalid URL (missing a p..)
-		packageNamesToCertMap.put("it.polimi.example2", "htt://google.com/test_cert2.pem");
-		// 4th Entry: reverse package name and then inexistent certificate at https://polimi.it/example3/certificate.pem
-		packageNamesToCertMap.put("it.polimi.example3", null);
-
-		Log.i(TAG_MAIN, "2nd Test: Fetch the certificate by filling associative map..");
-		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	exampleTestAPKPath, 
-																			null, 
-																			packageNamesToCertMap, 
-																			ClassLoader.getSystemClassLoader().getParent());
-		
 		try {
-			Class<?> loadedClass = mSecureDexClassLoader.loadClass(classNameInAPK);
 			
-			if (loadedClass != null) {
-				
-				Log.w(TAG_MAIN, "No class should be loaded!");
-			} else {
-				
-				Log.i(TAG_MAIN, "This time the chosen class should find a certificate but it's the " +
-						"wrong one! CORRECT!");
-			}
+			// Filling the associative map to link package names and certificates..
+			Map<String, URL> packageNamesToCertMap = new HashMap<String, URL>();
+			// 1st Entry: valid remote certificate location
+			packageNamesToCertMap.put("headfirstlab.nasadailyimage", new URL("https://dl.dropboxusercontent.com/u/28681922/test_cert.pem"));
+			// 2nd Entry: inexistent certificate -> This link will be enforced to https but still there is no certificate at the final pointed URL
+			packageNamesToCertMap.put("it.polimi.example", new URL("http://google.com/test_cert.pem"));
+			// 3rd Entry: misspelled and so invalid URL (missing a p..)
+			// packageNamesToCertMap.put("it.polimi.example2", "htt://google.com/test_cert2.pem");
+			// 4th Entry: reverse package name and then inexistent certificate at https://polimi.it/example3/certificate.pem
+			packageNamesToCertMap.put("it.polimi.example3", null);
 			
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-			Log.w(TAG_MAIN, "Class should be present in the provided path!!");
-		}
-		
-		// 3rd Test: Fetch the certificate by filling associative map 
-		// between package name and certificate --> FAIL cause some of 
-		// signatures in the container failed the verification process
-		// against the developer certificate.
-		Log.i(TAG_MAIN, "3rd Test: Fetch the certificate by filling associative map..");
-		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	exampleSignedChangedAPKPath, 
-																			null, 
-																			packageNamesToCertMap, 
-																			ClassLoader.getSystemClassLoader().getParent());
-		
-		try {
-			Class<?> loadedClass = mSecureDexClassLoader.loadClass(classNameInAPK);
+			Log.i(TAG_MAIN, "2nd Test: Fetch the certificate by filling associative map..");
+			mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	exampleTestAPKPath, 
+					null, 
+					ClassLoader.getSystemClassLoader().getParent(),
+					packageNamesToCertMap);
 			
-			if (loadedClass != null) {
+			try {
+				Class<?> loadedClass = mSecureDexClassLoader.loadClass(classNameInAPK);
 				
-				Log.w(TAG_MAIN, "No class should be loaded!");
-			} else {
-				
-				Log.i(TAG_MAIN, "This time the chosen class should find a certificate but the " +
-						"apk container signatures do not match all properly and so no class loading! CORRECT!");
-			}
-			
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-			Log.w(TAG_MAIN, "Class should be present in the provided path!!");
-		}
-		
-		// 4th Test: Fetch the certificate by filling associative map 
-		// between package name and certificate --> SUCCESS cause this 
-		// time the apk was signed with the correct certificate
-		Log.i(TAG_MAIN, "4th Test: Fetch the certificate by filling associative map..");
-		
-		// Creating the apk paths list (you can mix between remote and local URL)..
-		listAPKPaths = 	"http://google.com/testApp2.apk:" + exampleSignedAPKPath;
-		
-		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	listAPKPaths, 
-																			null, 
-																			packageNamesToCertMap, 
-																			ClassLoader.getSystemClassLoader().getParent());
-		
-		try {
-			Class<?> loadedClass = mSecureDexClassLoader.loadClass(classNameInAPK);
-			
-			if (loadedClass != null) {
-				
-				final Activity NasaDailyActivity = (Activity) loadedClass.newInstance();
-				
-				Log.i(TAG_MAIN, "Found valid class: " + loadedClass.getSimpleName() + "; APK path: " + exampleSignedAPKPath.toString() + "; Success!");
-				
-				toastHandler.post(new Runnable() {
-
-					@Override
-					public void run() {
-						Toast.makeText(MainActivity.this,
-								"SecureDexClassLoader was successful! Found activity: " + NasaDailyActivity.getClass().getName(),
-								Toast.LENGTH_SHORT).show();
-					}
+				if (loadedClass != null) {
 					
-				});
+					Log.w(TAG_MAIN, "No class should be loaded!");
+				} else {
+					
+					Log.i(TAG_MAIN, "This time the chosen class should find a certificate but it's the " +
+							"wrong one! CORRECT!");
+				}
 				
-			} else {
-				
-				Log.w(TAG_MAIN, "This time the chosen class should pass the security checks!");
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+				Log.w(TAG_MAIN, "Class should be present in the provided path!!");
 			}
 			
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-			Log.w(TAG_MAIN, "Class should be present in the provided path!!");
-		} catch (InstantiationException e) {
-			Log.w(TAG_MAIN, "Error while instanciating the loaded class!!");
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			Log.w(TAG_MAIN, "Error while instanciating the loaded class!!");
-			e.printStackTrace();
+			// 3rd Test: Fetch the certificate by filling associative map 
+			// between package name and certificate --> FAIL cause some of 
+			// signatures in the container failed the verification process
+			// against the developer certificate.
+			Log.i(TAG_MAIN, "3rd Test: Fetch the certificate by filling associative map..");
+			mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	exampleSignedChangedAPKPath, 
+					null, 
+					ClassLoader.getSystemClassLoader().getParent(),
+					packageNamesToCertMap); 
+			
+			try {
+				Class<?> loadedClass = mSecureDexClassLoader.loadClass(classNameInAPK);
+				
+				if (loadedClass != null) {
+					
+					Log.w(TAG_MAIN, "No class should be loaded!");
+				} else {
+					
+					Log.i(TAG_MAIN, "This time the chosen class should find a certificate but the " +
+							"apk container signatures do not match all properly and so no class loading! CORRECT!");
+				}
+				
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+				Log.w(TAG_MAIN, "Class should be present in the provided path!!");
+			}
+			
+			// 4th Test: Fetch the certificate by filling associative map 
+			// between package name and certificate --> SUCCESS cause this 
+			// time the apk was signed with the correct certificate
+			Log.i(TAG_MAIN, "4th Test: Fetch the certificate by filling associative map..");
+			
+			// Creating the apk paths list (you can mix between remote and local URL)..
+			listAPKPaths = 	"http://google.com/testApp2.apk:" + exampleSignedAPKPath;
+			
+			mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	listAPKPaths, 
+					null, 
+					ClassLoader.getSystemClassLoader().getParent(),
+					packageNamesToCertMap);
+			
+			try {
+				Class<?> loadedClass = mSecureDexClassLoader.loadClass(classNameInAPK);
+				
+				if (loadedClass != null) {
+					
+					final Activity NasaDailyActivity = (Activity) loadedClass.newInstance();
+					
+					Log.i(TAG_MAIN, "Found valid class: " + loadedClass.getSimpleName() + "; APK path: " + exampleSignedAPKPath.toString() + "; Success!");
+					
+					toastHandler.post(new Runnable() {
+						
+						@Override
+						public void run() {
+							Toast.makeText(MainActivity.this,
+									"SecureDexClassLoader was successful! Found activity: " + NasaDailyActivity.getClass().getName(),
+									Toast.LENGTH_SHORT).show();
+						}
+						
+					});
+					
+				} else {
+					
+					Log.w(TAG_MAIN, "This time the chosen class should pass the security checks!");
+				}
+				
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+				Log.w(TAG_MAIN, "Class should be present in the provided path!!");
+			} catch (InstantiationException e) {
+				Log.w(TAG_MAIN, "Error while instanciating the loaded class!!");
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				Log.w(TAG_MAIN, "Error while instanciating the loaded class!!");
+				e.printStackTrace();
+			}
+			
+			// Remove the cached certificates and the certificate..
+			mSecureDexClassLoader.wipeOutPrivateAppCachedData(true, true);
+			Log.d(TAG_MAIN, "Cached data of SecureDexClassLoader have been wiped out..");
+			
+		} catch (MalformedURLException e) {
+			
+			// The previous entries for the map are not necessarily the right ones 
+			// but still they are not malformed so no exception should be raised.
+			Log.e(TAG_MAIN, "A malformed URL was provided for a remote certificate location");
+			
 		}
+
 		
-		// Remove the cached certificates and the certificate..
-		mSecureDexClassLoader.wipeOutPrivateAppCachedData(true, true);
-		Log.d(TAG_MAIN, "Cached data of SecureDexClassLoader have been wiped out..");
 	}
 
 	/**

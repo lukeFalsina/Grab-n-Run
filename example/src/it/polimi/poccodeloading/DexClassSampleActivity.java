@@ -5,6 +5,8 @@ import it.necst.grabnrun.SecureDexClassLoader;
 import it.necst.grabnrun.SecureLoaderFactory;
 
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -204,16 +206,20 @@ public class DexClassSampleActivity extends Activity {
 		SecureLoaderFactory mSecureLoaderFactory = new SecureLoaderFactory(this);
 		
 		// Filling the associative map to link package names and certificates..
-		Map<String, String> packageNamesToCertMap = new HashMap<String, String>();
+		Map<String, URL> packageNamesToCertMap = new HashMap<String, URL>();
 		// 1st Entry: valid remote certificate location
-		// packageNamesToCertMap.put("it.polimi.componentmodifier", "https://github.com/lukeFalsina/test/test_cert.pem");
-		packageNamesToCertMap.put("it.polimi.componentmodifier", "https://dl.dropboxusercontent.com/u/28681922/test_cert.pem");
+		try {
+			packageNamesToCertMap.put("it.polimi.componentmodifier", new URL("https://dl.dropboxusercontent.com/u/28681922/test_cert.pem"));
+		} catch (MalformedURLException e1) {
+			// A malformed URL was used for remote certificate location
+			Log.e(TAG_DEX_SAMPLE, "A malformed URL was used for remote certificate location!");
+		}
 		
 		// Initialize SecureDexClassLoader with repackaged jar container..
 		mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerChoicePath, 
 																			null, 
-																			packageNamesToCertMap, 
-																			getClass().getClassLoader());
+																			getClass().getClassLoader(),
+																			packageNamesToCertMap);
 		
 		// Class returned from the loadClass() operation..
 		Class<?> loadedClass = null;

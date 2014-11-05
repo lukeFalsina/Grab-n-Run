@@ -95,7 +95,8 @@ public class SecureDexClassLoader {
 	// The Certificate Factory instance
 	private CertificateFactory certificateFactory;
 	
-	private Map<String, String> packageNameToCertificateMap, packageNameToContainerPathMap;
+	private Map<String, String> packageNameToContainerPathMap;
+	private Map<String, URL> packageNameToCertificateMap;
 	
 	// Final name of the folder user to store certificates for the verification
 	private static final String CERTIFICATE_DIR = "valid_certs";
@@ -109,7 +110,6 @@ public class SecureDexClassLoader {
 	// loadClass() method will be invoked.
 	private boolean performLazyEvaluation;
 	
-	// TODO Should this collection be thread safe?
 	// Helper cache set used in lazy mode in order to check only once that the container
 	// associated to a package name is valid (This works fine since each used container is
 	// previously imported in an application-private folder).
@@ -303,11 +303,11 @@ public class SecureDexClassLoader {
 		return null;
 	}
 	
-	void setCertificateLocationMap(	Map<String, String> extPackageNameToCertificateMap) {
+	void setCertificateLocationMap(	Map<String, URL> extPackageNameToCertificateMap) {
 		
 		// Either initialize a new map or copy the provided one if it's valid.
 		if (extPackageNameToCertificateMap == null) 
-			packageNameToCertificateMap = new HashMap<String, String>();
+			packageNameToCertificateMap = new HashMap<String, URL>();
 		else
 			packageNameToCertificateMap = extPackageNameToCertificateMap;
 		
@@ -323,14 +323,27 @@ public class SecureDexClassLoader {
 			
 			if (packageNameToCertificateMap.get(currentPackageName) == null) {
 				
-				// No certificate URL was defined for this package name
-				// so certificate URL must be constructed by reverting package name
-				// and a new entry is put in the map.
-				String certificateRemoteURL = revertPackageNameToURL(currentPackageName);
-				packageNameToCertificateMap.put(currentPackageName, certificateRemoteURL);
+				URL certificateRemoteURL;
 				
-				Log.d(	TAG_SECURE_DEX_CLASS_LOADER, "Package Name: " + currentPackageName + 
-						"; Certificate Remote Location: " + certificateRemoteURL + ";");
+				try {
+				
+					// No certificate URL was defined for this package name
+					// so certificate URL must be constructed by reverting package name
+					// and a new entry is put in the map.
+					certificateRemoteURL = revertPackageNameToURL(currentPackageName);
+					
+					// A consistent remote URL was created..
+					packageNameToCertificateMap.put(currentPackageName, certificateRemoteURL);
+					
+					Log.d(	TAG_SECURE_DEX_CLASS_LOADER, "Package Name: " + currentPackageName + 
+							"; Certificate Remote Location: " + certificateRemoteURL + ";");
+					
+				} catch (MalformedURLException e) {
+					// It was impossible to create a valid URL for this package name.
+					Log.d(TAG_SECURE_DEX_CLASS_LOADER, "It was impossible to revert package name " + 
+					currentPackageName + " into a valid URL!");
+				}
+
 			}
 		}
 		
@@ -342,7 +355,7 @@ public class SecureDexClassLoader {
 		}
 	}
 
-	private String revertPackageNameToURL(String packageName) {
+	private URL revertPackageNameToURL(String packageName) throws MalformedURLException {
 		
 		// Reconstruct URL of the certificate from the class package name.
 		String firstLevelDomain, secondLevelDomain;
@@ -352,7 +365,8 @@ public class SecureDexClassLoader {
 		if (firstPointChar == -1) {
 			// No point inside the package name.. NO SENSE
 			// Forced to .com domain
-			return "https://" + packageName + ".com/certificate.pem";
+			return new URL("https", packageName + ".com", "certificate.pem");
+			//return "https://" + packageName + ".com/certificate.pem";
 		}
 		
 		firstLevelDomain = packageName.substring(0, firstPointChar);
@@ -360,16 +374,19 @@ public class SecureDexClassLoader {
 		
 		if (secondPointChar == -1) {
 			// Just two substrings in the package name..
-			return "https://" + packageName.substring(firstPointChar + 1) + "." + firstLevelDomain + "/certificate.pem";
+			return new URL("https", packageName.substring(firstPointChar + 1) + "." + firstLevelDomain, "/certificate.pem");
+			//return "https://" + packageName.substring(firstPointChar + 1) + "." + firstLevelDomain + "/certificate.pem";
 		
 		} 
 		
 		// The rest of the package name is interpreted as a location
 		secondLevelDomain = packageName.substring(firstPointChar + 1, secondPointChar);
-								
-		return	"https://" + secondLevelDomain + "." + firstLevelDomain 
-				+ packageName.substring(secondPointChar).replaceAll(".", "/")
-				+ "/certificate.pem";
+		
+		return new URL("https", secondLevelDomain + "." + firstLevelDomain, packageName.substring(secondPointChar + 1).replace('.', File.separatorChar) + "/certificate.pem");
+		
+		//return	"https://" + secondLevelDomain + "." + firstLevelDomain 
+		//		+ packageName.substring(secondPointChar).replaceAll(".", "/")
+		//		+ "/certificate.pem";
 		
 	}
 	
@@ -910,17 +927,8 @@ public class SecureDexClassLoader {
 	private boolean downloadCertificateRemotelyViaHttps(String packageName) {
 		
 		// Find remote URL of the certificate from the related map through class package name.
-		String urlString = packageNameToCertificateMap.get(packageName);
-		
 		// All URLs here use method HTTPS.
-		URL certificateRemoteURL;
-		
-		try {
-			certificateRemoteURL = new URL(urlString);
-		} catch (MalformedURLException e) {
-			// Not valid remote URL for the certificate..
-			return false;
-		}
+		URL certificateRemoteURL = packageNameToCertificateMap.get(packageName);
 		
 		// The new certificate should be stored in the application private directory
 		// and its name should be the same as the package name.

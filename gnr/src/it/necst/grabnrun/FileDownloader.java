@@ -81,6 +81,10 @@ final class FileDownloader {
     					urlConnection = (HttpURLConnection) remoteURL.openConnection();
     				}
     				
+    				// TODO Find a way to timeout connection to inexistent resources..
+    				// Fix timeout for the connection..
+    				// urlConnection.setConnectTimeout(1000);
+    				
     				Log.d(TAG_FILE_DOWNLOADER, "A connection was set up: " + remoteURL.toString());
     				
     				inputStream = new BufferedInputStream(urlConnection.getInputStream());

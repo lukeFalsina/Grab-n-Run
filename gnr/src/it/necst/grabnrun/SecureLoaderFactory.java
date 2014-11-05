@@ -117,22 +117,22 @@ public class SecureLoaderFactory {
 	 *  directory before being used.
 	 * @param libraryPath
 	 *  the list of directories containing native libraries; it may be null.
+	 * @param parent
+	 *  the parent class loader
 	 * @param packageNameToCertificateMap
 	 *  a map that couples each package name to a URL which contains the certificate
 	 *  that must be used to validate all the classes that belong to that package
 	 *  before launching them at run time.
-	 * @param parent
-	 *  the parent class loader
 	 * @return secureDexClassLoader
 	 */
 	public SecureDexClassLoader createDexClassLoader(	String dexPath, 
 														String libraryPath, 
-														Map<String, String> packageNameToCertificateMap, 
-														ClassLoader parent) {
+														ClassLoader parent,
+														Map<String, URL> packageNameToCertificateMap) { 
 		
 		// The default behavior by now is using LAZY evaluation.
 		// In order to change it, simply modify the last boolean parameter from "true" to "false".
-		return createDexClassLoader(dexPath, libraryPath, packageNameToCertificateMap, parent, true);
+		return createDexClassLoader(dexPath, libraryPath, parent, packageNameToCertificateMap, true);
 		
 	}
 	
@@ -171,12 +171,12 @@ public class SecureLoaderFactory {
 	 *  directory before being used.
 	 * @param libraryPath
 	 *  the list of directories containing native libraries; it may be null.
+	 * @param parent
+	 *  the parent class loader
 	 * @param packageNameToCertificateMap
 	 *  a map that couples each package name to a URL which contains the certificate
 	 *  that must be used to validate all the classes that belong to that package
 	 *  before launching them at run time.
-	 * @param parent
-	 *  the parent class loader
 	 * @param performLazyEvaluation
 	 *  the mode in which the verification will be handled. True for lazy verification;
 	 *  false for the eager one.
@@ -184,8 +184,8 @@ public class SecureLoaderFactory {
 	 */
 	public SecureDexClassLoader createDexClassLoader(	String dexPath, 
 														String libraryPath, 
-														Map<String, String> packageNameToCertificateMap, 
 														ClassLoader parent,
+														Map<String, URL> packageNameToCertificateMap, 
 														boolean performLazyEvaluation) {
 		
 		// Final dex path list will be constructed incrementally
@@ -411,7 +411,7 @@ public class SecureLoaderFactory {
 		// Sanitize fields in packageNameToCertificateMap:
 		// - Check the syntax of packages names (only not empty strings divided by single separator char)
 		// - Enforce that all the certificates URLs in the map can be parsed and use HTTPS as their protocol
-		Map<String, String> santiziedPackageNameToCertificateMap = sanitizePackageNameToCertificateMap(packageNameToCertificateMap);
+		Map<String, URL> santiziedPackageNameToCertificateMap = sanitizePackageNameToCertificateMap(packageNameToCertificateMap);
 		
 		// Initialize SecureDexClassLoader instance
 		SecureDexClassLoader mSecureDexClassLoader = new SecureDexClassLoader(	finalDexPath.toString(),
@@ -472,12 +472,12 @@ public class SecureLoaderFactory {
 		
 	}
 
-	private Map<String, String> sanitizePackageNameToCertificateMap(Map<String, String> packageNameToCertificateMap) {
+	private Map<String, URL> sanitizePackageNameToCertificateMap(Map<String, URL> packageNameToCertificateMap) {
 		
 		if (packageNameToCertificateMap == null || packageNameToCertificateMap.isEmpty()) return null;
 		
 		// Copy the initial map and start validating it..
-		Map<String, String> santiziedPackageNameToCertificateMap = packageNameToCertificateMap;
+		Map<String, URL> santiziedPackageNameToCertificateMap = packageNameToCertificateMap;
 		
 		// Retrieves all the package names (keys of the map)
 		Iterator<String> packageNamesIterator = santiziedPackageNameToCertificateMap.keySet().iterator();
@@ -501,12 +501,18 @@ public class SecureLoaderFactory {
 				// and its protocol is HTTPS
 				URL certificateURL;
 				try {
-					String certificateURLString = santiziedPackageNameToCertificateMap.get(currentPackageName);
-					certificateURL = new URL(certificateURLString);
+					//String certificateURLString = santiziedPackageNameToCertificateMap.get(currentPackageName);
+					//certificateURL = new URL(certificateURLString);
+					certificateURL = santiziedPackageNameToCertificateMap.get(currentPackageName);
+					
+					// Check that the certificate URL is not null..
+					if (certificateURL == null)
+						throw new MalformedURLException();
 					
 					if (certificateURL.getProtocol().equals("http")) {
 						// In this case enforce HTTPS protocol
-						santiziedPackageNameToCertificateMap.put(currentPackageName, certificateURLString.replace("http", "https"));
+						// santiziedPackageNameToCertificateMap.put(currentPackageName, new URL(certificateURL.toString().replace("http", "https")));
+						santiziedPackageNameToCertificateMap.put(currentPackageName, new URL("https", certificateURL.getHost(), certificateURL.getPort(), certificateURL.getFile()));
 					}
 					else {
 						if (!certificateURL.getProtocol().equals("https")) {
