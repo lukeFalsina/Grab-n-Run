@@ -79,7 +79,7 @@ final class PackageNameTrie {
 		while (!packageNameToHasCertificateMap.get(currentPackageName))
 			currentPackageName = getUpALevel(currentPackageName);
 		
-		Log.d(TAG_PACKAGE_NAME_TRIE, packageName + " is the closest one to the target "
+		Log.d(TAG_PACKAGE_NAME_TRIE, currentPackageName + " is the closest package name to the target "
 		+ packageName + " with an associated certificate for verification.");
 		
 		return currentPackageName;

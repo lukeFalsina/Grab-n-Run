@@ -452,7 +452,7 @@ public class SecureDexClassLoader {
 				if (!rootPackageNameWithCertificate.isEmpty()) {
 					
 					// Try to find and import the certificate used to check the signature of .apk or .jar container
-					verifiedCertificate = importCertificateFromPackageName(currentPackageName);
+					verifiedCertificate = importCertificateFromPackageName(rootPackageNameWithCertificate);
 				}
 				
 				// Relevant only if a verified certificate object is found.
@@ -557,7 +557,7 @@ public class SecureDexClassLoader {
 				if (!rootPackageNameWithCertificate.isEmpty()) {
 					
 					// Try to find and import the certificate used to check the signature of .apk or .jar container
-					verifiedCertificate = importCertificateFromPackageName(packageName);
+					verifiedCertificate = importCertificateFromPackageName(rootPackageNameWithCertificate);
 				}
 				
 				if (verifiedCertificate != null) {
