@@ -309,7 +309,7 @@ public class MainActivity extends Activity {
 			packageNamesToCertMap.put("it.polimi.example", new URL("http://google.com/test_cert.pem"));
 			// 3rd Entry: misspelled and so invalid URL (missing a p..)
 			// packageNamesToCertMap.put("it.polimi.example2", "htt://google.com/test_cert2.pem");
-			// 4th Entry: reverse package name and then inexistent certificate at https://polimi.it/example3/certificate.pem
+			// 3rd Entry: reverse package name and then inexistent certificate at https://polimi.it/example3/certificate.pem
 			packageNamesToCertMap.put("it.polimi.example3", null);
 			
 			Log.i(TAG_MAIN, "2nd Test: Fetch the certificate by filling associative map..");

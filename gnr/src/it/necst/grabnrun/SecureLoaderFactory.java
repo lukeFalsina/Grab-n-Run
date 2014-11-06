@@ -110,6 +110,10 @@ public class SecureLoaderFactory {
 	 * invalid (i.e. expired) certificate is associated with the package name of the target class,
 	 * target class signature check fails against the associated certificate.
 	 * 
+	 * If you are planning to use the same instance of SecureDexClassLoader concurrently to 
+	 * load classes on different threds, use directly this constructor in stead of the one
+	 * with five parameters.
+	 * 
 	 * @param dexPath
 	 *  the list of jar/apk files containing classes and resources; these paths could
 	 *  be either local URLs pointing to a location in the device or URLs that links
@@ -125,6 +129,8 @@ public class SecureLoaderFactory {
 	 *  that must be used to validate all the classes that belong to that package
 	 *  before launching them at run time.
 	 * @return secureDexClassLoader
+	 *  a SecureDexClassLoader object which can be used to load dynamic code securely and 
+	 *  uses a Lazy strategy for container signature verification.
 	 */
 	public SecureDexClassLoader createDexClassLoader(	String dexPath, 
 														String libraryPath, 
@@ -162,7 +168,7 @@ public class SecureLoaderFactory {
 	 * parameter. Otherwise as a general guideline, prefer the lazy mode whenever you
 	 * need to load classes from many and heavy containers; use the eager mode when
 	 * the number of involved containers is small and so the penalty for evaluating all
-	 * of them immediately in one shot won't be so high. 
+	 * of them immediately in one shot won't be so high.
 	 * 
 	 * @param dexPath
 	 *  the list of jar/apk files containing classes and resources; these paths could
@@ -182,6 +188,9 @@ public class SecureLoaderFactory {
 	 *  the mode in which the verification will be handled. True for lazy verification;
 	 *  false for the eager one.
 	 * @return secureDexClassLoader
+	 * 	a SecureDexClassLoader object which can be used to load dynamic code securely and 
+	 *  uses a either Lazy or an Eager strategy for container signature verification depending
+	 *  on the last parameter provided to this constructor.
 	 */
 	public SecureDexClassLoader createDexClassLoader(	String dexPath, 
 														String libraryPath, 

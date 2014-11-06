@@ -105,8 +105,15 @@ So in this example we assume that all the classes belonging to the package ``com
 with a self-signed certificate, stored at ``https://something.somethelse.com/example_cert.pem``.
 Since here you just want to load ``com.example.MyClass`` the following snippet of code is enough::
 
-		Map<String, String> packageNamesToCertMap = new HashMap<String, String>();
-		packageNamesToCertMap.put("com.example", "https://something.somethelse.com/example_cert.pem");
+		Map<String, URL> packageNamesToCertMap = new HashMap<String, URL>();
+		try {
+			packageNamesToCertMap.put("com.example", new URL("https://something.somethelse.com/example_cert.pem"));
+
+		} catch (MalformedURLException e) {
+			// The previous URL used for the packageNamesToCertMap entry was a malformed one.
+			Log.e("Error", "A malformed URL was provided for a remote certificate location");
+		}
+		
 
 .. note::
 	Any *self-signed certificate* can be used to validate classes to load as long as it is not 
@@ -136,8 +143,8 @@ of ``SecureLoaderFactory``::
 
 		SecureDexClassLoader mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
 													null, 
-													packageNamesToCertMap, 
-													getClass().getClassLoader());
+													getClass().getClassLoader(),
+													packageNamesToCertMap);
 
 ``mSecureDexClassLoader`` will be able to load the classes whose container path is listed in ``jarContainerPath`` and 
 it will use the ``packageNamesToCertMap`` to retrieve all the required certificate from the web and import them into 
@@ -200,7 +207,7 @@ return ``null``  whenever **at least one of the following security constraints i
 * The *package name* of the class used as a parameter of ``loadClass()`` was **not previously included in the associative
   map** and so it do not exist any certificate that could be used to validate this class.
 * The *package name* of the class used as a parameter of ``loadClass()`` was previously included in the associative map
-  but the **related certificate** was **not found** (improper URL or no connectivity) or **not valid** 
+  but the **related certificate** was **not found** (URL with no certificate file attached or no connectivity) or **not valid** 
   (i.e. expired certificate, use of the Android Debug Certificate).
 * The *container file* of the required class was **not signed**.
 * The *container file* of the required class was **not signed with the certificate associated** to the package name 
@@ -228,16 +235,16 @@ Finally for clarity the full snippet of code presented in this section is report
 		MyClass myClassInstance = null;
 		jarContainerPath = "http://something.somethingelse.com/dev/exampleJar.jar";
 
-		Map<String, String> packageNamesToCertMap = new HashMap<String, String>();
-		packageNamesToCertMap.put("com.example", "https://something.somethelse.com/example_cert.pem");
-
-		SecureLoaderFactory mSecureLoaderFactory = new SecureLoaderFactory(this);
-		SecureDexClassLoader mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
-													null, 
-													packageNamesToCertMap, 
-													getClass().getClassLoader());
-
 		try {
+			Map<String, URL> packageNamesToCertMap = new HashMap<String, URL>();
+			packageNamesToCertMap.put("com.example", new URL("https://something.somethelse.com/example_cert.pem"));
+
+			SecureLoaderFactory mSecureLoaderFactory = new SecureLoaderFactory(this);
+			SecureDexClassLoader mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
+														null, 
+														packageNamesToCertMap, 
+														getClass().getClassLoader());
+		
 			Class<?> loadedClass = mSecureDexClassLoader.loadClass("com.example.MyClass");
 
 			// Check whether the signature verification process succeeds
@@ -263,7 +270,10 @@ Finally for clarity the full snippet of code presented in this section is report
 			e.printStackTrace();
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
-		}											
+		} catch (MalformedURLException e) {
+			// The previous URL used for the packageNamesToCertMap entry was a malformed one.
+			Log.e("Error", "A malformed URL was provided for a remote certificate location");
+		}
 
 
 Wiping out cached containers and certificates
@@ -298,13 +308,18 @@ perform is the following::
 	So it will be **necessary** for you to require a **new** ``SecureDexClassLoader`` instance to ``SecureLoaderFactory``
 	through the invocation of the ``createDexClassLoader()`` method before being able to dynamically and securely load other classes.
 
-Advanced topics
----------------
+Complementary topics
+--------------------
 
 In the end of this pages a couple of not so trivial use cases of *Grab'n Run* are presented. This section will not introduce new core concepts but it may help the developer to handle some **tricky situations**. For such a reason feel free to **skip this part** and eventually **come back later** to revise it whenever you will encounter one of the following situation while using the library.
 
-Handling containers whose classes come from different package names
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Handle containers whose classes come from different package names which have a common relevant prefix
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO
+
+Handle containers whose classes come from different package names with no relevant common prefix
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Even if it is not such a common situation it is possible for a *jar* archive to *contain classes which belongs to different package names*.
 This situation, on the other hand, is **not practical** for *apk* containers since, in order to be **published** on Google Market, 
@@ -318,9 +333,19 @@ It is also supposed that this container has being signed with a *valid self-sign
 In order to handle this situation correctly the developer is required to fill the **associative map** which links package names and certificates
 with **two entries**, one per each package name, which will *point to the same remote certificate*. This is exemplified in the following snippet of code::
 
-		Map<String, String> packageNamesToCertMap = new HashMap<String, String>();
-		packageNamesToCertMap.put("com.example", "https://something.somethelse.com/example_cert.pem");
-		packageNamesToCertMap.put("com.test", "https://something.somethelse.com/example_cert.pem");
+		Map<String, URL> packageNamesToCertMap = new HashMap<String, URL>();
+
+		try {
+			packageNamesToCertMap.put("com.example", new URL("https://something.somethelse.com/example_cert.pem"));
+			packageNamesToCertMap.put("com.test", new URL("https://something.somethelse.com/example_cert.pem"));
+
+		} catch (MalformedURLException e) {
+			
+			// The previous entries for the map are not necessarily the right ones 
+			// but still they are not malformed so no exception should be raised.
+			Log.e(TAG_MAIN, "A malformed URL was provided for a remote certificate location");
+			
+		}
 
 For the rest the developer may proceed as shown in `Using SecureDexClassLoader to load dynamic code securely`_ and this procedure grants to succeed in the loading
 process for any of the two classes independently on the order in which they are attempted to be loaded.
@@ -333,8 +358,23 @@ process for any of the two classes independently on the order in which they are 
 
 	So it is a **developer responsibility** to check the containers in order to avoid the occurrence of this unpleasant situation.
 
+Reverse package name to obtain remote certificate URL
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO
+
 
 Perform dynamic code loading concurrently
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 TODO
+
+Let GNR automatically handle library updates
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO
+
+On library developer side: how to prepare a valid library container compatible with GNR
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO 

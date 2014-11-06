@@ -6,7 +6,7 @@
 Welcome to Grab'n Run documentation!
 ====================================
 
-Grab'n Run is a **simple** and **effective** Java Library that you can add to your Android projects to secure *dynamic class loading* operations.
+*Grab'n Run* (aka **GNR**) is a **simple** and **effective** Java Library that you can add to your Android projects to secure *dynamic class loading* operations.
 
 For a **quick start** on how to include the library and how to use it in your projects give a look at :doc:`tutorial`.
 

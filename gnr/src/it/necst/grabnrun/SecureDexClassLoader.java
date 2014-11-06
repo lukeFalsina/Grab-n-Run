@@ -498,6 +498,21 @@ public class SecureDexClassLoader {
 	/* (non-Javadoc)
 	 * @see java.lang.ClassLoader#loadClass(java.lang.String)
 	 */
+	/**
+	 * @see java.lang.ClassLoader#loadClass(java.lang.String)
+	 * @param className
+	 *  the full class name to load. It must fit the form "package name + . + class name".
+	 *  A valid full class name is for example "it.polimi.myapplication.classA"; while "classA" is not
+	 *  enough since it misses the package name and so {@link SecureDexClassLoader} will not find any
+	 *  class to load.
+	 * @return
+	 *  Either a class that needs to be casted at runtime accordingly to className if the verification
+	 *  process succeeds or a {@link <code>null</code>} pointer in case that at least one of the security
+	 *  constraints for secure dynamic class loading is violated.
+	 * @throws ClassNotFoundException
+	 *  this exception is raised whenever no security constraint is violated but still the target class is
+	 *  not found in any of the available containers used to instantiate this {@link SecureDexClassLoader} object.
+	 */
 	public Class<?> loadClass(String className) throws ClassNotFoundException {
 		
 		// A meaningful map which links package names to certificate locations
