@@ -115,6 +115,11 @@ public class SecureDexClassLoader {
 	// previously imported in an application-private folder).
 	private Set<String> lazyAlreadyVerifiedPackageNameSet;
 	
+	// An helper data structure used to connect each package name of a possible target class
+	// to the certificate of the closest package name. The closeness relation here is considered
+	// in terms of hierarchy on the package name.
+	private PackageNameTrie mPackageNameTrie;
+	
 	SecureDexClassLoader(	String dexPath, String optimizedDirectory,
 							String libraryPath, ClassLoader parent,
 							ContextWrapper parentContextWrapper,
@@ -137,6 +142,8 @@ public class SecureDexClassLoader {
 		
 		lazyAlreadyVerifiedPackageNameSet = Collections.synchronizedSet(new HashSet<String>());
 		
+		mPackageNameTrie = new PackageNameTrie();
+		
 		// Initialize the certificate factory
 		try {
 			certificateFactory = CertificateFactory.getInstance("X.509");
@@ -145,7 +152,7 @@ public class SecureDexClassLoader {
 		}
 		
 		// Map initialization
-		packageNameToCertificateMap = null;
+		packageNameToCertificateMap = new LinkedHashMap<String, URL>();
 		// packageNameToContainerPathMap = new LinkedHashMap<String, String>();
 		packageNameToContainerPathMap = Collections.synchronizedMap(new LinkedHashMap<String, String>());
 		
@@ -165,6 +172,9 @@ public class SecureDexClassLoader {
 					
 					// This is a valid entry so it must be added to packageNameToContainerPathMap
 					String previousPath = packageNameToContainerPathMap.put(packageName, currentPath);
+					
+					// Also fill auxiliary Trie-like data structure
+					mPackageNameTrie.generateEntriesForPackageName(packageName);
 					
 					// If previous path is not null, it means that one of the previous analyzed
 					// path had the same package name (this is a possibility for JAR containers..)
@@ -305,17 +315,14 @@ public class SecureDexClassLoader {
 	
 	void setCertificateLocationMap(	Map<String, URL> extPackageNameToCertificateMap) {
 		
-		// Either initialize a new map or copy the provided one if it's valid.
-		if (extPackageNameToCertificateMap == null) 
-			packageNameToCertificateMap = new HashMap<String, URL>();
-		else
+		// Copy the external map only if it is not empty..
+		if (extPackageNameToCertificateMap != null && !extPackageNameToCertificateMap.isEmpty()) 
 			packageNameToCertificateMap = extPackageNameToCertificateMap;
 		
-		// Now check all the package names inside packageNameToContainerPathMap.
-		// For each one of those which is missing in packageNameToCertificateMap
-		// add a new entry (package name, URL certificate = reverted package name)
-		// to the latter map.
-		Iterator<String> packageNameIterator = packageNameToContainerPathMap.keySet().iterator();
+		// Now check all the package names inside packageNameToCertificateMap.
+		// For each one of those which has a null value add a new entry
+		// (package name, URL certificate = reverted package name) to packageNameToCertificateMap.
+		Iterator<String> packageNameIterator = packageNameToCertificateMap.keySet().iterator();
 		
 		while (packageNameIterator.hasNext()) {
 			
@@ -340,10 +347,21 @@ public class SecureDexClassLoader {
 					
 				} catch (MalformedURLException e) {
 					// It was impossible to create a valid URL for this package name.
+					// so just remove it from packageNameToCertificateMap.
+					packageNameIterator.remove();
+					
 					Log.d(TAG_SECURE_DEX_CLASS_LOADER, "It was impossible to revert package name " + 
 					currentPackageName + " into a valid URL!");
 				}
 
+			}
+			
+			if (packageNameToCertificateMap.containsKey(currentPackageName)) {
+				
+				// Either by reverting the package name or from provided URL this
+				// package name has now a certificate URL associated to it.
+				// So update the Trie-like data structure accordingly
+				mPackageNameTrie.setEntryHasAssociatedCertificate(currentPackageName);
 			}
 		}
 		
@@ -418,14 +436,24 @@ public class SecureDexClassLoader {
 				// decide whether this package name should be removed or not
 				if (!alreadyCheckedContainerMap.get(containerPath))
 					packageNamesIterator.remove();
-			}
-			else {
+				
+			} else {
 				
 				// A complete signature verification on the container must be performed and 
 				// depending on the final result the alreadyCheckedContainerMap will be updated.
 				
-				// Try to find and import the certificate used to check the signature of .apk or .jar container
-				X509Certificate verifiedCertificate = importCertificateFromPackageName(currentPackageName);
+				// At first find the package name which is closest in hierarchy to the target one
+				// and has an associated URL for a certificate.
+				String rootPackageNameWithCertificate = mPackageNameTrie.getPackageNameWithAssociatedCertificate(currentPackageName);
+				
+				X509Certificate verifiedCertificate = null;
+				
+				// Check that such a package name exists and, in this case, try to import the certificate.
+				if (!rootPackageNameWithCertificate.isEmpty()) {
+					
+					// Try to find and import the certificate used to check the signature of .apk or .jar container
+					verifiedCertificate = importCertificateFromPackageName(currentPackageName);
+				}
 				
 				// Relevant only if a verified certificate object is found.
 				boolean signatureCheckIsSuccessful = true;
@@ -472,9 +500,9 @@ public class SecureDexClassLoader {
 	 */
 	public Class<?> loadClass(String className) throws ClassNotFoundException {
 		
-		// A map which links package names to certificate locations
-		// must be provided before calling this method..
-		if (packageNameToCertificateMap == null) return null;
+		// A meaningful map which links package names to certificate locations
+		// must have been provided before calling this method..
+		if (packageNameToCertificateMap.isEmpty()) return null;
 		
 		// Cached data have been wiped out so some of the required
 		// resources may have been erased..
@@ -511,16 +539,26 @@ public class SecureDexClassLoader {
 			
 			if (alreadyVerifiedPackageName) {
 				
-				// This package name has been already verified once so classes
-				// belonging to it can be immediately loaded.
+				// The container associated to this package name has been already verified once so classes
+				// belonging to this package name can be immediately loaded.
 				return mDexClassLoader.loadClass(className);
 			}
 			else {
 				
 				// This branch represents those classes, whose package name and related container has not been analyzed yet..
 				
-				// Try to find and import the certificate used to check the signature of .apk or .jar container
-				X509Certificate verifiedCertificate = importCertificateFromPackageName(packageName);
+				// At first find the package name which is closest in hierarchy to the target one
+				// and has an associated URL for a certificate.
+				String rootPackageNameWithCertificate = mPackageNameTrie.getPackageNameWithAssociatedCertificate(packageName);
+				
+				X509Certificate verifiedCertificate = null;
+				
+				// Check that such a package name exists and, in this case, try to import the certificate.
+				if (!rootPackageNameWithCertificate.isEmpty()) {
+					
+					// Try to find and import the certificate used to check the signature of .apk or .jar container
+					verifiedCertificate = importCertificateFromPackageName(packageName);
+				}
 				
 				if (verifiedCertificate != null) {
 					
@@ -590,9 +628,10 @@ public class SecureDexClassLoader {
 					return null;
 				}
 				
-				// Download procedure fails and the required certificate has not been cached locally.
+				// Either download procedure fails and the required certificate has not been cached locally or
+				// a package name with no certificate associated to its hierarchy was provided.
 				// No class should be loaded since its signature can't be verified..
-				// But on the other hand this do not imply that the container is necessarly malicious.
+				// But on the other hand this do not imply that the container is necessarily malicious.
 				return null;
 			}
 			

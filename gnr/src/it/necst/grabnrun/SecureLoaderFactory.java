@@ -12,6 +12,7 @@ import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 //import android.content.Context;
@@ -477,7 +478,7 @@ public class SecureLoaderFactory {
 		if (packageNameToCertificateMap == null || packageNameToCertificateMap.isEmpty()) return null;
 		
 		// Copy the initial map and start validating it..
-		Map<String, URL> santiziedPackageNameToCertificateMap = packageNameToCertificateMap;
+		Map<String, URL> santiziedPackageNameToCertificateMap = new LinkedHashMap<String, URL>(packageNameToCertificateMap);
 		
 		// Retrieves all the package names (keys of the map)
 		Iterator<String> packageNamesIterator = santiziedPackageNameToCertificateMap.keySet().iterator();
@@ -506,21 +507,25 @@ public class SecureLoaderFactory {
 					certificateURL = santiziedPackageNameToCertificateMap.get(currentPackageName);
 					
 					// Check that the certificate URL is not null..
-					if (certificateURL == null)
-						throw new MalformedURLException();
-					
-					if (certificateURL.getProtocol().equals("http")) {
-						// In this case enforce HTTPS protocol
-						// santiziedPackageNameToCertificateMap.put(currentPackageName, new URL(certificateURL.toString().replace("http", "https")));
-						santiziedPackageNameToCertificateMap.put(currentPackageName, new URL("https", certificateURL.getHost(), certificateURL.getPort(), certificateURL.getFile()));
-					}
-					else {
-						if (!certificateURL.getProtocol().equals("https")) {
-							// If the certificate URL protocol is different from HTTPS
-							// or HTTP, this entry is not valid
-							removeThisPackageName = true;
+					if (certificateURL != null) {
+						
+						if (certificateURL.getProtocol().equals("http")) {
+							// In this case enforce HTTPS protocol
+							// santiziedPackageNameToCertificateMap.put(currentPackageName, new URL(certificateURL.toString().replace("http", "https")));
+							santiziedPackageNameToCertificateMap.put(currentPackageName, new URL("https", certificateURL.getHost(), certificateURL.getPort(), certificateURL.getFile()));
+						}
+						else {
+							if (!certificateURL.getProtocol().equals("https")) {
+								// If the certificate URL protocol is different from HTTPS
+								// or HTTP, this entry is not valid
+								removeThisPackageName = true;
+							}
 						}
 					}
+					
+					// If the certificate URL is null no action is performed here.
+					// Reverting package name to obtain a valid URL will be performed in SecureDexClassLoader.
+					
 				} catch (MalformedURLException e) {
 					removeThisPackageName = true;
 				}
