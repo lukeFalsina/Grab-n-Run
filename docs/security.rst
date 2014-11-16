@@ -12,15 +12,17 @@ First of all ``SecureDexClassLoader`` provides a couple of slight but significan
 
 * ``SecureDexClassLoader`` lets you retrieve *dynamically* also classes from *.jar* and *.apk* containers which are **not located directly on the phone** running the application as long as you simply provide a **valid remote URL** for the resource, while ``DexClassLoader`` is only able to cache classes from containers stored on the phone.
 
-* ``SecureDexClassLoader`` is a **thread-safe** library and so, after that you have created your ``SecureDexClassLoader`` instance on the main thread of your application, you can launch different threads, each one performing dynamic class loading on the very same ``SecureDexClassLoader`` instance **without** incurring in nasty **race conditions** and **concurrencies exceptions**. **[TODO]**
+* ``SecureDexClassLoader`` is a **thread-safe** library and so, after that you have created your ``SecureDexClassLoader`` instance on the main thread of your application, you can launch different threads, each one performing dynamic class loading on the very same ``SecureDexClassLoader`` instance **without** incurring in nasty **race conditions** and **concurrencies exceptions**.
 
-In addition and above all ``SecureDexClassLoader`` ensures relevant **security features** on classes that you dynamically load that are not possible to check with ``DexClassLoader`` like:
+In addition and above all ``SecureDexClassLoader`` ensures relevant **security features** on classes that you dynamically load that are not possible to check or implemented with ``DexClassLoader`` like:
+
+* **Fetch remote code in a secure way**: ``SecureDexClassLoader`` retrieves remote code either via HTTP or HTTPS protocol. In both cases it **always verifies** and validates the downloaded containers **before actually loading classes** inside of them.
+
+* **Store containers in secure application-private locations**: `SecureDexClassLoader`` also **prevents** your application from being a possible target of **code injection attacks**. This attack becomes feasible whenever you use the standard ``DexClassLoader`` and you provide as an optimized cache folder for *dex* files a directory which is located in a **world writable area** of your phone (i.e. external storage) or you decide to load classes from a container which is, once again, stored in a world writable folder. ``SecureDexClassLoader`` on the other hand manages this situation for you by choosing *application-private directories* for caching *dex* files and storing containers and certificates. This strategy represents an **effective** way to make the **attack infeasible**.
 
 * **Developer authentication**: for each package containing classes to be loaded dynamically it is possible to ensure authentication of the developer who coded those classes though a *check of the signature on the container* of the classes against the *certificate of the developer* (which could possibly be even *self-signed*). **Non-signed** classes or those who were not signed by that required certificate will be rejected and **prevented from being loaded**.  
 
 * **Integrity**: during the *signature verification* process whenever one of the entries inside the container results to be *incorrectly signed*, ``SecureDexClassLoader`` recognized a **possible tampered or repackaged container** and it prevents your application from running the code of any classes inside this invalid and possible malicious container.
-
-Finally ``SecureDexClassLoader`` also **prevents** your application from being a possible target of **code injection attacks**. This attack becomes feasible whenever you use the standard ``DexClassLoader`` and you provide as an optimized cache folder for *dex* files a directory which is located in a world writable are of your phone (i.e. external storage). ``SecureDexClassLoader`` on the other hand manages this setting for you by choosing an *application-private directory* for caching *dex* files and this makes the **attack infeasible**.
 
 And these improvements come with a **convenient overhead** on the **performance** :)
 
