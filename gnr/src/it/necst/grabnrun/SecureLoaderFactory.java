@@ -50,17 +50,22 @@ public class SecureLoaderFactory {
 	private MessageDigest messageDigest;
 	
 	/**
-	 * When a remote container URL is encountered, this field specifies the time interval, 
+	 * When a remote container URL is encountered, this field specifies the default time interval, 
 	 * expressed in days, before which a local copy of a remote container, stored in an 
-	 * application-private directory, will be considered fresh and so cached.
+	 * application-private directory, will be considered fresh and so acceptable to be cached.
 	 * 
 	 * On the other hand, all of those containers, whose life time is greater than this
 	 * field value, will be immediately erased from the device storage in stead of being cached.
+	 * 
+	 * You can change this duration by generating the {@link SecureLoaderFactory} instance
+	 * with {@link SecureLoaderFactory#SecureLoaderFactory(ContextWrapper, int)}.
 	 */
-	public static int DAYS_BEFORE_CACHE_EXPIRATION = 5;
+	public static final int DEFAULT_DAYS_BEFORE_CONTAINER_EXPIRACY = 5;
+	
+	private int daysBeforeContainerCacheExpiration;
 	
 	/**
-	 * Creates a {@code SecureLoaderFactory} used to check and generate instances 
+	 * Creates a {@link SecureLoaderFactory} used to check and generate instances 
 	 * from secure dynamic code loader classes.
 	 * 
 	 * It requires a {@link ContextWrapper} (i.e. the launching activity) which 
@@ -72,6 +77,36 @@ public class SecureLoaderFactory {
 	 */
 	public SecureLoaderFactory(ContextWrapper parentContextWrapper) {
 	
+		this(parentContextWrapper, DEFAULT_DAYS_BEFORE_CONTAINER_EXPIRACY);
+	}
+	
+	/**
+	 * This constructor works exactly as the previous one but it also allows to 
+	 * decide the time interval in days before which a local copy of a remote container, stored in an 
+	 * application-private directory, will be considered fresh and so acceptable to be cached.
+	 * 
+	 * If a negative value is provided for the second parameter, {@link SecureLoaderFactory} will be 
+	 * instantiated with the time interval in days equal to {@link SecureLoaderFactory#DEFAULT_DAYS_BEFORE_CONTAINER_EXPIRACY}.
+	 * 
+	 * @param parentContextWrapper
+	 *  The content wrapper coming from the launching Activity
+	 * @param daysBeforeContainerCacheExpiration
+	 *  The non negative value of days for which a local copy of a remote container imported into
+	 *  an application private folder is considered fresh and so acceptable to be cached
+	 */
+	public SecureLoaderFactory(ContextWrapper parentContextWrapper, int daysBeforeContainerCacheExpiration) {
+		
+		if (daysBeforeContainerCacheExpiration >= 0) {
+		
+			// Initialize this variable for caching freshness with the parameter value
+			this.daysBeforeContainerCacheExpiration = daysBeforeContainerCacheExpiration;
+		
+		} else {
+			
+			// Initialize this variable for caching freshness with the default value (5 days)
+			this.daysBeforeContainerCacheExpiration = DEFAULT_DAYS_BEFORE_CONTAINER_EXPIRACY;
+		}
+		
 		mContextWrapper = parentContextWrapper;
 		//mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);
 		mFileDownloader = new FileDownloader(mContextWrapper);
@@ -128,7 +163,7 @@ public class SecureLoaderFactory {
 	 *  a map that couples each package name to a URL which contains the certificate
 	 *  that must be used to validate all the classes that belong to that package
 	 *  before launching them at run time.
-	 * @return secureDexClassLoader
+	 * @return
 	 *  a SecureDexClassLoader object which can be used to load dynamic code securely and 
 	 *  uses a Lazy strategy for container signature verification.
 	 */
@@ -187,7 +222,7 @@ public class SecureLoaderFactory {
 	 * @param performLazyEvaluation
 	 *  the mode in which the verification will be handled. True for lazy verification;
 	 *  false for the eager one.
-	 * @return secureDexClassLoader
+	 * @return
 	 * 	a SecureDexClassLoader object which can be used to load dynamic code securely and 
 	 *  uses a either Lazy or an Eager strategy for container signature verification depending
 	 *  on the last parameter provided to this constructor.
@@ -229,7 +264,7 @@ public class SecureLoaderFactory {
 		File importedContainerDir = mContextWrapper.getDir(CONT_IMPORT_DIR, ContextWrapper.MODE_PRIVATE);
 		Log.d(TAG_SECURE_FACTORY, "Download Resource Dir has been mounted at: " + importedContainerDir.getAbsolutePath());
 		
-		CacheLogger mCacheLogger = new CacheLogger(importedContainerDir.getAbsolutePath(), DAYS_BEFORE_CACHE_EXPIRATION);
+		CacheLogger mCacheLogger = new CacheLogger(importedContainerDir.getAbsolutePath(), daysBeforeContainerCacheExpiration);
 		
 		for (String path : strings) {
 			
