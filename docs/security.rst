@@ -32,14 +32,13 @@ Moreover, for even *more performance concerned developers*, it is also possible 
 
 1. **Lazy Strategy**: this mode implies that the **signature and integrity** of each container will be **evaluated only when** the ``loadClass()`` method will be invoked on *one of the classes*, whose package name is linked to this container. An ideal case of use for this mode is when you have quite a lot of containers and just a couple of classes to load, which may also vary from one execution to another and so validating all the containers in this case may be a waste of time.
 
-2. **Eager Strategy**: in this mode the process of **signature and integrity** will be carried out on **all** the containers **immediately** before returning an instance of ``SecureDexClassLoader``. This choice implies that you will have to pay an **initial penalty** on time of execution but then the time required for a ``loadClass()`` operation becomes almost equal to the corresponding operation performed with standard ``DexClassLoader``.
+2. **Eager Strategy**: in this mode the process of **signature and integrity** will be carried out on **all** the containers **immediately and concurrently** before returning an instance of ``SecureDexClassLoader``. This choice implies that you will have to pay an **initial penalty (but still reduced since the verification process is driven concurrently among the containers)** on time of execution but then the time required for a ``loadClass()`` operation becomes almost equal to the corresponding operation performed with standard ``DexClassLoader``.
 
-**By default lazy strategy** is applied but developers can *pick* the *eager version* by adding a final ``false`` attribute to the ``createDexClassLoader()`` method invocation
-in ``SecureLoaderFactory``. An example of use is shown in the following snippet of code (a slight modification of one of the calls of what you may have seen in :doc:`tutorial` )::
+**By default eager strategy** is applied but developers can *pick* the *lazy version* by adding a final ``true`` attribute to the ``createDexClassLoader()`` method invocation
+in ``SecureLoaderFactory``. An example of use is shown in the following snippet of code (this is just a slight modification of one of the calls that you may have seen in :doc:`tutorial` )::
 
 		SecureDexClassLoader mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
 													null, 
 													packageNamesToCertMap, 
 													getClass().getClassLoader(),
-													false);
-
+													true);
