@@ -49,8 +49,9 @@ import dalvik.system.DexFile;
  * provided by the Android system and it is used to load classes 
  * from jar and apk container files including a classes.dex entry in a secure way.
  * <p>
- * In order to instantiate this class a call to the method createDexClassLoader
- * from a {@link SecureLoaderFactory} object must be performed.
+ * In order to instantiate this class a call to 
+ * {@link SecureLoaderFactory#createDexClassLoader(String, String, ClassLoader, Map)} 
+ * must be performed.
  * <p>
  * {@link SecureDexClassLoader} ensures integrity of loaded external remote 
  * classes by comparing them with the developer certificate, which
@@ -72,13 +73,12 @@ import dalvik.system.DexFile;
  * Please note that in the current implementation certificates obtained 
  * by reverting package name must have been saved at the described 
  * location as "certificate.pem". Moreover all the certificates must 
- * fit requirements of a standard X.509 certificate, they must 
- * be valid in the current time frame and of course they must have been 
+ * fit requirements of a standard {@link java.security.cert.X509Certificate}, 
+ * they must be valid in the current time frame and of course they must have been 
  * used to sign the jar or apk, which contains the classes to be loaded.
  * <p>
  * If any of these previous requirements is violated no class is loaded 
- * and this class immediately returns without executing any class code 
- * loading operation.
+ * and this class returns without executing any class loading operation.
  * 
  * @author Luca Falsina
  */
@@ -605,7 +605,11 @@ public class SecureDexClassLoader {
 			
 			String currentPackageName = packageNamesAfterVerificationIterator.next();
 			
-			if (!successVerifiedContainerPathSet.contains(packageNameToContainerPathMap.get(currentPackageName))) {
+			// Verify that at least one of the prefix of the current package name was designated 
+			// for loading its classes.
+			String rootPackageNameAllowedForLoading = mPackageNameTrie.getPackageNameWithAssociatedCertificate(currentPackageName); 
+			
+			if (rootPackageNameAllowedForLoading.isEmpty() || !successVerifiedContainerPathSet.contains(packageNameToContainerPathMap.get(currentPackageName))) {
 				
 				// The container linked to this package name did not succeed in the verification process.
 				// No class with this package name can be loaded..
@@ -741,10 +745,17 @@ public class SecureDexClassLoader {
 			}
 			
 			if (alreadyVerifiedPackageName) {
+
+				// Even if the container associated to this package name may have been verified correctly,
+				// it is necessary to verify that the user also wants to dynamically load classes from this package name.
+				String rootPackageNameWithCertificate = mPackageNameTrie.getPackageNameWithAssociatedCertificate(packageName);
 				
-				// The container associated to this package name has been already verified once so classes
-				// belonging to this package name can be immediately loaded.
-				return mDexClassLoader.loadClass(className);
+				if (!rootPackageNameWithCertificate.isEmpty()) {
+					
+					// The container associated to this package name has been already verified once so classes
+					// belonging to this package name can be immediately loaded.
+					return mDexClassLoader.loadClass(className);
+				}
 			}
 			else {
 				
@@ -1182,8 +1193,8 @@ public class SecureDexClassLoader {
 	
 	/**
 	 * Sometimes it may be useful to remove those data that have been cached in 
-	 * the private application folder (basically for performance reason or for saving 
-	 * disk space on the device). A call to this method solves the issue.
+	 * the private application folders (basically for performance reason or for making 
+	 * {@link SecureDexClassLoader} works also partially offline). A call to this method solves the issue.
 	 * <p>
 	 * Please notice that a call to this method with both the parameters set to false 
 	 * has no effect.
@@ -1195,9 +1206,9 @@ public class SecureDexClassLoader {
 	 * from loading classes dynamically.
 	 * 
 	 * @param containerPrivateFolder
-	 * if the private folder containing jar and apk containers downloaded from remote URL needs to be wiped out
+	 * if the private folder where jar and apk containers downloaded from remote URL or imported from local storage needs to be wiped out.
 	 * @param certificatePrivateFolder
-	 * if the private folder containing certificates needs to be wiped out
+	 * if the private folder containing certificates needs to be wiped out.
 	 */
 	public void wipeOutPrivateAppCachedData(boolean containerPrivateFolder, boolean certificatePrivateFolder) {
 		
