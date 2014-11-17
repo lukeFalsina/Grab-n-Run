@@ -47,7 +47,7 @@ final class FileDownloader {
 	
 	// Assumption: input URL and output URI has been already validated
 	// before calling this method..
-	final boolean downloadRemoteUrl(final URL remoteURL, final String localURI) {
+	final boolean downloadRemoteUrl(final URL remoteURL, final String localURI, final boolean isRedirectAllowed) {
 	
 		// Check whether Internet access is granted..
 		activeNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
@@ -81,11 +81,52 @@ final class FileDownloader {
     					urlConnection = (HttpURLConnection) remoteURL.openConnection();
     				}
     				
-    				// TODO Find a way to timeout connection to inexistent resources..
     				// Fix timeout for the connection..
-    				// urlConnection.setConnectTimeout(1000);
+    				urlConnection.setConnectTimeout(1000);
     				
     				Log.d(TAG_FILE_DOWNLOADER, "A connection was set up: " + remoteURL.toString());
+    				
+    				// When it is allowed, check if this URL asks for a redirect..
+    				if (isRedirectAllowed) {
+    					
+    					boolean redirect = false;
+    					
+    					// Normally 301 or 302 is redirect..
+    					int connection_status = urlConnection.getResponseCode();
+    					if (connection_status != HttpURLConnection.HTTP_OK) {
+    						if (connection_status == HttpURLConnection.HTTP_MOVED_TEMP
+    							|| connection_status == HttpURLConnection.HTTP_MOVED_PERM
+    								|| connection_status == HttpURLConnection.HTTP_SEE_OTHER)
+    							// A redirect is required
+    							redirect = true;
+    					}
+    					
+    					if (redirect) {
+    						 
+    						// Get redirect URL from "location" header field
+    						URL redirectedURL = new URL(urlConnection.getHeaderField("Location"));
+    				 
+    						// Get the cookie for login if provided
+    						String cookies = urlConnection.getHeaderField("Set-Cookie");
+    						
+    						// Open the new redirected connection again..
+    						if (redirectedURL.getProtocol().equals("https")) {
+    	    					// HTTPS protocol
+    	    					urlConnection = (HttpsURLConnection) redirectedURL.openConnection();
+    	    				}
+    	    				else {
+    	    					// HTTP protocol
+    	    					urlConnection = (HttpURLConnection) redirectedURL.openConnection();
+    	    				}
+    						
+    						// Fix timeout for the connection..
+    	    				urlConnection.setConnectTimeout(1000);
+    	    				
+    						urlConnection.setRequestProperty("Cookie", cookies);
+    				 
+    						Log.d(TAG_FILE_DOWNLOADER, "The connection was redirected to: " + redirectedURL.toString());
+    					}
+    				}
     				
     				inputStream = new BufferedInputStream(urlConnection.getInputStream());
 					outputStream = new FileOutputStream(localURI);

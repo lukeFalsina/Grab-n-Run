@@ -641,7 +641,8 @@ public class SecureLoaderFactory {
 		// and stored in the local folder
 		String localContainerPath = resOutputDir.getAbsolutePath() + finalContainerName;
 		
-		boolean isDownloadSuccessful = mFileDownloader.downloadRemoteUrl(url, localContainerPath);
+		// Redirect may be allowed here while downloading a remote container..
+		boolean isDownloadSuccessful = mFileDownloader.downloadRemoteUrl(url, localContainerPath, true);
 		
 		if (isDownloadSuccessful)
 			// If this branch is reached, the download 
