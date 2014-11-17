@@ -45,7 +45,7 @@ import dalvik.system.DexClassLoader;
 import dalvik.system.DexFile;
 
 /**
- * A class that provides an extension of default {@link DexClassLoader} 
+ * A class that provides an extension of default {@link dalvik.system.DexClassLoader} 
  * provided by the Android system and it is used to load classes 
  * from jar and apk container files including a classes.dex entry in a secure way.
  * <p>

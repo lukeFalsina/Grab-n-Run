@@ -13,9 +13,10 @@ import java.util.Scanner;
 import android.util.Log;
 
 /**
- * CacheLogger is an helper class used by SecureLoaderFactory in order to keep track of the connection
+ * {@link CacheLogger} is an helper class used by {@link SecureLoaderFactory} in order to keep track of the connection
  * between remote resources URL and their respective files, which has been already cached in the 
  * application private folder.
+ * <p>
  * It provides methods to look for the associated local file of a remote URL, as well as adding a
  * new reference between a URL and a local file. When it is dismissed by invoking the method
  * finalizeLog(), it saves back all the fresh references into an helper file on the device filesystem.
@@ -46,11 +47,11 @@ final class CacheLogger {
 	private static final String helperFileName = "helper.txt";
 	
 	/**
-	 * This constructor generates a CacheLogger instance which will
+	 * This constructor generates a {@link CacheLogger} instance which will
 	 * analyze the helper.txt file in the provided directory and 
 	 * create all the references between remote URLs and local cached
 	 * resources.
-	 * 
+	 * <p>
 	 * All of those resources, whose life time is bigger than the one 
 	 * stated by the daysTillConsideredFresh parameter, will be 
 	 * automatically erased. 
@@ -134,6 +135,15 @@ final class CacheLogger {
 		}
 	}
 
+	/**
+	 * This method checks inside the {@link CacheLogger} data structure whether a certain URL of a remote container
+	 * is associated to one local file stored in the private application folder.
+	 * 
+	 * @param remoteURL
+	 *  a {@link URL} pointing to a remote resource.
+	 * @return
+	 *  either the name of the local file associated to the remote URL or {@code null}.
+	 */
 	final String checkForCachedEntry(String remoteURL) {
 		
 		// Check on the hasBeenAlreadyFinalized field..
@@ -149,6 +159,16 @@ final class CacheLogger {
 		return null;
 	}
 	
+	/**
+	 * Every time that a remote resource is successfully imported into the local
+	 * cache folder, this method should be invoked to link the initial remote 
+	 * {@link URL} and the corresponding local file stored on the mobile.
+	 * 
+	 * @param remoteURL
+	 *  the remote {@link URL} from which the resource was retrieved.
+	 * @param localFileName
+	 *  the final location on the mobile where the resource has been stored.
+	 */
 	final void addCachedEntryToLog(String remoteURL, String localFileName) {
 		
 		// Check on the hasBeenAlreadyFinalized field..
@@ -160,6 +180,14 @@ final class CacheLogger {
 	}
 	
 	// Save back the helper log file on the filesystem..
+	/**
+	 * This method must be called before dismissing the {@link CacheLogger} object.
+	 * <p>
+	 * It writes back to the helper file all the saved linkages between remote 
+	 * {@link URL} and local resources imported into the application private
+	 * directory.
+	 * 
+	 */
 	final void finalizeLog() {
 		
 		// Check on the hasBeenAlreadyFinalized field..

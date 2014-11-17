@@ -4,9 +4,9 @@ import java.io.File;
 import java.io.FileFilter;
 
 /**
- * A simple implementation of the FileFilter interface which will accept
+ * A simple implementation of the {@link FileFilter} interface which will accept
  * only those files whose name and extension match the required one
- * stated when FileFilterByName is created.
+ * stated during object creation.
  * 
  * @author Luca Falsina
  */
@@ -16,7 +16,7 @@ final class FileFilterByName implements FileFilter {
 	private String extension;
 
 	/**
-	 * Instantiate a FileFilterByName which will look
+	 * Instantiate a {@link FileFilterByName} which will look
 	 * for files with the provided name and extension.
 	 * 
 	 * @param name

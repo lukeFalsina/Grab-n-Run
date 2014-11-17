@@ -58,7 +58,7 @@ public class SecureLoaderFactory {
 	 * field value, will be immediately erased from the device storage in stead of being cached.
 	 * <p>
 	 * You can change this duration by generating the {@link SecureLoaderFactory} instance
-	 * with {@link SecureLoaderFactory#SecureLoaderFactory(ContextWrapper, int)}.
+	 * with {@link SecureLoaderFactory#SecureLoaderFactory(android.content.ContextWrapper, int)}.
 	 */
 	public static final int DEFAULT_DAYS_BEFORE_CONTAINER_EXPIRACY = 5;
 	
@@ -68,12 +68,12 @@ public class SecureLoaderFactory {
 	 * Creates a {@link SecureLoaderFactory} used to check and generate instances 
 	 * from secure dynamic code loader classes.
 	 * <p>
-	 * It requires a {@link ContextWrapper} (i.e. the launching activity) which 
+	 * It requires a {@link android.content.ContextWrapper} (i.e. the launching activity) which 
 	 * should be used to manage and retrieve internal directories 
 	 * of the application.
 	 * 
 	 * @param parentContextWrapper
-	 *  The content wrapper coming from the launching Activity
+	 *  The content wrapper coming from the launching Activity.
 	 */
 	public SecureLoaderFactory(ContextWrapper parentContextWrapper) {
 	
@@ -89,10 +89,10 @@ public class SecureLoaderFactory {
 	 * instantiated with the time interval in days equal to {@link SecureLoaderFactory#DEFAULT_DAYS_BEFORE_CONTAINER_EXPIRACY}.
 	 * 
 	 * @param parentContextWrapper
-	 *  The content wrapper coming from the launching Activity
+	 *  The content wrapper coming from the launching Activity.
 	 * @param daysBeforeContainerCacheExpiration
 	 *  The non negative value of days for which a local copy of a remote container imported into
-	 *  an application private folder is considered fresh and so acceptable to be cached
+	 *  an application private folder is considered fresh and so acceptable to be cached.
 	 */
 	public SecureLoaderFactory(ContextWrapper parentContextWrapper, int daysBeforeContainerCacheExpiration) {
 		
@@ -152,17 +152,17 @@ public class SecureLoaderFactory {
 	 *  connectivity is available, the resource will be imported in a private-application 
 	 *  directory before being used.
 	 * @param libraryPath
-	 *  the list of directories containing native libraries; it may be null.
+	 *  the list of directories containing native libraries; it may be {@code null}.
 	 * @param parent
-	 *  the parent class loader
+	 *  the parent class loader.
 	 * @param packageNameToCertificateMap
 	 *  a map that couples each package name to a URL which contains the certificate
 	 *  that must be used to validate all the classes that belong to that package
 	 *  before launching them at run time. Please notice that any URL in this map 
 	 *  using HTTP protocol will be enforced to use HTTPS in stead.
 	 * @return
-	 *  a SecureDexClassLoader object which can be used to load dynamic code securely and 
-	 *  uses a Lazy strategy for container signature verification.
+	 *  a {@link SecureDexClassLoader} object which can be used to load dynamic code securely and 
+	 *  uses a Eager strategy for container signature verification.
 	 */
 	public SecureDexClassLoader createDexClassLoader(	String dexPath, 
 														String libraryPath, 
@@ -176,25 +176,26 @@ public class SecureLoaderFactory {
 	}
 	
 	/**
-	 * This method returns a SecureDexClassLoader instance in the same way as it is 
-	 * explained in the previous createDexClassLoader() method. In addition it is 
+	 * This method returns a {@link SecureDexClassLoader} instance in the same way as it is 
+	 * explained in the {@link SecureLoaderFactory#createDexClassLoader(String, String, ClassLoader, Map)}. In addition it is 
 	 * possible to specify the mode in which the signature verification process will be carried.
 	 * <p>
 	 * In particular by setting the performLazyEvaluation parameter on true, 
 	 * a lazy verification process will be chosen. This means that the signature
 	 * of the single container associated with the target class will be evaluated 
-	 * only when the loadClass() method will be invoked on {@link SecureDexClassLoader} 
-	 * object. If this check succeeds the target class will be loaded.
+	 * only when {@link SecureDexClassLoader#loadClass(String)} will be invoked . 
+	 * If this check succeeds the target class will be loaded.
 	 * <p>
 	 * On the other hand, by setting the parameter performLazyEvaluation to false 
 	 * an eager evaluation will be carried out. This means that before returning this 
 	 * object, the signature verification procedure will be carried out on all the 
 	 * provided containers in a CONCURRENT way and all of those that do not succeed in the process will
-	 * be blocked from loading their classes in the following loadClass() calls.
+	 * be blocked from loading their classes in the following loadClass() method calls.
 	 * <p>
 	 * The use of one mode in stead of the other is merely a performance-related choice.
-	 * If you do not care that much about it, just invoke the overloaded method 
-	 * createDexClassLoader() which does not require to provide the performLazyEvaluation
+	 * If you do not care that much about it, just invoke
+	 * {@link SecureLoaderFactory#createDexClassLoader(String, String, ClassLoader, Map)} 
+	 * which does not require to provide the performLazyEvaluation
 	 * parameter and it will perform an Eager evaluation. Otherwise as a general guideline, 
 	 * prefer the lazy mode whenever you think that you won't need to load classes 
 	 * from all the provided containers.
@@ -206,9 +207,9 @@ public class SecureLoaderFactory {
 	 *  connectivity is available, the resource will be imported in a private-application 
 	 *  directory before being used.
 	 * @param libraryPath
-	 *  the list of directories containing native libraries; it may be null.
+	 *  the list of directories containing native libraries; it may be {@code null}.
 	 * @param parent
-	 *  the parent class loader
+	 *  the parent class loader.
 	 * @param packageNameToCertificateMap
 	 *  a map that couples each package name to a URL which contains the certificate
 	 *  that must be used to validate all the classes that belong to that package
@@ -218,7 +219,7 @@ public class SecureLoaderFactory {
 	 *  the mode in which the verification will be handled. True for lazy verification;
 	 *  false for the eager one.
 	 * @return
-	 * 	a SecureDexClassLoader object which can be used to load dynamic code securely and 
+	 * 	a {@link SecureDexClassLoader} object which can be used to load dynamic code securely and 
 	 *  uses a either Lazy or an Eager strategy for container signature verification depending
 	 *  on the last parameter provided to this constructor.
 	 */

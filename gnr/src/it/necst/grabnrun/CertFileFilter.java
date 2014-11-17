@@ -21,11 +21,12 @@ final class CertFileFilter implements FileFilter {
 	/**
 	 * A constructor for the filter which receives the 
 	 * name of the desired certificate as a parameter.
-	 * 
+	 * <p>
 	 * Do not provide the extension of the certificate
 	 * file but only the name!
 	 * 
 	 * @param certificateName
+	 *  the name of the certificate file.
 	 */
 	CertFileFilter(String certificateName) {
 		

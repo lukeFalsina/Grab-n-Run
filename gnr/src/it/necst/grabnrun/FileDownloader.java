@@ -11,42 +11,57 @@ import java.net.URL;
 
 import javax.net.ssl.HttpsURLConnection;
 
-//import android.app.Activity;
-//import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-//import android.os.Handler;
 import android.util.Log;
 
+/**
+ * {@link FileDownloader} is a class used to download remote resources like containers or certificates, which are then used 
+ * for dynamic class loading or signature verification.
+ * 
+ * @author Luca Falsina
+ */
 final class FileDownloader {
 	
 	// Unique identifier used for Log entries
 	private static final String TAG_FILE_DOWNLOADER = FileDownloader.class.getSimpleName();
 	
-	// private ContextWrapper mContextWrapper;
-	
 	// Objects used to check availability of Internet connection
 	private ConnectivityManager mConnectivityManager;
 	private NetworkInfo activeNetworkInfo;
-	
-	// Used to avoid users from clicking while downloading 
-	// other components..
-	// private ProgressDialog dialog;
-	
-	// Used to dismiss the dialog
-	// private Handler handler;
 
+	/**
+	 * This constructor initializes a {@link FileDownloader} object for downloading remote
+	 * resources.
+	 * 
+	 * @param parentContextWrapper
+	 *  a {@link ContextWrapper} coming from the parent {@link Activity} and used to
+	 *  retrieve the state of the connectivity service of the mobile.
+	 */
 	FileDownloader(ContextWrapper parentContextWrapper) {
-		
-		//handler = new Handler();
-		// mContextWrapper = parentContextWrapper;
+
 		mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);		
 	}
 	
-	// Assumption: input URL and output URI has been already validated
-	// before calling this method..
+	// Assumption: input URL and output URI has been already validated by the caller of this method..
+	/**
+	 * This method takes a remote {@link URL} and instantiate a data {@link Thread} responsible for
+	 * downloading the resource and storing it on the mobile at the location provided by the second 
+	 * parameter.
+	 * <p>
+	 * It is also possible to specify whether a redirect link should be followed or ignored.
+	 * 
+	 * @param remoteURL
+	 *  the remote {@link URL} from which the remote resources is downloaded.
+	 * @param localURI
+	 *  the local path at which the final resource is expected to be in case of a successful download.
+	 * @param isRedirectAllowed
+	 *  a {@code boolean} stating whether {@link FileDownloader} should follow a redirect link or not.
+	 * @return
+	 *  a boolean indicating whether the downloading procedure succeeded.
+	 */
 	final boolean downloadRemoteUrl(final URL remoteURL, final String localURI, final boolean isRedirectAllowed) {
 	
 		// Check whether Internet access is granted..
@@ -56,9 +71,6 @@ final class FileDownloader {
 			Log.w(TAG_FILE_DOWNLOADER, "No connectivity is available. Download failed!");
 			return false;
 		}
-		
-		// A progress dialog is shown to let the user know about the downloading process
-    	//dialog = ProgressDialog.show((Activity) mContextWrapper, "Downloading", "Downloading a remote resource..");
 		
     	// Data are retrieved here by an auxiliary thread.
     	Thread dataThread = new Thread() {
@@ -168,18 +180,6 @@ final class FileDownloader {
     				}    			
     			}
     			
-    			// Finally dismiss the dialog..
-    			/*handler.post(new Runnable () {
-
-					@Override
-					public void run() {
-				             
-				        // The progress dialog is dismissed here..
-				        dialog.dismiss();
-						
-					}
-    				
-    			});*/
     		}
     	};
     	
