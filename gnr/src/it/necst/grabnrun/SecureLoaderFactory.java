@@ -53,10 +53,10 @@ public class SecureLoaderFactory {
 	 * When a remote container URL is encountered, this field specifies the default time interval, 
 	 * expressed in days, before which a local copy of a remote container, stored in an 
 	 * application-private directory, will be considered fresh and so acceptable to be cached.
-	 * 
+	 * <p>
 	 * On the other hand, all of those containers, whose life time is greater than this
 	 * field value, will be immediately erased from the device storage in stead of being cached.
-	 * 
+	 * <p>
 	 * You can change this duration by generating the {@link SecureLoaderFactory} instance
 	 * with {@link SecureLoaderFactory#SecureLoaderFactory(ContextWrapper, int)}.
 	 */
@@ -67,7 +67,7 @@ public class SecureLoaderFactory {
 	/**
 	 * Creates a {@link SecureLoaderFactory} used to check and generate instances 
 	 * from secure dynamic code loader classes.
-	 * 
+	 * <p>
 	 * It requires a {@link ContextWrapper} (i.e. the launching activity) which 
 	 * should be used to manage and retrieve internal directories 
 	 * of the application.
@@ -84,7 +84,7 @@ public class SecureLoaderFactory {
 	 * This constructor works exactly as the previous one but it also allows to 
 	 * decide the time interval in days before which a local copy of a remote container, stored in an 
 	 * application-private directory, will be considered fresh and so acceptable to be cached.
-	 * 
+	 * <p>
 	 * If a negative value is provided for the second parameter, {@link SecureLoaderFactory} will be 
 	 * instantiated with the time interval in days equal to {@link SecureLoaderFactory#DEFAULT_DAYS_BEFORE_CONTAINER_EXPIRACY}.
 	 * 
@@ -124,10 +124,10 @@ public class SecureLoaderFactory {
 	 * provided locations (either local or remote via HTTP or HTTPS) in dexPath.
 	 * Interpreted classes are found in a set of DEX files contained in Jar or Apk files and 
 	 * stored into an application-private, writable directory.
-	 * 
+	 * <p>
 	 * Before executing one of these classes the signature of the target class is 
 	 * verified against the certificate associated with its package name.
-	 * Certificates location are provided by filling appropriately {@link packageNameToCertificateMap}};
+	 * Certificates location are provided by filling appropriately packageNameToCertificateMap;
 	 * each package name must be linked with the remote location of the certificate that
 	 * should be used to validate all the classes of that package. It's important 
 	 * that each one of these locations uses HTTPS as its protocol; otherwise this 
@@ -135,19 +135,15 @@ public class SecureLoaderFactory {
 	 * If a class package name do not match any of the provided entries in the map, 
 	 * certificate location will be constructed by simply reverting package name and 
 	 * transforming it into a web-based URL using HTTPS.
-	 * 
-	 * Note that this method returns null if no matching Jar or Apk file is found at the
+	 * <p>
+	 * Note that this method returns {@code null} if no matching Jar or Apk file is found at the
 	 * provided dexPath parameter; otherwise a {@link SecureDexClassLoader} instance is returned.
-	 * 
+	 * <p>
 	 * Dynamic class loading with the returned {@link SecureDexClassLoader} will fail whether
 	 * at least one of these conditions is not accomplished: target class is not found in dexPath
 	 * or is in a missing remote container (i.e. Internet connectivity is not present), missing or
 	 * invalid (i.e. expired) certificate is associated with the package name of the target class,
 	 * target class signature check fails against the associated certificate.
-	 * 
-	 * If you are planning to use the same instance of SecureDexClassLoader concurrently to 
-	 * load classes on different threds, use directly this constructor in stead of the one
-	 * with five parameters.
 	 * 
 	 * @param dexPath
 	 *  the list of jar/apk files containing classes and resources; these paths could
@@ -162,7 +158,8 @@ public class SecureLoaderFactory {
 	 * @param packageNameToCertificateMap
 	 *  a map that couples each package name to a URL which contains the certificate
 	 *  that must be used to validate all the classes that belong to that package
-	 *  before launching them at run time.
+	 *  before launching them at run time. Please notice that any URL in this map 
+	 *  using HTTP protocol will be enforced to use HTTPS in stead.
 	 * @return
 	 *  a SecureDexClassLoader object which can be used to load dynamic code securely and 
 	 *  uses a Lazy strategy for container signature verification.
@@ -172,38 +169,35 @@ public class SecureLoaderFactory {
 														ClassLoader parent,
 														Map<String, URL> packageNameToCertificateMap) { 
 		
-		// The default behavior by now is using LAZY evaluation.
-		// In order to change it, simply modify the last boolean parameter from "true" to "false".
-		return createDexClassLoader(dexPath, libraryPath, parent, packageNameToCertificateMap, true);
+		// The default behavior by now is using EAGER evaluation.
+		// In order to change it, simply modify the last boolean parameter from "false" to "true".
+		return createDexClassLoader(dexPath, libraryPath, parent, packageNameToCertificateMap, false);
 		
 	}
 	
 	/**
 	 * This method returns a SecureDexClassLoader instance in the same way as it is 
-	 * explained in the previous createDexClassLoader() method.
-	 * 
-	 * In addition it is possible to specify the mode in which the signature verification
-	 * process will be carried.
-	 * 
+	 * explained in the previous createDexClassLoader() method. In addition it is 
+	 * possible to specify the mode in which the signature verification process will be carried.
+	 * <p>
 	 * In particular by setting the performLazyEvaluation parameter on true, 
 	 * a lazy verification process will be chosen. This means that the signature
 	 * of the single container associated with the target class will be evaluated 
 	 * only when the loadClass() method will be invoked on {@link SecureDexClassLoader} 
 	 * object. If this check succeeds the target class will be loaded.
-	 * 
+	 * <p>
 	 * On the other hand, by setting the parameter performLazyEvaluation to false 
 	 * an eager evaluation will be carried out. This means that before returning this 
 	 * object, the signature verification procedure will be carried out on all the 
-	 * provided containers and all of those that do not succeed in the process will
+	 * provided containers in a CONCURRENT way and all of those that do not succeed in the process will
 	 * be blocked from loading their classes in the following loadClass() calls.
-	 * 
+	 * <p>
 	 * The use of one mode in stead of the other is merely a performance-related choice.
 	 * If you do not care that much about it, just invoke the overloaded method 
 	 * createDexClassLoader() which does not require to provide the performLazyEvaluation
-	 * parameter. Otherwise as a general guideline, prefer the lazy mode whenever you
-	 * need to load classes from many and heavy containers; use the eager mode when
-	 * the number of involved containers is small and so the penalty for evaluating all
-	 * of them immediately in one shot won't be so high.
+	 * parameter and it will perform an Eager evaluation. Otherwise as a general guideline, 
+	 * prefer the lazy mode whenever you think that you won't need to load classes 
+	 * from all the provided containers.
 	 * 
 	 * @param dexPath
 	 *  the list of jar/apk files containing classes and resources; these paths could
@@ -218,7 +212,8 @@ public class SecureLoaderFactory {
 	 * @param packageNameToCertificateMap
 	 *  a map that couples each package name to a URL which contains the certificate
 	 *  that must be used to validate all the classes that belong to that package
-	 *  before launching them at run time.
+	 *  before launching them at run time. Please notice that any URL in this map 
+	 *  using HTTP protocol will be enforced to use HTTPS in stead.
 	 * @param performLazyEvaluation
 	 *  the mode in which the verification will be handled. True for lazy verification;
 	 *  false for the eager one.
@@ -449,7 +444,6 @@ public class SecureLoaderFactory {
 		
 		Log.d(TAG_SECURE_FACTORY, "Dex Output Dir has been mounted at: " + dexOutputDir.getAbsolutePath());
 		
-		// TODO: Discuss about this aspect with Federico..
 		// Up to now libraryPath is not checked and left untouched..
 		// This is not necessary a bad choice..
 		

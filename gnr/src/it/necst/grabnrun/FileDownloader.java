@@ -83,6 +83,8 @@ final class FileDownloader {
     				
     				// Fix timeout for the connection..
     				urlConnection.setConnectTimeout(1000);
+    				// It should not be necessary to disable redirect manually..
+    				// urlConnection.setInstanceFollowRedirects(false);
     				
     				Log.d(TAG_FILE_DOWNLOADER, "A connection was set up: " + remoteURL.toString());
     				

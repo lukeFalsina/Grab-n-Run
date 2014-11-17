@@ -25,6 +25,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -43,10 +48,10 @@ import dalvik.system.DexFile;
  * A class that provides an extension of default {@link DexClassLoader} 
  * provided by the Android system and it is used to load classes 
  * from jar and apk container files including a classes.dex entry in a secure way.
- * 
+ * <p>
  * In order to instantiate this class a call to the method createDexClassLoader
  * from a {@link SecureLoaderFactory} object must be performed.
- * 
+ * <p>
  * {@link SecureDexClassLoader} ensures integrity of loaded external remote 
  * classes by comparing them with the developer certificate, which
  * is retrieved either by a provided associative map between package names 
@@ -54,23 +59,23 @@ import dalvik.system.DexFile;
  * first two words of the package name of the loaded class and then 
  * by adding each following word in the same order and separated by 
  * a slash "/".
- * 
- * Package name reversion example:
- * Class name = it.necst.grabnrun.example.TestClassImpl
- * Constructed URL = https://necst.it/grabnrun/example
- * Final certificate location = https://necst.it/grabnrun/example/certificate.pem
- * 
+ * <p>
+ * Package name reversion example:<br>
+ * Class name = it.necst.grabnrun.example.TestClassImpl<br>
+ * Constructed URL = https://necst.it/grabnrun/example<br>
+ * Final certificate location = https://necst.it/grabnrun/example/certificate.pem<br>
+ * <p>
  * A request is pointed to the final certificate location and if 
  * the file is found, it is imported in the local private 
  * application directory.
- * 
+ * <p>
  * Please note that in the current implementation certificates obtained 
  * by reverting package name must have been saved at the described 
  * location as "certificate.pem". Moreover all the certificates must 
  * fit requirements of a standard X.509 certificate, they must 
  * be valid in the current time frame and of course they must have been 
  * used to sign the jar or apk, which contains the classes to be loaded.
- * 
+ * <p>
  * If any of these previous requirements is violated no class is loaded 
  * and this class immediately returns without executing any class code 
  * loading operation.
@@ -100,6 +105,12 @@ public class SecureDexClassLoader {
 	
 	// Final name of the folder user to store certificates for the verification
 	private static final String CERTIFICATE_DIR = "valid_certs";
+
+	// Constant used to tune concurrent vs standard verification in Eager mode.
+	private static final int MINIMUM_NUMBER_OF_CONTAINERS_FOR_CONCURRENT_VERIFICATION = 2;
+	
+	// Sets the Time Unit to milliseconds.
+    private static final TimeUnit KEEP_ALIVE_TIME_UNIT = TimeUnit.MILLISECONDS;
 	
 	// Used to verify if a call to the wiped out method has
 	// been performed.
@@ -369,7 +380,21 @@ public class SecureDexClassLoader {
 			
 			// If an eager approach is chosen now it is time to verify all the containers
 			// and remove the invalid ones.
-			verifyAllContainersSignature();
+			
+			// Get the distinct set of containers path..
+			Set<String> containersToVerifySet = new HashSet<String>(packageNameToContainerPathMap.values());;
+			
+			// Check how many containers need to be verified..
+			if (containersToVerifySet.size() < MINIMUM_NUMBER_OF_CONTAINERS_FOR_CONCURRENT_VERIFICATION) {
+				
+				// Choose standard single thread verification.
+				verifyAllContainersSignature();
+			} else {
+				
+				// Perform a concurrent container verification.
+				verifyAllContainersSignatureConcurrently(containersToVerifySet);
+			}
+			
 		}
 	}
 
@@ -420,9 +445,6 @@ public class SecureDexClassLoader {
 		
 		// Analyze all the package names which are linked to a container.
 		Iterator<String> packageNamesIterator = packageNameToContainerPathMap.keySet().iterator();
-		
-		// TODO Check that the remove() call on the iterator actually modifies the keySet
-		// in packageNameToContainerPathMap.
 		
 		while (packageNamesIterator.hasNext()) {
 			
@@ -494,6 +516,172 @@ public class SecureDexClassLoader {
 		}
 		
 	}
+	
+	// This method is invoked only in the case of an eager evaluation.
+	// It will check that all the provided containers successfully
+	// execute the signature verification step against the certificate associated
+	// to those. Containers which fail the test will be removed.
+	private void verifyAllContainersSignatureConcurrently(Set<String> containersPathToVerifySet) {
+		
+		
+		// Initialize helper map which links a container to the certificate to validate it..
+		Map<String, String> containerPathToRootPackageNameMap = new LinkedHashMap<String, String>();
+		
+		// Analyze all the package names which are linked to a container.
+		Iterator<String> packageNamesIterator = packageNameToContainerPathMap.keySet().iterator();
+				
+		// Scan all package names and find a suitable root package name 
+		// with an associated certificate to validate each container.
+		while (packageNamesIterator.hasNext()) {
+			
+			String currentPackageName = packageNamesIterator.next();
+			
+			// At first find the package name which is closest in hierarchy to the target one
+			// and has an associated URL for a certificate.
+			String rootPackageNameWithCertificate = mPackageNameTrie.getPackageNameWithAssociatedCertificate(currentPackageName);
+			
+			if (!rootPackageNameWithCertificate.isEmpty()) {
+				
+				// Insert a valid entry into the container to certificate Map
+				containerPathToRootPackageNameMap.put(packageNameToContainerPathMap.get(currentPackageName), rootPackageNameWithCertificate);
+			}
+		}
+		
+		// Initialize the set of successfully verified containers
+		Set<String> successVerifiedContainerPathSet = Collections.synchronizedSet(new HashSet<String>());
+		
+		if (!containerPathToRootPackageNameMap.isEmpty()) {
+			
+			// Initialize the thread pool executor with number of thread equals to the
+			// number of containers to verify..
+			ExecutorService threadSignatureVerificationPool = Executors.newFixedThreadPool(containerPathToRootPackageNameMap.size());			
+			List<Future<?>> futureTaskList = new ArrayList<Future<?>>();
+			
+			Iterator<String> containerPathIterator = containerPathToRootPackageNameMap.keySet().iterator();
+			
+			while (containerPathIterator.hasNext()) {
+				
+				String currentContainerPath = containerPathIterator.next();
+				
+				// Submit a new signature verification thread on a container and store a 
+				// reference in the future objects list.
+				Future<?> futureTask = threadSignatureVerificationPool.submit(new SignatureVerificationTask(currentContainerPath, containerPathToRootPackageNameMap.get(currentContainerPath), successVerifiedContainerPathSet));
+				futureTaskList.add(futureTask);
+			}
+			
+			// Stop accepting new tasks for the current threadSignatureVerificationPool
+			threadSignatureVerificationPool.shutdown();
+			
+			for (Future<?> futureTask : futureTaskList) {
+				
+				try {
+					
+					// Wait till the current task for signature verification is finished..
+					futureTask.get();
+					
+				} catch (InterruptedException | ExecutionException e) {
+					
+					// Issue while executing the verification on a thread
+					Log.w(TAG_SECURE_DEX_CLASS_LOADER, "One of the thread failed during signature verification because of " + e.getCause().toString());
+				}
+			}
+			
+			try {
+				
+				// Join all the threads here..
+				threadSignatureVerificationPool.awaitTermination(MINIMUM_NUMBER_OF_CONTAINERS_FOR_CONCURRENT_VERIFICATION, KEEP_ALIVE_TIME_UNIT);
+			} catch (InterruptedException e) {
+				
+				// One or more of the thread were still busy.. This should not happen..
+				Log.w(TAG_SECURE_DEX_CLASS_LOADER, "At least one thread for signature verification was still busy and so it was interrupted");
+			}
+		}
+		
+		// Now all the package names are scanned again and removed from the packageNameToContainerPathMap 
+		// if their container is not one of the valid ones..
+		Iterator<String> packageNamesAfterVerificationIterator = packageNameToContainerPathMap.keySet().iterator();
+		
+		while (packageNamesAfterVerificationIterator.hasNext()) {
+			
+			String currentPackageName = packageNamesAfterVerificationIterator.next();
+			
+			if (!successVerifiedContainerPathSet.contains(packageNameToContainerPathMap.get(currentPackageName))) {
+				
+				// The container linked to this package name did not succeed in the verification process.
+				// No class with this package name can be loaded..
+				packageNamesAfterVerificationIterator.remove();
+			}
+				
+		}
+		
+		// In the end all the containers that failed the verification are deleted..
+		Iterator<String> containersPathToVerifyIterator = containersPathToVerifySet.iterator();
+		
+		while (containersPathToVerifyIterator.hasNext()) {
+			
+			String currentContainerPath = containersPathToVerifyIterator.next();
+			
+			if (!successVerifiedContainerPathSet.contains(currentContainerPath)) {
+				
+				// This container did not overcome successfully the signature verification
+				// so it should be deleted from the cached container directory.
+				if (!(new File(currentContainerPath).delete()))
+						Log.w(TAG_SECURE_DEX_CLASS_LOADER, "Issue while deleting conainer located at " + currentContainerPath);
+			}
+		}
+	}
+	
+	class SignatureVerificationTask implements Runnable {
+
+		// Location of the container to verify.
+		private String containerPath;
+		// Package name associated with a certificate.
+		private String rootPackageNameWithCertificate;
+		// Concurrent set of containers that has been successfully verified.
+		private Set<String> successVerifiedContainerSet;
+		
+		public SignatureVerificationTask(String containerPath, String rootPackageNameWithCertificate, Set<String> successVerifiedContainerSet) {
+			
+			// Simply copy all the incoming parameters..
+			this.containerPath = containerPath;
+			this.rootPackageNameWithCertificate = rootPackageNameWithCertificate;
+			this.successVerifiedContainerSet = successVerifiedContainerSet;
+		}
+		
+		@Override
+		public void run() {
+			
+			// Moves the current Thread into the background
+	        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
+			
+			// This runnable class performs a full signature verification on the 
+			// associated container
+			
+			// Try to find and import the certificate used to check the signature of .apk or .jar container
+			X509Certificate verifiedCertificate = importCertificateFromPackageName(rootPackageNameWithCertificate);
+			
+			if (verifiedCertificate != null) {
+				
+				// We were able to get a valid certificate either directly from the local cache directory or after having 
+				// downloaded it from the web securely.
+				// Now it's time to check whether this certificate was used to sign the class to be loaded.
+				
+				boolean signatureCheckIsSuccessful = verifyContainerSignatureAgainstCertificate(containerPath, verifiedCertificate);
+				
+				// Signature verification result..
+				if (signatureCheckIsSuccessful) {
+				
+					// If the signature verification on the container succeeds, insert this container path
+					// into the set of those containers which successfully pass the signature verification process.
+					synchronized (successVerifiedContainerSet) {
+					
+						successVerifiedContainerSet.add(containerPath);
+					}
+				}
+			}
+		}
+		
+	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.ClassLoader#loadClass(java.lang.String)
@@ -507,7 +695,7 @@ public class SecureDexClassLoader {
 	 *  class to load.
 	 * @return
 	 *  Either a class that needs to be casted at runtime accordingly to className if the verification
-	 *  process succeeds or a {@link <code>null</code>} pointer in case that at least one of the security
+	 *  process succeeds or a {@code null} pointer in case that at least one of the security
 	 *  constraints for secure dynamic class loading is violated.
 	 * @throws ClassNotFoundException
 	 *  this exception is raised whenever no security constraint is violated but still the target class is
@@ -996,10 +1184,10 @@ public class SecureDexClassLoader {
 	 * Sometimes it may be useful to remove those data that have been cached in 
 	 * the private application folder (basically for performance reason or for saving 
 	 * disk space on the device). A call to this method solves the issue.
-	 * 
+	 * <p>
 	 * Please notice that a call to this method with both the parameters set to false 
 	 * has no effect.
-	 * 
+	 * <p>
 	 * In any of the other cases the content of the related folder(s) will be erased and 
 	 * since some of the data may have been used by {@link SecureDexClassLoader} instances, it is 
 	 * required to the caller to create a new {@link SecureDexClassLoader} object through 
