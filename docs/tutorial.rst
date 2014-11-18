@@ -71,13 +71,15 @@ since the third parameter of the constructor is ``null`` and the `ClassLoader <h
 Finally the designated class is, at first, loaded by invoking the ``loadClass()`` method on ``mDexClassLoader`` with the **full class name** provided as a parameter and, secondly, instantiated through the ``newInstance()`` method and the forced
 casting to ``MyClass``. The three different **catch blocks** are used to handle different exceptions that may be raised during the process.
 
-.. note::
+.. warning::
 	Notice that a **full class name** is required to successfully load a class and so the **complete package name** separated by dots must **precede** the **class name**.
 	Referred to the example, full class name is ``com.example.MyClass`` and not just the short class name ``MyClass``, which would produce a failure in the class loading operation.
 	In particular if it is the case that a short class name is provided in stead of a full one, it is likely that a ``ClassNotFoundException`` will be raised at runtime.
 
 This snippet of code is perfectly fine and working but it is **not completely secure** since neither integrity on the container of the classes, neither authentication on the developer of the container are checked before executing the code.
 And here comes ``SecureDexClassLoader`` to solve these issues.  
+
+.. _Using SecureDexClassLoader to load dynamic code securely:
 
 Using SecureDexClassLoader to load dynamic code securely 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -132,7 +134,7 @@ Since here you just want to load ``com.example.MyClass`` the following snippet o
 	Pushing into the associative map an entry with an already existing package name will simply overwrite 
 	the previously chosen location of the certificate for that package name.
 
-.. note::
+.. warning::
 	For each entry of the map only an **HTTPS** link will be accepted. This is necessary in order to 
 	**avoid MITM (Man-In-The-Middle)** attacks while retrieving the *trusted* certificate. In case that an **HTTP**
 	link is inserted, ``SecureLoaderFactory`` will enforce *HTTPS protocol* on it and in any case whenever 
@@ -152,7 +154,7 @@ it will use the ``packageNamesToCertMap`` to retrieve all the required certifica
 an application private certificate folder. Also notice that in this case no directory to cache output classes is needed
 since ``SecureDexClassLoader`` will automatically reserve such a folder.
 
-.. note::
+.. warning::
 	As stated in the `API documentation <http://developer.android.com/reference/dalvik/system/DexClassLoader.html#DexClassLoader(java.lang.String, java.lang.String, java.lang.String, java.lang.ClassLoader)>`_ ``jarContainerPath`` may link many *different containers* separated by ``:`` and 
 	for such a reason the **developer is responsible** of filling the associative map of the certificates location
 	accordingly with all the entries needed to cover all the package names of the classes to be loaded.
@@ -303,243 +305,8 @@ perform is the following::
 
 		mSecureDexClassLoader.wipeOutPrivateAppCachedData(true, true);
 
-.. note::
+.. warning::
 	After that you *have erased at least one cached resource between the certificates and the containers*, ``mSecureDexClassLoader``
 	will always return ``null`` for **consistency reason** to any invocation of the ``loadClass()`` method. 
 	So it will be **necessary** for you to require a **new** ``SecureDexClassLoader`` instance to ``SecureLoaderFactory``
 	through the invocation of the ``createDexClassLoader()`` method before being able to dynamically and securely load other classes.
-
-Complementary topics
---------------------
-
-In the end of this pages a couple of not so trivial use cases of *Grab'n Run* are presented. This section will not introduce new core concepts but it may help the developer to handle some **tricky situations**. For such a reason feel free to **skip this part** and eventually **come back later** to revise it whenever you will encounter one of the following situation while using the library.
-
-Handle containers whose classes come from different package names which have a common relevant prefix
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Before starting diving in this section it is important to recall the **relationship between package name and containers**. 
-
-**Package name in apk containers**
-	*Apk* containers must contain just **one package name**, which must be chosen by the developer when a new application is created. The package name is then stored in the *Android Manifest* of the application. In order to have an application being admitted on the *Google Play* store, it is also fundamental that the chosen package name is **unique** and should **not change** for the whole life cycle of the application.
-
-**Package name in jar containers**
-	*Jar* containers on the other hand do **not** have such a **strict policy** as in *apk* containers. Hypothetically each class file contained in a *jar* archive may have a different package name and this mean that **many package names** can be present in the **same** *jar* container.
-
-**Common relevant prefix**
-	In *Grab'n Run* two package names share a relevant common prefix if their prefix match for at least two words separated by one dot.
-	
-	**Example:**
-	Consider the following package names: 
-
-	A. ``com.example.polimi``
-	B. ``it.example.polimi``
-	C. ``com.test``
-	D. ``com.example.application.system``
-	E. ``com.example.polimi.system``
-
-	* A. and B. do **not** share any **common relevant prefix** since they differ in the initial word of the package name (``com`` vs ``it``).
-	* A. and C. do **not** share any **common relevant prefix** since they just have one word of the package name in common (``com``).
-	* A. and D. share a **common relevant prefix** (``com.example``).
-	* A. and E. share a **common relevant prefix** (``com.example.polimi``).
-
-Given these insights a first interesting situation to consider is when a developer wants to *load dynamically classes* from an external *jar* library which contains **more than one package name** that, anyway, share a **common relevant prefix**. Let us assume for example that the target library has the following structure:
-
-.. image:: JarContStructure.png
-
-In such a scenario we have four classes (``ClassA``, ``ClassB``, ``ClassC``, ``ClassD``) which belongs to **three different packages**, whose names are respectively ``com.example``, ``com.example.system`` and ``com.example.system.preference``. Let use also assume that this container has being signed with a *valid self-signed certificate*, remotely located at ``https://something.somethelse.com/example_cert.pem``.
-
-Questions now for the developer are:
-
-1. *How should I fill in the associative map which links package names to remote certificate location in order to being able to load all the classes in this container?*
-2. *Am I obliged to insert all three package names pointing to the very same certificate?*
-
-Luckily the answer for the second question is **no**, which means that there is indeed an **easier way** to perform the job. *Grab'n Run* in fact was thought to make the whole dynamic class loading **secure but** at the same time **simple** for applications developers.
-
-You can in fact handle this situation correctly by simply inserting into the associative map a **single entry** where the *key corresponds to the shortest among the package names* belonging to one of the classes that need to be loaded and the *value is the location of the remote certificate* used to sign the container. So in the **previous case** since the classes with the shortest package name are ``com.example.ClassA`` and  ``com.example.ClassB`` the following code is appropriate to populate the map::
-
-		Map<String, URL> packageNamesToCertMap = new HashMap<String, URL>();
-
-		try {
-			packageNamesToCertMap.put("com.example", new URL("https://something.somethelse.com/example_cert.pem"));
-
-		} catch (MalformedURLException e) {
-			
-			// The previous entry for the map may not necessarily be the right one 
-			// but still it is not malformed so no exception should be raised.
-			Log.e(TAG_MAIN, "A malformed URL was provided for a remote certificate location");
-			
-		}
-
-For the rest the developer may proceed as shown in `Using SecureDexClassLoader to load dynamic code securely`_. The result will be that the container is going to be verified against the appropriate certificate and, if it is **genuine**, it will be *also possible to load the other two classes* in the archive with a **different package name** (``com.example.system.ClassC`` and ``com.example.system.preference.ClassD``).
-
-Handle containers whose classes come from different package names with no relevant common prefix
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Even if it is not such a common situation it is possible for a *jar* archive to *contain classes which belongs to different package names* and does not share any common relevant prefix.
-This situation, on the other hand, is **not practical** for *apk* containers since, in order to be **published** on Google Market, 
-an application needs to have a **single** package name which more over must **not change** during its whole life cycle.
-
-Anyway let us try to sketch the case of the previous cited jar archive and how to handle it with ``SecureDexClassLoader``. As an example we can consider the 
-scenario in which the goal is loading two classes, whose full class names are respectively ``com.example.MyFirstClass`` and ``com.test.MySecondClass`` and so 
-which **differs** in the **package name** but are **both stored** in the **same container** ``exampleJar.jar``.
-It is also supposed that this container has being signed with a *valid self-signed certificate*, remotely located at ``https://something.somethelse.com/example_cert.pem``.
-
-In order to handle this situation correctly the developer is required to fill the **associative map** which links package names and certificates
-with **two entries**, one per each package name, which will *point to the same remote certificate*. This is exemplified in the following snippet of code::
-
-		Map<String, URL> packageNamesToCertMap = new HashMap<String, URL>();
-
-		try {
-			packageNamesToCertMap.put("com.example", new URL("https://something.somethelse.com/example_cert.pem"));
-			packageNamesToCertMap.put("com.test", new URL("https://something.somethelse.com/example_cert.pem"));
-
-		} catch (MalformedURLException e) {
-			
-			// The previous entries for the map may not be necessarily the right ones 
-			// but still they are not malformed so no exception should be raised.
-			Log.e(TAG_MAIN, "A malformed URL was provided for a remote certificate location");
-			
-		}
-
-For the rest the developer may proceed as shown in `Using SecureDexClassLoader to load dynamic code securely`_ and this procedure grants to succeed in the loading
-process for any of the two classes independently on the order in which they are attempted to be loaded.
-
-.. note::
-	By design ``SecureDexClassLoader`` assumes that **each package name** is intrinsically related to a **single container**, while it is not necessary true the opposite.
-	This means that attempting to *load a class*, whose **package name** is associated with **more than one container** provided in *dexPath* (i.e. each one of the two 
-	containers contains at least one class with the same package name), will generate an **unpredictable behavior** since ``SecureDexClassLoader`` will associate 
-	that package name with just one of the two containers.
-
-	So it is a **developer responsibility** to check the containers in order to avoid the occurrence of this rare but undesirable situation.
-
-Reverse package name to obtain remote certificate URL
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-*Grab'n Run* provides as an extra feature the possibility to **reconstruct the remote URL location of the certificate by reversing the package name** provided into the associative map. To enable this feature simply add an entry to the associative map where the **key** is the **desired package name to reverse** and the **value** is ``null``.
-Here is a simple snippet of code to exemplify::
-
-		Map<String, URL> packageNamesToCertMap = new HashMap<String, URL>();
-
-		// A null entry can't raise a MalformedURLException..
-		packageNamesToCertMap.put("it.polimi.necst.mylibrary", null);
-
-What is going on behind the curtains is that whenever GNR find an entry with *a valid package name associated to a null value*, it will **reverse the package name** with the following convention:
-
-	The **first word** of the package name will be considered as the **top level domain (TLD)**, while the **second** one is going to be the **main domain**. Any **following word** of the package name will be used in the **same order** as they are listed to define the **file path** on the remote server and of course since a secure connection is needed for the certificate, **HTTPS protocol** will be enforced.
-
-Let us translate this theory with some concrete examples::
-* Package name ``it`` won't be reverted since it contains just a world (at least two are required for real world package name).
-* Package name ``it.polimi`` will be reverted to the URL ``https://polimi.it/certificate.pem``.
-* Package name ``it.polimi.necst.mylibrary`` will be reverted to the URL ``https://polimi.it/necst/mylibrary/certificate.pem``.
-
-As you can see from the previous examples this naming convention assumes that the **final certificate** will be found in the *remote folder obtained by reverting the package name* and that the **certificate file** will have been **always renamed** ``certificate.pem``.
-
-Perform dynamic code loading concurrently
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-TODO
-
-.. * By now use SecureDexClassLoader in Lazy mode. Instantiate such an object on the main thread.
-.. * Initialize a thread executor and then makes each thread load a class from the same SecureDexClassLoader object. Evaluation of containers will be performed only by the first thread to load a class into a container while the others will use the cached verification mechanism to directly load or reject loading for their target class.
-.. * Remember to put a join instruction at the end of the code block on the main thread to be sure that after that line all the classes that you need have attempted to being loaded.    
-
-On library developer side: how to prepare a valid library container compatible with GNR
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-For once in this tutorial the **focus is now moved** from the *application developer*, who wants to load classes from an external library, **to the library developer**, who wrote a library and wants to make it available to the application developers.
-
-What we are going to discuss about in this section is **how a library developer should prepare his/her library** in order to have it **compatible with GNR** system and more in general with **dynamic code loading**. A hint in this sense is provided by DexClassLoader `documentation <http://developer.android.com/reference/dalvik/system/DexClassLoader.html>`_, which states clearly that this class, and so also ``SecureDexClassLoader`` does, *"loads classes from .jar and .apk files containing a classes.dex entry."*.
-
-So let us assume that you, as a library developer, want to export your project called "MyLibrary" into a *jar* archive compatible with ``SecureDexClassLoader``. The following steps should be performed:
-
-1. **Export the project "MyLibrary" into a jar archive.**
-
-	In the ADT (Android Development Tool) right-click on the project *"MyLibrary"* and select *"Export..."*.
-
-	.. image:: ExportJarOption.png
-
-	Then choose the option "Jar File" and click "Next...".
-
-	.. image:: ExportJarFile.png
-
-	Finally choose the location of the exported *jar* archive by clicking on the "Browse..." button and then "Finish".
-
-	.. image:: ExportJarFinish.png
-
-	You have now successfully exported your project into a *jar* container.
-
-2. **Translate Java Byte Code (.class) into Dalvik Byte Code (classes.dex).**
-
-	After having exported your project into a *jar* container you now have code that can run on a **Java Virtual Machine (JVM)** in the form of class file with the extensions ``.class``. Nevertheless in order to have your **code running** with ``SecureDexClassLoader`` **on an Android phone** it is necessary to **translate** the class files from Java Bytecode to **Dalvik Bytecode**. This task can be accomplished easily thanks to the ``dx`` tool, present in the Android SDK folder.
-
-	..	highlight:: bash
-
-	So by assuming that you have just exported the project into a file called *myLibrary.jar* in a terminal type the following commands::
-
-	$ cd <path_to_exported_jar>
-	$ /<path_to_sdk>/build-tools/<last_stable_sdk_version>/dx --dex --output=myLibrary-dex.jar myLibrary.jar
-
-	The result is an output *jar* container called *myLibrary-dex.jar*. You can easily spot that no ``.class`` file is stored in this container and in stead a file called ``classes.dex`` was added. This is the direct **result of the translation** mentioned before. 
-
-3. **Generate a keypair and export the developer certificate**
-
-	If this is the first time that you sign a container you will need to **generate a key pair** with ``keytool`` and then **export a certificate** containing the newly created public key. 
-	Otherwise if you *already have a key pair and the associated certificate, simply skip this section* and continue reading from the next one.
-
-	In order to **generate a keystore and a key pair** type in the following command line in a terminal::
-
-	$ keytool -genkey -v -keystore my-release-key.keystore -alias alias_name -keyalg RSA -keysize 2048 -validity 10000  
-
-	This line prompts you for passwords for the keystore and private key, and to provide the Distinguished Name fields for your key. It then generates the keystore as a file called ``my-release-key.keystore``. The keystore will contain a single key, valid for 10000 days. The **alias** is a name that you choose to **identify keys** inside the keystore. In this case this private key will be identified as ``alias_name``.
-
-	If the previous step succeeded, now it is time to **export your developer certificate** that will be used by *application developers to verify your library code before dynamically loading it*. This can be accomplished again thanks to a ``keytool`` feature::
-
-	$ keytool -exportcert -keystore my-release-key.keystore -alias alias_name -file certificate.pem
-
-	This command will export the certificate embedding the public key associated to the private key whose alias is ``alias_name``. This certificate will be stored in the file ``certificate.pem``.
-
-	Even if the previous commands are all that you will need here, if you desire to deepen your knowledge on *keystore, keys and signing Android applications* visit these reference links:
-
-	* https://www.digitalocean.com/community/tutorials/java-keytool-essentials-working-with-java-keystores
-	* http://developer.android.com/tools/publishing/app-signing.html#signing-manually
-
-4. **Sign the library with the developer private key.**
-
-	Now it is time to **sign** the *jar* library with the **library developer private key** to enable the possibility to verify it.
-
-	Assuming that you have generated a private key whose alias is ``alias_name`` and stored it in a keystore whose name is ``my-release-key.keystore`` in order to sign the *jar* container manually type in this line in your terminal::
-
-	$ jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore my-release-key.keystore myLibrary-dex.jar alias_name
-
-	You can then verify that the jar container is actually signed by typing::
-
-	$ jarsigner -verify -verbose -certs myLibrary-dex.jar
-	
-	..	highlight:: java
-
-	.. note::
-		When you verify the signature of the final container, you will receive a **warning message** like the following *"This jar contains entries whose certificate chain is not validated"*. This is absolutely normal since a **self-signed certificate** was used for the **verification process** and this is acceptable in Android as long as you are absolutely *sure that the certificate used for the verification is actually the library developer one*. In *Grab'n Run* the **chain of trust** is replaced by assuming that the certificate is stored on a domain which is directly controlled by the library developer and can only be retrieved via **HTTPS protocol**. 
-
-5. **Make the library and the certificate publicly available.**
-
-	The last step is **making public the signed version of the jar container**, obtained after the previous step, and the **exported certificate** embedding the library developer public key (*as explained in step 3*).
-
-	While you can *store the library container basically everywhere on the web* (application developers can retrieve your library via both HTTP or HTTPS protocol), it is **crucial and fundamental** for the whole security model to handle that you **publish your library developer certificate on a secure trustworthy remote location which can be accessed only via HTTPS protocol**.
-
-If you have successfully followed up all the previous steps, you have now correctly **published your library** and application developers will be able to **run your code securely** by using ``SecureDexClassLoader``. 
-
-Let GNR automatically handle library updates silently
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-TODO
-
-.. Library developer side:
-
-..	* Read previous section.
-..	* Use a redirect HTTP link to point to the last version of the signed jar library container
-..	* Use an HTTPS link to make the certificate for verification public
-
-.. Application developer side:
-..	* Initialize SecureDexClassLoader with dexPath pointing to the redirect HTTP link for the updated container and associate the package name to the remote URL of the library developer certificate
-
-.. DONE :)

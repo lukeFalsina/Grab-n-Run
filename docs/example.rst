@@ -83,7 +83,7 @@ At first a ``SecureLoaderFactory`` object is created. Then this instance is used
 
 	In the second test case you can see different ways to **populate** the associative map ``packageNamesToCertMap``, used to *link packages with certificates location*.
 
-	.. note::
+	.. warning::
 		Always keep in mind that **prior** to **downloading** a certificate from the **web** the certificate for that package will be **searched inside the application-private directory** reserved for certificates and then possibly at the remote location. If you wish to *just look at the remote URL* without considering cached certificates, always remember to **wipe out private application data** through the invocation of the method ``wipeOutPrivateAppCachedData()`` **before dismissing** your ``SecureDexClassLoader`` instances. In such a way every time that a new ``SecureDexClassLoader`` is created, you will be sure that no cached resource will be associated with it.
 
 
@@ -118,7 +118,7 @@ But let's explain how this could possibly happen: in ``DexClassSampleActivity`` 
 
 On the other hand if you perform the same experiment with ``SecureDexClassLoader`` the repackaged *apk* container choice this time will be detected and blocked during the **signature verification procedure** against the developer certificate in the ``loadClass()`` method. This is possible since *malicious modified entries will not succeed in the signature verification check computed by considering both the initial signature stored inside the container and the developer certificate* retrieved from the associative map used to initialize the ``SecureDexClassLoader`` instance. Thanks to this, ``SecureDexClassLoader`` **won't load** the customization classes inside the *repackaged container* and it will just **end up the activity**, which is exactly the **secure** behavior that you, *as a developer*, would like to obtain :)  
 
-Create PackageContext
----------------------
+.. Create PackageContext
+.. ---------------------
 
-Coming soon.. More or less ;)
+.. Coming soon.. More or less ;)
