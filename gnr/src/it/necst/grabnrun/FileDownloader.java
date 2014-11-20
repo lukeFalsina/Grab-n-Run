@@ -31,6 +31,7 @@ final class FileDownloader {
 	// Objects used to check availability of Internet connection
 	private ConnectivityManager mConnectivityManager;
 	private NetworkInfo activeNetworkInfo;
+	private String fileMimeType;
 
 	/**
 	 * This constructor initializes a {@link FileDownloader} object for downloading remote
@@ -42,7 +43,8 @@ final class FileDownloader {
 	 */
 	FileDownloader(ContextWrapper parentContextWrapper) {
 
-		mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);		
+		mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);
+		fileMimeType = null;
 	}
 	
 	// Assumption: input URL and output URI has been already validated by the caller of this method..
@@ -87,8 +89,7 @@ final class FileDownloader {
     				if (remoteURL.getProtocol().equals("https")) {
     					// HTTPS protocol
     					urlConnection = (HttpsURLConnection) remoteURL.openConnection();
-    				}
-    				else {
+    				} else {
     					// HTTP protocol
     					urlConnection = (HttpURLConnection) remoteURL.openConnection();
     				}
@@ -127,8 +128,7 @@ final class FileDownloader {
     						if (redirectedURL.getProtocol().equals("https")) {
     	    					// HTTPS protocol
     	    					urlConnection = (HttpsURLConnection) redirectedURL.openConnection();
-    	    				}
-    	    				else {
+    	    				} else {
     	    					// HTTP protocol
     	    					urlConnection = (HttpURLConnection) redirectedURL.openConnection();
     	    				}
@@ -141,6 +141,11 @@ final class FileDownloader {
     						Log.d(TAG_FILE_DOWNLOADER, "The connection was redirected to: " + redirectedURL.toString());
     					}
     				}
+    				
+    				// Get MIME-type of the file.
+    				fileMimeType = urlConnection.getContentType();
+    				
+    				// Log.i(TAG_FILE_DOWNLOADER, "Download complete. File MIME-type: " + fileMimeType);
     				
     				inputStream = new BufferedInputStream(urlConnection.getInputStream());
 					outputStream = new FileOutputStream(localURI);
@@ -161,7 +166,8 @@ final class FileDownloader {
     				
     			} finally {
     				Log.d(TAG_FILE_DOWNLOADER, "Clean up all pending streams..");
-    				if (urlConnection != null)	((HttpURLConnection) urlConnection).disconnect();
+    				if (urlConnection != null)
+    					((HttpURLConnection) urlConnection).disconnect();
 
     				if (inputStream != null) {
     					try {
@@ -200,5 +206,37 @@ final class FileDownloader {
     		return true;
     	else
     		return false;
+	}
+	
+	/**
+	 * This method analyzes the MIME-type of the last downloaded file
+	 * and returns the related extension.
+	 * 
+	 * @return
+	 *  the extension of the last downloaded file or null if MIME-type is unknown.
+	 */
+	String getDownloadedFileExtension() {
+		
+		if (fileMimeType == null)
+			return null;
+		
+		switch(fileMimeType) {
+		
+		case "application/vnd.android.package-archive":
+			// APK archive case (.apk)
+			return ".apk";
+			
+		case "application/java-archive":
+			// JAR archive case (.jar)
+			return ".jar";
+		
+		case "application/octet-stream":
+			// Certificate case (.pem)
+			return ".pem";
+			
+		default: 
+			// Case with no match with any of the previous types..
+			return null;
+		}
 	}
 }

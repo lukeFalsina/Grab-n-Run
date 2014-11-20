@@ -16,13 +16,13 @@ Include Grab'n Run in your project
 
 TODO
 
-Android Development Tool (ADT)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+a. Android Development Tool (ADT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 TODO
 
-Android Studio
-~~~~~~~~~~~~~~
+b. Android Studio
+~~~~~~~~~~~~~~~~~
 
 TODO
 

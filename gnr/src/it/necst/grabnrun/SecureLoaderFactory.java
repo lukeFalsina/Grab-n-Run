@@ -264,10 +264,6 @@ public class SecureLoaderFactory {
 		
 		for (String path : strings) {
 			
-			// Compute the extension of the file (Useful for later operations)
-			int extensionIndex = path.lastIndexOf(".");
-			String extension = path.substring(extensionIndex);
-			
 			if (path.startsWith("http//") || path.startsWith("https//")) {
 				
 				// Used to fix previous workaround on remote URL..
@@ -313,6 +309,10 @@ public class SecureLoaderFactory {
 							if (!downloadedContainer.delete())
 								Log.w(TAG_SECURE_FACTORY, "Issue while deleting " + downloadedContainerPath);
 						} else {
+							
+							// Compute the extension of the file.
+							int extensionIndex = downloadedContainerPath.lastIndexOf(".");
+							String extension = downloadedContainerPath.substring(extensionIndex);
 							
 							// Rename the previous container file according to the containerDigest and its extension.
 							String downloadedContainerFinalPath = importedContainerDir.getAbsolutePath() + File.separator + containerDigest + extension;
@@ -368,6 +368,10 @@ public class SecureLoaderFactory {
 				
 				// Take this branch if the digest was correctly computed on the container..
 				if (encodedContainerDigest != null) {
+					
+					// Compute the extension of the file.
+					int extensionIndex = path.lastIndexOf(".");
+					String extension = path.substring(extensionIndex);
 					
 					// Check if a file whose name is "encodedContainerDigest.(jar/apk)" is already present in
 					// the cached certificate folder.					
@@ -609,12 +613,17 @@ public class SecureLoaderFactory {
 		
 		// Check whether the selected resource is a container (jar or apk)
 		int extensionIndex = containerName.lastIndexOf(".");
-		String extension = containerName.substring(extensionIndex);
-		if (!extension.equals(".jar") && !extension.equals(".apk")) return null;
+		String extension = null;
+		
+		if (extensionIndex != -1) {
+			
+			extension = containerName.substring(extensionIndex);
+			if (!extension.equals(".jar") && !extension.equals(".apk")) return null;			
+		}
 		
 		// The new file name is fixed after having checked that its file name
 		// is unique.
-		File checkFile = new File(resOutputDir.getAbsolutePath() + containerName);
+		/* File checkFile = new File(resOutputDir.getAbsolutePath() + containerName);
 		String finalContainerName;
 		
 		if (checkFile.exists()) {
@@ -630,7 +639,16 @@ public class SecureLoaderFactory {
 		}
 		else {
 			finalContainerName = containerName;
-		}
+		} */
+		
+		String finalContainerName = containerName;
+		
+		// Check that no file is present at this location.
+		File checkFile = new File(resOutputDir.getAbsolutePath() + finalContainerName);
+		
+		// In case, just delete the old file..
+		if (checkFile.exists())
+			checkFile.delete();
 		
 		// Finally the container file can be downloaded from the URL
 		// and stored in the local folder
@@ -639,11 +657,46 @@ public class SecureLoaderFactory {
 		// Redirect may be allowed here while downloading a remote container..
 		boolean isDownloadSuccessful = mFileDownloader.downloadRemoteUrl(url, localContainerPath, true);
 		
-		if (isDownloadSuccessful)
+		if (isDownloadSuccessful) {
+			
 			// If this branch is reached, the download 
 			// worked properly and the path of the output
 			// file container is returned.
-			return localContainerPath;
+			if (extension == null) {
+
+				// In such a situation, try to identify the extension of the downloaded file
+				extension = mFileDownloader.getDownloadedFileExtension();
+				
+				// Check that an extension was found and it is a suitable one..
+				if (extension != null && (extension.equals(".jar") || extension.equals(".apk"))) {
+
+					// In such a case rename the previous file by adding the extension
+					File containerToRename = new File(localContainerPath);
+					File finalContainerWithExtension = new File(localContainerPath + extension); 
+					
+					if (finalContainerWithExtension.exists())
+						if (!finalContainerWithExtension.delete())
+							Log.w(TAG_SECURE_FACTORY, "Issue while deleting " + finalContainerWithExtension);
+					
+					if (!containerToRename.renameTo(finalContainerWithExtension)) {
+						
+						// Renaming operation failed..
+						// Erase downloaded container.
+						if (!containerToRename.delete())
+							Log.w(TAG_SECURE_FACTORY, "Issue while deleting " + localContainerPath);
+						
+						return null;
+					}
+						
+					// Return the local path to the renamed container.
+					return localContainerPath + extension;
+				}
+			} else {
+				
+				// An extension is already present so just return the path..
+				return localContainerPath;
+			}
+		}
 		
 		// Return null if any of the download
 		// steps failed.
