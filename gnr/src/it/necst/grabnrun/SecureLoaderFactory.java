@@ -529,15 +529,22 @@ public class SecureLoaderFactory {
 		while(packageNamesIterator.hasNext()) {
 			
 			String currentPackageName = packageNamesIterator.next();
-			String[] packStrings = currentPackageName.split(".");
+			String[] packStrings = currentPackageName.split("\\.");
 			boolean isValidPackageName = true;
 			boolean removeThisPackageName = false;
 			
 			for (String packString : packStrings) {
 				
 				// Heuristic: all the subfields should contain at least one char..
-				if (packString.isEmpty()) isValidPackageName = false;
+				if (packString.isEmpty())
+					isValidPackageName = false;
 			}
+			
+			// Package names should not be too general..
+			// At least two subnames dot separated.
+			// Example: "com" is rejected, while "com.polimi" is not.
+			if (packStrings.length < 2)
+				removeThisPackageName = true;
 			
 			if (isValidPackageName) {
 				
@@ -572,8 +579,8 @@ public class SecureLoaderFactory {
 				} catch (MalformedURLException e) {
 					removeThisPackageName = true;
 				}
-			}
-			else removeThisPackageName = true;
+			} else 
+				removeThisPackageName = true;
 			
 			if (removeThisPackageName) {
 
