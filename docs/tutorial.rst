@@ -71,6 +71,9 @@ since the third parameter of the constructor is ``null`` and the `ClassLoader <h
 Finally the designated class is, at first, loaded by invoking the ``loadClass()`` method on ``mDexClassLoader`` with the **full class name** provided as a parameter and, secondly, instantiated through the ``newInstance()`` method and the forced
 casting to ``MyClass``. The three different **catch blocks** are used to handle different exceptions that may be raised during the process.
 
+**Package Name**
+	In Java every class is associated to a **package name**. A **package** is a *grouping of related classes, interfaces and enumerations* providing **access protection** and **name space management**. In particular in *Grab'n Run* packages names are accepted if and only if they are *a sequence of at least two not-empty, dot-separated words, which ends with a word and not with a dot*. This implies that the following are all examples of **invalid** package names: ``com``, ``com..application``, ``com.application.``, while **suitable** package names are ``com.application`` or ``it.polimi.necst.gnr``. As you will see later on in this tutorial, package names perform a **relevant functionality** in **GNR** system since they *link containers to be verified with the certificate used to do so*.
+
 .. warning::
 	Notice that a **full class name** is required to successfully load a class and so the **complete package name** separated by dots must **precede** the **class name**.
 	Referred to the example, full class name is ``com.example.MyClass`` and not just the short class name ``MyClass``, which would produce a failure in the class loading operation.

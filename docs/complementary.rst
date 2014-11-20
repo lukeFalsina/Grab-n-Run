@@ -248,9 +248,12 @@ And finally here it is the ``classLoadingTask``, an implementation of the `Runna
 
 The interesting **advantage** of this *concurrent evaluation* is that **only the first loaded class** belonging to each separate container will perform the **signature verification** process when the ``loadClass()`` method is invoked, while all the other loaded classes from the same container will benefit from the cached result of this verification and so their evaluation  will be way faster (comparable to the ``loadClass()`` time execution of ``DexClassLoader``).
 
+.. note::
+	Using this **concurrent lazy approach** is a good way to *lower the performance overhead* that may be introduced by *Grab'n Run* and *keep your application always responsive*. Another slight shrewdness that you may consider when you are in need to *load many classes from containers that have to be downloaded* is considering to show a `ProgressDialog <http://developer.android.com/reference/android/app/ProgressDialog.html>`_ or a similar object to *make the user aware that your application is performing some tasks that require him/her to wait* and at the same time prevent the user from clicking everywhere or terminating your application since it sometimes may seem not fully responsive.
+
 .. * By now use SecureDexClassLoader in Lazy mode. Instantiate such an object on the main thread.
 .. * Initialize a thread executor and then makes each thread load a class from the same SecureDexClassLoader object. Evaluation of containers will be performed only by the first thread to load a class into a container while the others will use the cached verification mechanism to directly load or reject loading for their target class.
-.. * Remember to put a join instruction at the end of the code block on the main thread to be sure that after that line all the classes that you need have attempted to being loaded.    
+.. * Remember to put a join instruction at the end of the code block on the main thread to be sure that after that line all the classes that you need have attempted to being loaded.
 
 On library developer side: how to prepare a valid library container compatible with GNR
 ---------------------------------------------------------------------------------------
@@ -344,7 +347,69 @@ If you have successfully followed up all the previous steps, you have now correc
 Let GNR automatically handle library updates silently
 -----------------------------------------------------
 
-TODO
+In the end of this section **silent updating**, a *powerful feature* of **dynamic code loading**, is presented and easily and securely implemented with the use of *Grab'n Run*. Performing silent updates is a convenient techniques which can be used to **keep always updated third-party libraries or frameworks** by *decoupling the update process of the main application from those ones of the non-standalone libraries*. The **advantage** of such an approach is clearly the possibility to have always the **latest features and security workaround on third-party libraries** without continuously bothering the user on updating the application.
+
+Dynamic code loading in this sense can be really effective in such a scenario since the latest version of the code can be retrieved from a remote URL just at runtime and then immediately executed.
+
+Let us now set up a possible use case for this technique and see how to implement it with Grab'n Run from both the library developer and the application developer side: imagine that an application developer wants to dynamically load the latest version of the already seen class ``com.example.ClassA`` stored in "myLibrary-dex.jar", a remote library.
+
+From the point of view of the **library developer** a couple of prerequisite steps must be performed:
+
+	* The developer must prepare correctly a **signed version** of his/her library. For a complete walk-through on this task see the previous section `On library developer side: how to prepare a valid library container compatible with GNR`_.
+	* Once that the last version of the library container is correctly prepared and signed, the **developer must publish** on a domain that (s)he controls a **redirect link** (i.e. ``http://mylibrary.it/downloads/mobile/latest``) which *points to the remote location where the library container is actually stored* (i.e. ``http://mylibrary.it/downloads/mobile/myLibrary-dex-1-8.jar``).
+	* The developer must also set up a **secure link using HTTPS protocol**, which *points to the remote location of the certificate* associated to the private key used to sign the last version of the library (i.e. ``https://myLibrary.com/developerCert.pem``).
+	* Every time that a **new version of the same library is ready** (i.e. version 1.9 of myLibrary is now available), the library developer will have to prepare the container in the usual way and sign it with the **SAME** private key associated to ``developerCert.pem`` and finally **update the redirect link** to *point to the location of the latest version of the container* (i.e. set up ``http://mylibrary.it/downloads/mobile/latest`` to redirect to ``http://mylibrary.it/downloads/mobile/myLibrary-dex-1-9.jar``).
+
+	.. warning::
+		While *Grab'n Run* **supports redirect links for the container remote location**, this kind of link is arbitrarily not accepted for remote certificates!!! This is a **security-oriented choice** since redirect links may jump from an HTTPS link to an HTTP one making the whole system insecure in case that the attacker performs a **Man-In-The-Middle-Attack** and substitute the proper certificate for the verification with a different one generated by himself. That is the reason why **redirect links for remote certificates will not be followed** by Grab'n Run and so no certificate file will be found for the container signature verification.
+
+On the other hand the **application developer**, who wants to make use of the classes provided by ``myLibrary`` can easily accomplish this by setting up a ``SecureDexClassLoader`` where the *location pointing to the remote container* is the **redirect link** provided by the library developer and the **certificate** used for the verification is the *one stored at the secure URL on the library developer domain*. Here is a snippet of code that summarizes this operational description::
+
+		ClassA classAInstance = null;
+		// The latest version of the library container is always found thanks to the redirect link
+		jarContainerRemotePath = "http://mylibrary.it/downloads/mobile/latest";
+
+		try {
+			Map<String, URL> packageNamesToCertMap = new HashMap<String, URL>();
+
+			// The package "com.example" is always signed by the library developer with the same private key
+			// and so it can always be verified with the same remote certificate.
+			packageNamesToCertMap.put("com.example", new URL("https://myLibrary.com/developerCert.pem"));
+
+			// The second parameter used here specifies how many days are counted before a cached copy of
+			// the remote library container is considered rotten and automatically discarded.
+			// Default value is 5 days, here the value is lowered to 3..
+			SecureLoaderFactory mSecureLoaderFactory = new SecureLoaderFactory(this, 3);
+			SecureDexClassLoader mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerRemotePath, 
+														null, 
+														packageNamesToCertMap, 
+														getClass().getClassLoader());
+		
+			Class<?> loadedClass = mSecureDexClassLoader.loadClass("com.example.ClassA");
+
+			// Check whether the signature verification process succeeds
+			if (loadedClass != null) {
+
+				// Class loading was successful and performed in a safe way.
+				// The last version of ClassA has been successfully retrieved!
+				classAInstance = (ClassA) loadedClass.newInstance();
+				
+				// Do something with the loaded object classAInstance
+				// i.e. classAInstance.doSomething();
+			}
+
+		} catch (ClassNotFoundException e) {
+			// This exception will be raised when the container of the target class
+			// is genuine but this class file is missing..
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		} catch (MalformedURLException e) {
+			// The previous URL used for the packageNamesToCertMap entry was a malformed one.
+			Log.e("Error", "A malformed URL was provided for a remote certificate location");
+		} 
 
 .. Library developer side:
 
