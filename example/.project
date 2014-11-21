@@ -3,7 +3,6 @@
 	<name>ExampleAppGNR</name>
 	<comment></comment>
 	<projects>
-		<project>GNR</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
