@@ -269,7 +269,7 @@ So let us assume that you, as a library developer, want to export your project c
 1. Export the project "MyLibrary" into a jar archive.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In the ADT (Android Development Tool) right-click on the project *"MyLibrary"* and select *"Export..."*.
+In the ADT (Android Development Tool) right-click on the project *"MyLibrary"* and select "Export...".
 
 .. image:: ExportJarOption.png
 
