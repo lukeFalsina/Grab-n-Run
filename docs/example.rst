@@ -10,7 +10,7 @@ Different extracts of code will be considered and explained in the following sec
 Retrieve the example code and the emulator
 ------------------------------------------
 
-This section assumes that you have **already cloned** *Grab'n Run* repository into a local directory on your machine thanks to **Git**. If this is not the case, first read and perform the operations explained in :ref:`Retrieve Grab'n Run`. After this you will have to import the example project into your development environment in the same way which you used to import the GNR library into the IDE.
+This section assumes that you have **already cloned** *Grab'n Run* repository into a local directory on your machine thanks to **Git**. If this is not the case, first read and perform the operations explained in :ref:`Retrieve Grab'n Run`.
 
 .. TODO Explain how to import the project in Eclipse/Android Studio.. if necessary
 
@@ -19,7 +19,7 @@ This section assumes that you have **already cloned** *Grab'n Run* repository in
 Then it is time to retrieve the **emulator** used to run the example application. You can easily find it in the ``assets`` folder of the ``example`` repository.
 So once that you have located the compressed file ``ExampleAppGNREmu.tar.gz`` containing the emulator, open a terminal and at first copy this file into your *home* folder::
 
-	$ cd /<path_to_gnr_repo>/example/assets
+	$ cd <absolute_path_to_gnr_repo>/example/assets
 	$ cp ExampleAppGNREmu.tar.gz ~
 
 Next decompress this container:: 
@@ -42,6 +42,7 @@ Before starting the emulator in your **IDE**, remember to **verify that the SDK 
 
 	* If possible, try to target directly **SDK version 17**, as it results to me that the more recent SDK version you target, the more time the emulator requires before setting up.
 	* It is a really good idea to enable the **snapshot feature**. This lets the system frame the current situation of the emulator when you turn it off and load it back whenever you restart the emulator with a *significant reduction of the waiting time*. This `post <http://stackoverflow.com/questions/1554099/why-is-the-android-emulator-so-slow>`_ explains how to enable the feature.
+	* Emulator can be switched between landscape and portrait view by pressing ``ctrl + F12``. This can be useful to interact properly with the example application.
 
 When the emulator is finally set up, you can start it in either **ADT Eclipse** or **Android Studio** (it may take time depending on your machine..). Next, whenever you want to run the example code and the IDE asks which device should be used, remember to **select this emulator as the running Android device**.
 

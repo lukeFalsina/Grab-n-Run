@@ -16,40 +16,61 @@ The latest version can be found at Git download `page <http://git-scm.com/downlo
 
 ..	highlight:: bash
 
-Next open a terminal and **clone** the example repository into a local folder through Git::
+Next open a terminal and **clone** the example repository into ``grab-n-run``, a local folder located at ``absolute_path_to_gnr_repo``, through Git::
 
+	$ cd <absolute_path_to_gnr_repo>
 	$ mkdir grab-n-run
 	$ cd grab-n-run
-	$ git clone "https://example_link_rep.com"
+	$ git clone "https://github.com/lukeFalsina/Grab-n-Run.git"
 
 ..	highlight:: java
 
 At the end of the process you will have all the GNR code locally including a copy of the *example application* and of the *documentation*.
 
-Include Grab'n Run in your IDE
+Include Grab'n Run in your IDE 
 ------------------------------
 
-Next step is importing the local copy of *Grab'n Run* into an **IDE** (here we assume the use of either **ADT** or **Android Studio**) and linking it to one of your projects.
+The next **optional step** is *importing the sources of the Grab'n Run library functions* into an **IDE** (here it is assumed from now on the use of **Android Development Tool (ADT)**).
 
-a. Android Development Tool (ADT)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To make it work you will need to import the support Android library ``appcompact_v7`` into your workspace. To do so, follow this `guide <https://developer.android.com/tools/support-library/setup.html#libs-with-res>`_ from the **Official Android Documentation**.  
 
-TODO
+Once that you have a local copy of the ``appcompact_v7`` project into your workspace, you can import also the GNR and ExampleApp project. So at first right click in the *Package Explorer* and select "Import.."
 
-b. Android Studio
-~~~~~~~~~~~~~~~~~
+.. image:: ImportGNR.png
 
-TODO
+Next select under the *Android* folder "Existing Android Code Into Workspace" and then "Next >"
+
+.. image:: ImportGNR2.png
+
+Point the *Root Directory* to the ``grab-n-run`` folder in which you previously cloned the repository by pressing the "Browse..." button. Then select both the projects that can be imported, whose names are ``GNR`` (source code of the library) and ``ExampleAppGNR`` (an example application which makes use of GNR). In the end press "Finish" to import both the projects. Below you can see a screenshot which summarizes all the settings before the "Finish" button is clicked.
+
+.. image:: ImportGNR3.png
+
+At the end of this process you should have been able to **correctly import** both the projects!
+
+.. image:: ImportGNR4.png
 
 Link Grab'n Run as a library to an Android existing project
 -----------------------------------------------------------
 
-TODO
+Finally regarding the setup phase, let us analyze how to **add GNR library to an existing Android project** in your workspace. Notice that this requires that you have **correctly retrieved the library** as explained in `Retrieve Grab'n Run`_, while you may skip the phase of importing GNR sources and so you can avoid to perform the steps shown in `Include Grab'n Run in your IDE`_
+
+Now, as an example, think that you have an Android project in your workspace and you want to **add GNR** as a library of it. There are several options to accomplish this task but the easiest among all is simply modifying the ``.classpath`` file in the target project with any text editor by inserting an additional entry to import GNR library::
+
+	<classpathentry exported="true" kind="lib" path="<absolute_path_to_gnr_repo>/grab-n-run/gnr/bin/gnr.jar" sourcepath="/GNR/src"/>
+
+where ``<absolute_path_to_gnr_repo>`` is the local path on your machine which contains the initially created ``grab-n-run`` directory which was set up in `Retrieve Grab'n Run`_.
+
+To clarify here it is shown the **final version of the file** after the previous modification in case that ``<absolute_path_to_gnr_repo>`` = ``/home/luca/codepool``.
+
+.. image:: LinkGNR.png
+
+Please notice that if you have the **ADT already open and running**, it is recommended to **close and restart it** since it seems that Eclipse perform a deep analysis on the *.classpath* files only when it is started. You should be now able to **import and use all the Java classes inside GNR into your project**. 
 
 Tutorial
 --------
 
-This tutorial assumes that you have *already retrieved Grab'n Run, imported it into your IDE and linked it* to one of your existing Android projects.
+This tutorial assumes that you have **already retrieved Grab'n Run and linked it** to one of your existing Android projects.
 
 Using standard DexClassLoader to load code dynamically
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
