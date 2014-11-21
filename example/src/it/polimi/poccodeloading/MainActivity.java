@@ -45,15 +45,15 @@ public class MainActivity extends Activity {
 	private static final String techinquesToExecute[] = {	"DexClassLoader (.apk)", 
 															"SecureDexClassLoader (.apk)", 
 															"DexClassLoader (.jar)",
-															"SecureDexClassLoader (.jar)",
-															"CreatePackageContext"};
+															"SecureDexClassLoader (.jar)"};
+															//"CreatePackageContext"};
 	
 	// Auxiliary constants used for readability..
 	private static final int DEX_CLASS_LOADER_APK = 0;
 	private static final int SECURE_DEX_CLASS_LOADER_APK = 1;
 	private static final int DEX_CLASS_LOADER_JAR = 2;
 	private static final int SECURE_DEX_CLASS_LOADER_JAR = 3;
-	private static final int CREATE_PACK_CTX = 4;
+	// private static final int CREATE_PACK_CTX = 4;
 	
 	// Unique identifier used for Log entries
 	private static final String TAG_MAIN = MainActivity.class.getSimpleName();
@@ -136,9 +136,9 @@ public class MainActivity extends Activity {
 						startActivity(secureDexClassLoaderIntent);
 						break;
 						
-					case CREATE_PACK_CTX:
+					//case CREATE_PACK_CTX:
 					
-						break;
+						//break;
 				
 					default:
 						Log.d(TAG_MAIN, "Invalid button choice!");

@@ -6,15 +6,30 @@ In this section you will see how to *retrieve and include Grab'n Run library* in
 
 Since this section is **introductory** and more descriptive, it should be read by those who are not familiar with this library or more in general with *class loading* in Android. On the other hand the :doc:`javaAPI/packages` section provides a more complete and detailed view on Grab'n Run library and its insights, while :doc:`example` shows a simple use case of the concepts introduced here.
 
+.. _Retrieve Grab'n Run:
+
 Retrieve Grab'n Run
 -------------------
 
-TODO
+At first you will need to recover *Grab'n Run* code. In order to do so you need to have **Git** installed on your machine.
+The latest version can be found at Git download `page <http://git-scm.com/downloads>`_.
 
-Include Grab'n Run in your project
-----------------------------------
+..	highlight:: bash
 
-TODO
+Next open a terminal and **clone** the example repository into a local folder through Git::
+
+	$ mkdir grab-n-run
+	$ cd grab-n-run
+	$ git clone "https://example_link_rep.com"
+
+..	highlight:: java
+
+At the end of the process you will have all the GNR code locally including a copy of the *example application* and of the *documentation*.
+
+Include Grab'n Run in your IDE
+------------------------------
+
+Next step is importing the local copy of *Grab'n Run* into an **IDE** (here we assume the use of either **ADT** or **Android Studio**) and linking it to one of your projects.
 
 a. Android Development Tool (ADT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -26,10 +41,15 @@ b. Android Studio
 
 TODO
 
+Link Grab'n Run as a library to an Android existing project
+-----------------------------------------------------------
+
+TODO
+
 Tutorial
 --------
 
-This tutorial assumes that you have *already retrieved and imported Grab'n Run* into your Android project.
+This tutorial assumes that you have *already retrieved Grab'n Run, imported it into your IDE and linked it* to one of your existing Android projects.
 
 Using standard DexClassLoader to load code dynamically
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

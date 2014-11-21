@@ -3,34 +3,52 @@ Discussion of an example project
 
 Before digging into this section, you are **strongly** encouraged to read :doc:`tutorial` for an **introductory description** on the features of Grab`n Run library.
 
-The **aim of the sample application** is to give you some *hints on how to use the classes in Grab'n Run and how they will behave across different contexts*. The **source code** of the example can be found `here <http://fill.link.com>`_.
+The **aim of the sample application** is to give you some *hints on how to use the classes in Grab'n Run and how they will behave across different contexts*. The **source code** of the example can be found in the ``example`` folder of *Grab'n Run* repository.
 
-Different extracts of code will be considered and explained in the following sections of this page but before analyzing the code you will need to set up an **already prepared Android
-smart phone emulator** that contains all the containers needed to run the example code..
+Different extracts of code will be considered and explained in the following sections of this page but before analyzing the code you will need to set up an **already prepared Android smart phone emulator** that contains all the containers needed to run the example code..
 
 Retrieve the example code and the emulator
 ------------------------------------------
 
-At first you will need to recover the example code. In order to do so you need to have **Git** installed on your machine.
-The appropriate version can be found at Git download `page <http://git-scm.com/downloads>`_.
-
-..	highlight:: bash
-
-Next open a terminal and **clone** the example repository into a local folder through Git::
-
-	$ mkdir example_gnr
-	$ cd example_gnr
-	$ git clone "https://example_link_rep.com"
-
-..	highlight:: java
-
-After this you will have to import this example project into your development environment..
+This section assumes that you have **already cloned** *Grab'n Run* repository into a local directory on your machine thanks to **Git**. If this is not the case, first read and perform the operations explained in :ref:`Retrieve Grab'n Run`. After this you will have to import the example project into your development environment in the same way which you used to import the GNR library into the IDE.
 
 .. TODO Explain how to import the project in Eclipse/Android Studio.. if necessary
 
-Then it is time to download the `emulator <http://fill.link.com>`_ used for the example. 
+..	highlight:: bash
 
-When the emulator is set up, you can start it in either the ADT Eclipse or Android Studio. Next run the example code and select this emulator as the running Android device
+Then it is time to retrieve the **emulator** used to run the example application. You can easily find it in the ``assets`` folder of the ``example`` repository.
+So once that you have located the compressed file ``ExampleAppGNREmu.tar.gz`` containing the emulator, open a terminal and at first copy this file into your *home* folder::
+
+	$ cd /<path_to_gnr_repo>/example/assets
+	$ cp ExampleAppGNREmu.tar.gz ~
+
+Next decompress this container:: 
+
+	$ cd ~
+	$ tar xzf ExampleAppGNREmu.tar.gz
+
+This operation will generate two files, a folder called ``ExampleAppGNREmu.avd`` and a configuration file ``ExampleAppGNREmu.ini``. In the end move these two files into the Android emulator folder, normally located at ``/home/<your_username>/.android/avd``::
+
+	$ mv ExampleAppGNREmu.avd ExampleAppGNREmu.ini .android/avd
+
+The last step consist in editing the ``path`` variable stored in the configuration file. So open ``ExampleAppGNREmu.ini`` at the final location with a text editor and change the path variable in order to match the current location of the ``ExampleAppGNREmu.avd`` folder. So if my user name is for example *bill90*, I need to change the path variable from ``path=/home/<USER_NAME>/.android/avd/ExampleAppGNREmu.avd`` to ``path=/home/bill90/.android/avd/ExampleAppGNREmu.avd``. 
+
+..	highlight:: java
+
+Before starting the emulator in your **IDE**, remember to **verify that the SDK version 17** is installed on your machine since the emulator targets that version. Otherwise you can *also edit the emulator configuration* from your IDE to target a different and **more recent** version of the SDK which is installed on your machine.
+
+.. note::
+	Android emulator is unfortunately pretty slow and requires also a big bunch of resources and that is the reason why it may be not supported by different machines. A couple of empirical suggestions in this direction are the following:
+
+	* If possible, try to target directly **SDK version 17**, as it results to me that the more recent SDK version you target, the more time the emulator requires before setting up.
+	* It is a really good idea to enable the **snapshot feature**. This lets the system frame the current situation of the emulator when you turn it off and load it back whenever you restart the emulator with a *significant reduction of the waiting time*. This `post <http://stackoverflow.com/questions/1554099/why-is-the-android-emulator-so-slow>`_ explains how to enable the feature.
+
+When the emulator is finally set up, you can start it in either **ADT Eclipse** or **Android Studio** (it may take time depending on your machine..). Next, whenever you want to run the example code and the IDE asks which device should be used, remember to **select this emulator as the running Android device**.
+
+In case you need to integrate this previous concise walk-through, please give a look at these other resources:
+	
+	* https://blahti.wordpress.com/2011/08/24/how-to-export-and-import-android-virtual-device-avd-files/
+	* http://stackoverflow.com/questions/4575167/android-how-to-copy-the-emulator-to-a-friend-for-testing
 
 List of example containers
 --------------------------
@@ -74,8 +92,8 @@ At first a ``SecureLoaderFactory`` object is created. Then this instance is used
 
 1.	**Test case 1:** Load a class through ``SecureDexClassLoader`` without providing an associative map for certificates location
 
-	This first test case shows a **common error** that a developer may encounter when using this library for the first time.
-	If you want to have the location of the certificate being computed by `reversing the package name <http://fill.it>`_ you still need to **populate an associative map** with entries like (*"any.package.name"*, **null**) and use it as a parameter of the method ``createDexClassLoader()``. To understand why the class works in this way think of this system as a kind of `white listing <http://en.wikipedia.org/wiki/Whitelist>`_. Only those classes inside package names which are *declared into the associative map* or *directly descend* from one of the declared package names will be considered as possible valid ones, while all classes belonging to a **not listed package name or not a descendant of the declared ones** will be **immediately rejected**.
+	This first test case shows a **possible error** that a developer may encounter when using this library for the first time.
+	If you want to have the location of the certificate being computed by reversing the package name, as explained in :ref:`Reverse package name to obtain remote certificate URL`, you still need to **populate an associative map** with entries like (*"any.package.name"*, **null**) and use it as a parameter of the method ``createDexClassLoader()``. To understand why the class works in this way think of this system as a kind of `white listing <http://en.wikipedia.org/wiki/Whitelist>`_. Only those classes inside package names which are *declared into the associative map* or *directly descend* from one of the declared package names will be considered as possible valid ones, while all classes belonging to a **not listed package name or not a descendant of the declared ones** will be **immediately rejected**.
 
 	And this is exactly what happens in this test case where **no associative map is provided** and so all the classes in the two containers, including the target ``NasaDailyImage``, are **prevented from being loaded** since there is *no clue on the certificate location*.
 
