@@ -5,14 +5,58 @@ Before digging into this section, you are **strongly** encouraged to read :doc:`
 
 The **aim of the sample application** is to give you some *hints on how to use the classes in Grab'n Run and how they will behave across different contexts*. The **source code** of the example can be found in the ``example`` folder of *Grab'n Run* repository.
 
-Different extracts of code will be considered and explained in the following sections of this page but before analyzing the code you will need to set up an **already prepared Android smart phone emulator** that contains all the containers needed to run the example code..
+Different extracts of code will be considered and explained in the following sections of this page but before analyzing the code it may be convenient to retrieve it and to set up an **already prepared Android smart phone emulator** that contains all the containers needed to run the example code..
 
 Retrieve the example code and the emulator
 ------------------------------------------
 
-This section assumes that you have **already cloned** *Grab'n Run* repository into a local directory on your machine thanks to **Git**. If this is not the case, first read and perform the operations explained in :ref:`Retrieve Grab'n Run`.
+Retrieve Grab'n Run full repository
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+At first you will need to recover *Grab'n Run* example code. In order to do so you need to have **Git** installed on your machine.
+The latest version can be found at Git download `page <http://git-scm.com/downloads>`_.
+
+..	highlight:: bash
+
+Next open a terminal and **clone** the example repository into ``grab-n-run``, a local folder located at ``absolute_path_to_gnr_repo``, through Git::
+
+	$ cd <absolute_path_to_gnr_repo>
+	$ mkdir grab-n-run
+	$ cd grab-n-run
+	$ git clone "https://github.com/lukeFalsina/Grab-n-Run.git"
+
+..	highlight:: java
+
+At the end of the process you will have all the GNR code locally including a copy of the *example application* and of the *documentation*.
+
+Include Grab'n Run example code in your IDE 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The next step is *importing the example sources* into an **IDE** (here it is assumed from now on the use of **Android Development Tool (ADT)**).
+
+If you desire to add also the project containing the sources of Grab'n Run, named ``GNR``, you will have to import the support Android library ``appcompact_v7`` as well into your workspace. To do so, follow this `guide <https://developer.android.com/tools/support-library/setup.html#libs-with-res>`_ from the **Official Android Documentation**.  
+Once that you have a local copy of the ``appcompact_v7`` project into your workspace, you can import both the ``GNR`` and ``ExampleAppGNR`` project. On the other hand if you are not interested in the ``GNR`` project simply do not care about ``appcompact_v7`` and later on import only ``ExampleAppGNR``, which contains an example application which makes use of *Grab'n Run* library.
+
+So at first right click in the *Package Explorer* and select "Import.."
+
+.. image:: ImportGNR.png
+
+Next select under the *Android* folder "Existing Android Code Into Workspace" and then "Next >"
+
+.. image:: ImportGNR2.png
+
+Point the *Root Directory* to the ``grab-n-run`` folder in which you previously cloned the repository by pressing the "Browse..." button. Then select the candidate projects that you want to import among ``GNR`` (*source code of the library*) and ``ExampleAppGNR`` (*an example application which makes use of GNR*). In the end press "Finish" to import the selected projects. Below you can see a screenshot which summarizes all the settings before the "Finish" button is clicked in case that you decide to import both the projects.
+
+.. image:: ImportGNR3.png
+
+At the end of this process you should have been able to **correctly import** at least the example project!
+
+.. image:: ImportGNR4.png
 
 .. TODO Explain how to import the project in Eclipse/Android Studio.. if necessary
+
+Retrieve and set up the emulator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ..	highlight:: bash
 

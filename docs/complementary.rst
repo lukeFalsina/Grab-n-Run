@@ -264,6 +264,15 @@ For once in this tutorial the **focus is now moved** from the *application devel
 
 What we are going to discuss about in this section is **how a library developer should prepare his/her library** in order to have it **compatible with GNR** system and more in general with **dynamic code loading**. A hint in this sense is provided by DexClassLoader `documentation <http://developer.android.com/reference/dalvik/system/DexClassLoader.html>`_, which states clearly that this class, and so also ``SecureDexClassLoader`` does, *"loads classes from .jar and .apk files containing a classes.dex entry."*.
 
+.. note::
+	The procedure outlined below must be performed entirely in case that you want to **export a library** into a *jar* container. The *typical use case* for such a situation is whenever you want to *export a library* which was *initially thought to work just for regular Java applications* but that now you would *also like to execute into an Android application*.
+
+	On the other hand, if you decide to **export an Android application** as a source for dynamic class loading, part of the upcoming procedure won't be necessary anymore. This happens because:
+
+		1. When an *apk* container is generated, ``dx`` tool is automatically invoked. This means that by considering a valid *apk* container as a source for classes to load, the ``classes.dex`` entry will be already present and so you won't need to manually execute step *1* and step *2* of the following guide.
+
+		2. Since Android requires an *apk* container to be signed to allow execution, you can decide, whenever you are ready to **export your application as a library**, to right click on the project and choose ``Android Tools -> Export Signed Application Package...``. By completing the wizard procedure, you are going to export a signed version of the final *apk* container and this basically covers the first *4* steps of the following guide.
+
 So let us assume that you, as a library developer, want to export your project called "MyLibrary" into a *jar* archive compatible with ``SecureDexClassLoader``. The following steps should be performed:
 
 1. Export the project "MyLibrary" into a jar archive.
