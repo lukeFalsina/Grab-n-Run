@@ -39,19 +39,19 @@ Once that you have a local copy of the ``appcompact_v7`` project into your works
 
 So at first right click in the *Package Explorer* and select "Import.."
 
-.. image:: ImportGNR.png
+.. image:: images/ImportGNR.png
 
 Next select under the *Android* folder "Existing Android Code Into Workspace" and then "Next >"
 
-.. image:: ImportGNR2.png
+.. image:: images/ImportGNR2.png
 
 Point the *Root Directory* to the ``grab-n-run`` folder in which you previously cloned the repository by pressing the "Browse..." button. Then select the candidate projects that you want to import among ``GNR`` (*source code of the library*) and ``ExampleAppGNR`` (*an example application which makes use of GNR*). In the end press "Finish" to import the selected projects. Below you can see a screenshot which summarizes all the settings before the "Finish" button is clicked in case that you decide to import both the projects.
 
-.. image:: ImportGNR3.png
+.. image:: images/ImportGNR3.png
 
 At the end of this process you should have been able to **correctly import** at least the example project!
 
-.. image:: ImportGNR4.png
+.. image:: images/ImportGNR4.png
 
 .. TODO Explain how to import the project in Eclipse/Android Studio.. if necessary
 

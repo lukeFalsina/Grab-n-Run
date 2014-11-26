@@ -33,7 +33,7 @@ Before starting diving in this section it is important to recall the **relations
 
 Given these insights a first interesting situation to consider is when a developer wants to *load dynamically classes* from an external *jar* library which contains **more than one package name** that, anyway, share a **common relevant prefix**. Let us assume for example that the target library has the following structure:
 
-.. image:: JarContStructure.png
+.. image:: images/JarContStructure.png
 
 In such a scenario we have four classes (``ClassA``, ``ClassB``, ``ClassC``, ``ClassD``) which belongs to **three different packages**, whose names are respectively ``com.example``, ``com.example.system`` and ``com.example.system.preference``. Let use also assume that this container has being signed with a *valid self-signed certificate*, remotely located at ``https://something.somethelse.com/example_cert.pem``.
 
@@ -280,15 +280,15 @@ So let us assume that you, as a library developer, want to export your project c
 
 In the ADT (Android Development Tool) right-click on the project *"MyLibrary"* and select "Export...".
 
-.. image:: ExportJarOption.png
+.. image:: images/ExportJarOption.png
 
 Then choose the option "Jar File" and click "Next...".
 
-.. image:: ExportJarFile.png
+.. image:: images/ExportJarFile.png
 
 Finally choose the location of the exported *jar* archive by clicking on the "Browse..." button and then "Finish".
 
-.. image:: ExportJarFinish.png
+.. image:: images/ExportJarFinish.png
 
 You have now successfully exported your project into a *jar* container.
 

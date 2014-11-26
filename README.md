@@ -15,7 +15,7 @@ Moreover if you have just spent a bit of time playing with *Grab'n Run*, why don
 - *11/26/2014* - **Grab'n Run is on line!**
 
 ## Main features
-Securely load code dynamically into your Android application from **APK** containers or **JAR** libraries translated to be *executable by the Dalvik Virtual Machine* (don't worry a [section]() of the docs explains this).
+Securely load code dynamically into your Android application from **APK** containers or **JAR** libraries translated to be *executable by the Dalvik Virtual Machine* (don't worry a [section]() of the docs explains how to do it).
 
 - *JAR* and *APK* containers can be either already stored on the device or **automatically fetched from remote locations** by GNR.
 - Retrieved containers signatures are compared against a **valid developer certificate**. Only containers that are **correctly signed** are allowed to have their classes loaded dynamically. This ensures **integrity** and **developer authentication** on all the retrieved containers.
@@ -81,7 +81,7 @@ As a **test** example you could store the *certificate.pem* in your "Public" *Dr
 Let's say that in your IDE (i.e. the *Android Development Tool (ADT)*) you have an Android project called **"LoaderApp"** from which you want to load some of its classes dynamically in another project.
 
 * In the *ADT Package Explorer* **right** click on **"LoaderApp"** -> Android Tools -> Export Unsigned Application Package...
-![Screenshot](https://github.com/lukeFalsina/Grab-n-Run/raw/master/docs/ExportUnsignedContainer.png)
+![Screenshot](https://github.com/lukeFalsina/Grab-n-Run/raw/master/docs/images/ExportUnsignedContainer.png)
 * Next select the **same folder** where you have previously saved the keystore and the keypair as the *destination folder* and press OK.
 * Open a terminal which points to the destination folder and **sign the apk container** with the previously created key:
 ``` bash
@@ -151,6 +151,7 @@ try {
 * If you want to learn how to use *Grab'n Run* I suggest to start from the [tutorial]() and then moving on by analyzing the [example application]().
 * If you are interested in understanding what are the **security threats** of *improper dynamic code loading* fixed by GNR check out the [security resume]().
 * If you would like to implement cool features of GNR like **silent updates**, **handling more containers**, **concurrent code loading** or **dynamically loading JAR libraries in your applications** you should give a look at the [complementary topics]().
+* Finally you may also need to **consult** the *JavaDoc-like* [API documentation](). 
 
 ## License
 

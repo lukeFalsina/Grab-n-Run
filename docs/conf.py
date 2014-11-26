@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.abspath('../../grab-n-run/gnr/src/'))
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
-    'javasphinx',
+    #'javasphinx',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
