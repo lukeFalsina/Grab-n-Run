@@ -6,21 +6,21 @@ For a **brief presentation** of the library and some of its features you can giv
 
 *Grab'n Run* is currently a work in progress so if you desire to suggest new features, improvements, criticisms or whatever I would be more than glad to hear **any kind of constructive feedback** :D You can contact me either by dropping an email at luca.falsina@mail.polimi.it or by pinging on Twitter [@lfalsina](https://twitter.com/lfalsina).
 
-If you have also played a bit with the whole project, it would be great if you decide to spend 5/10 minutes of your time by filling in this [evaluation form](http://goo.gl/forms/k500h7cYiv), which once again could help to improve *Grab'n Run*.
+If you have also played a bit with the whole project, it would be great if you decide to spend 5/10 minutes of your time by **filling in** this [evaluation form](http://goo.gl/forms/k500h7cYiv), which once again could help to improve *Grab'n Run*.
 
 ## News
 
 - *11/26/2014* - **Grab'n Run is on line!**
 
 ## Main features
-Securely load code dynamically into your Android application from *APK* containers or *JAR* libraries translated to be executable by the Dalvik Virtual Machine (don not worry a [section]() of the guide explain exactly how to perform this translation).
+Securely load code dynamically into your Android application from **APK** containers or **JAR** libraries translated to be *executable by the Dalvik Virtual Machine* (don't worry a [section]() of the docs explains this).
 
 - *JAR* and *APK* containers can be either already stored on the device or **automatically fetched from remote locations** by GNR.
-- Retrieved containers signatures are compared against a valid developer certificate. Only containers that are correctly signed are allowed to have their classes loaded dynamically. This ensures **integrity** and **developer authentication** on all the retrieved containers.
+- Retrieved containers signatures are compared against a **valid developer certificate**. Only containers that are **correctly signed** are allowed to have their classes loaded dynamically. This ensures **integrity** and **developer authentication** on all the retrieved containers.
 - Developer certificates are retrieved from remote locations securely and cached on the mobile phone for future verifications.
-- Cached classes, containers and certificates used for the signature verification are stored into *application-private* folders. This **prevents** your application **from code injection attacks** at runtime.
+- *Cached classes, containers and certificates* used for the signature verification are stored into *application-private* folders. This **prevents** your application **from code injection attacks** at runtime.
 - GNR implements an **effective caching system** that speeds up its execution and at the same time enables it to *work in most cases also when no connectivity is available*.
-- Transition to GNR is *smooth* for the application developer since its **API** where thought to be *as close as possible to the standard API* provided by the Android framework.
+- Transition to GNR is **smooth** for the application developer since its **API** where thought to be *as close as possible to the standard API* provided by the Android framework.
 - When *many containers* are provided as sources for class loading, Grab'n Run performs a **concurrent multi-thread signature verification** in order to *limit the performance overhead*.
 - GNR helps the application developer to **implement silent updating** on *remote third-party libraries in a secure and concise way*. 
 
@@ -38,11 +38,14 @@ This setup explains how to simply add *Grab'n Run* as a library for your Android
 Modify the *Android Manifest* of your application by adding a couple of **required permissions**:
 ``` xml
 <manifest>
-	<!-- Include following permission to be able to download remote resources like containers and certificates -->
+	<!-- 	Include following permission to be able to download remote resources 
+			like containers and certificates -->
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-	<!-- Include following permission to be able to download remote resources like containers and certificates -->
+	<!-- 	Include following permission to be able to download remote resources 
+			like containers and certificates -->
 	<uses-permission android:name="android.permission.INTERNET" />
-	<!-- Include following permission to be able to import local containers on SD card -->
+	<!-- 	Include following permission to be able to import local containers 
+			on SD card -->
 	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 	...
 </manifest>
@@ -56,13 +59,14 @@ This quick use case gives you a taste on how to use GNR once that you have added
 
 * Open a terminal and type the following command to **generate a keystore** and a **keypair**:
 ``` bash
-$ keytool -genkey -v -keystore my-tests-key.keystore -alias test_dev_key -keyalg RSA -keysize 2048 -validity 10000
+$ 	keytool -genkey -v -keystore my-tests-key.keystore -alias test_dev_key 
+	-keyalg RSA -keysize 2048 -validity 10000
 ```
 * Next **export** the public key **into a certificate** that will be *used to verify your library code* before dynamically loading it:
 ``` bash
 $ keytool -exportcert -keystore my-tests-key.keystore -alias test_dev_key -file certificate.pem
 ```
-* You should now see in the folder a certificate file called *certificate.pem*
+* You should now see in the folder a **certificate file** called *certificate.pem*
 
 #### 2. Publish your developer certificate on line at a remote location which uses HTTPS protocol
 
@@ -86,53 +90,53 @@ $ <path_to_your_sdk>/sdk/build-tools/<sdk_version_number>/zipalign -v 4 LoaderAp
 ```
 #### 4. Publish the signed and aligned version of the source container
 
-Once that you have obtained LoaderAppAligned.apk you need to make also this resource available on line. Notice that in this case both remote locations that uses HTTP or HTTPS protocols are fine as long as they are accessible by everyone from the web. As an example again you can store the container in your "Public" *Dropbox* folder and get back a public URL like "https://dl.dropboxusercontent.com/u/28681922/LoaderAppAligned.apk".
+Once that you have obtained *LoaderAppAligned.apk* you need to make also this resource **available on line**. Notice that in this case both remote locations that uses **HTTP** or **HTTPS** protocols are fine as long as they are accessible from the web. As an example again you can store the container in your "Public" *Dropbox* folder and get back a **public URL** like "https://dl.dropboxusercontent.com/u/28681922/LoaderAppAligned.apk".
 
 #### 5. Set up dynamic code loading with GNR in the application
 
 In the end it is time to set up a *SecureDexClassLoader* instance to **fetch your remote container and developer certificate**, **store it in a safe place** and **perform a signature verification** before dynamically loading your code.
 
-Copy and paste the code below in one of the Activity in your target Android project, where you have *already imported GNR*, to **dynamically and securely load** an instance of the class "com.example.MyClass":
+**Copy and paste** the code below in one of the Activity in your target Android project, where you have *already imported GNR*, to **dynamically and securely load** an instance of the class *"com.example.MyClass"*:
 ``` java
 
-		MyClass myClassInstance = null;
-		jarContainerPath = "https://dl.dropboxusercontent.com/u/28681922/LoaderAppAligned.apk";
+MyClass myClassInstance = null;
+jarContainerPath = "https://dl.dropboxusercontent.com/u/28681922/LoaderAppAligned.apk";
 
-		try {
-			Map<String, URL> packageNamesToCertMap = new HashMap<String, URL>();
-			packageNamesToCertMap.put("com.example", new URL("https://dl.dropboxusercontent.com/u/28681922/test_cert.pem"));
+try {
+	Map<String, URL> packageNamesToCertMap = new HashMap<String, URL>();
+	packageNamesToCertMap.put("com.example", new URL("https://dl.dropboxusercontent.com/u/28681922/test_cert.pem"));
 
-			SecureLoaderFactory mSecureLoaderFactory = new SecureLoaderFactory(this);
-			SecureDexClassLoader mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
-														null, 
-														packageNamesToCertMap, 
-														getClass().getClassLoader());
+	SecureLoaderFactory mSecureLoaderFactory = new SecureLoaderFactory(this);
+	SecureDexClassLoader mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
+												null, 
+												packageNamesToCertMap, 
+												getClass().getClassLoader());
 		
-			Class<?> loadedClass = mSecureDexClassLoader.loadClass("com.example.MyClass");
+	Class<?> loadedClass = mSecureDexClassLoader.loadClass("com.example.MyClass");
 
-			// Check whether the signature verification process succeeded
-			if (loadedClass != null) {
+	// Check whether the signature verification process succeeded
+	if (loadedClass != null) {
 
-				// No security constraints were violated and so
-				// class loading was successful.
-				myClassInstance = (MyClass) loadedClass.newInstance();
+		// No security constraints were violated and so
+		// class loading was successful.
+		myClassInstance = (MyClass) loadedClass.newInstance();
 				
-				// Do something with the loaded object myClassInstance
-				// i.e. myClassInstance.doSomething();
-			}
+		// Do something with the loaded object myClassInstance
+		// i.e. myClassInstance.doSomething();
+	}
 
-		} catch (ClassNotFoundException e) {
-			// This exception will be raised when the container of the target class
-			// is genuine but this class file is missing..
-			e.printStackTrace();
-		} catch (InstantiationException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
-		} catch (MalformedURLException e) {
-			// The previous URL used for the packageNamesToCertMap entry was a malformed one.
-			Log.e("Error", "A malformed URL was provided for a remote certificate location");
-		}
+} catch (ClassNotFoundException e) {
+	// This exception will be raised when the container of the target class
+	// is genuine but this class file is missing..
+	e.printStackTrace();
+} catch (InstantiationException e) {
+	e.printStackTrace();
+} catch (IllegalAccessException e) {
+	e.printStackTrace();
+} catch (MalformedURLException e) {
+	// The previous URL used for the packageNamesToCertMap entry was a malformed one.
+	Log.e("Error", "A malformed URL was provided for a remote certificate location");
+}
 ```
 
 *Et voilá..* now you have an instance of *"MyClass"* loaded in a **secure way** at **run time**!
@@ -141,7 +145,7 @@ Copy and paste the code below in one of the Activity in your target Android proj
 
 * If you want to learn how to use *Grab'n Run* I suggest to start from the [tutorial]() and then moving on by analyzing the [example application]().
 * If you are interested in understanding what are the **security threats** of *improper dynamic code loading* fixed by GNR check out the [security resume]().
-* If you would like to implement cool features of GNR like **silent updates**, **handling more containers**, **concurrent code loading** or **reusing jar libraries in your applications** you should give a look at the [complementary topics]().
+* If you would like to implement cool features of GNR like **silent updates**, **handling more containers**, **concurrent code loading** or **dynamically loading JAR libraries in your applications** you should give a look at the [complementary topics]().
 
 ## License
 
