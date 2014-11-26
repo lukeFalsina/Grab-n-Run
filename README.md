@@ -4,9 +4,11 @@
 
 For a **brief presentation** of the library and some of its features you can give a look at these [slides](http://goo.gl/oiYAZB). On the other hand if you prefer a more **structured and complete description** with *set up information, tutorials, examples, tips&tricks and a full presentation of the API* you should definitely check the [documentation](https://readthedocs.com/something).
 
-*Grab'n Run* is currently a work in progress so if you desire to suggest new features, improvements, criticisms or whatever I would be more than glad to hear **any kind of constructive feedback** :D You can contact me either by dropping an email at luca.falsina@mail.polimi.it or by pinging on Twitter [@lfalsina](https://twitter.com/lfalsina).
+*Grab'n Run* is currently a work in progress so, if you desire to suggest new *features, improvements, criticisms* or whatever, I would be more than glad to hear **any kind of constructive feedback** :D 
 
-If you have also played a bit with the whole project, it would be great if you decide to spend 5/10 minutes of your time by **filling in** this [evaluation form](http://goo.gl/forms/k500h7cYiv), which once again could help to improve *Grab'n Run*.
+You can contact me either by dropping an email at luca.falsina@mail.polimi.it or by pinging on Twitter [@lfalsina](https://twitter.com/lfalsina).
+
+Moreover if you have just spent a bit of time playing with *Grab'n Run*, why don't you try to **fill in** this [evaluation form](http://goo.gl/forms/k500h7cYiv)? This will help once again to **make GNR a better tool** to use for other developers like you :)
 
 ## News
 
@@ -64,7 +66,8 @@ $ 	keytool -genkey -v -keystore my-tests-key.keystore -alias test_dev_key
 ```
 * Next **export** the public key **into a certificate** that will be *used to verify your library code* before dynamically loading it:
 ``` bash
-$ keytool -exportcert -keystore my-tests-key.keystore -alias test_dev_key -file certificate.pem
+$	keytool -exportcert -keystore my-tests-key.keystore -alias test_dev_key 
+	-file certificate.pem
 ```
 * You should now see in the folder a **certificate file** called *certificate.pem*
 
@@ -82,11 +85,13 @@ Let's say that in your IDE (i.e. the *Android Development Tool (ADT)*) you have 
 * Next select the **same folder** where you have previously saved the keystore and the keypair as the *destination folder* and press OK.
 * Open a terminal which points to the destination folder and **sign the apk container** with the previously created key:
 ``` bash
-$ jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore my-tests-key.keystore LoaderApp.apk test_dev_key
+$	jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 
+	-keystore my-tests-key.keystore LoaderApp.apk test_dev_key
 ```
 * Finally **align** the apk container to optimize access time to its resources:
 ``` bash
-$ <path_to_your_sdk>/sdk/build-tools/<sdk_version_number>/zipalign -v 4 LoaderApp.apk LoaderAppAligned.apk
+$	<path_to_your_sdk>/sdk/build-tools/<sdk_version_number>/zipalign -v 4 
+	LoaderApp.apk LoaderAppAligned.apk
 ```
 #### 4. Publish the signed and aligned version of the source container
 
