@@ -13,7 +13,7 @@ If you have also played a bit with the whole project, it would be great if you d
 - *11/26/2014* - **Grab'n Run is on line!**
 
 ## Main features
-Securely load code dynamically into your Android application from *APK* containers or *JAR* libraries translated to be executable by the Dalvik Virtual Machine (see [here]() ).
+Securely load code dynamically into your Android application from *APK* containers or *JAR* libraries translated to be executable by the Dalvik Virtual Machine (don not worry a [section]() of the guide explain exactly how to perform this translation).
 
 - *JAR* and *APK* containers can be either already stored on the device or **automatically fetched from remote locations** by GNR.
 - Retrieved containers signatures are compared against a valid developer certificate. Only containers that are correctly signed are allowed to have their classes loaded dynamically. This ensures **integrity** and **developer authentication** on all the retrieved containers.
@@ -111,7 +111,7 @@ Copy and paste the code below in one of the Activity in your target Android proj
 			Class<?> loadedClass = mSecureDexClassLoader.loadClass("com.example.MyClass");
 
 			// Check whether the signature verification process succeeded
-			if (loadedClass == null) {
+			if (loadedClass != null) {
 
 				// No security constraints were violated and so
 				// class loading was successful.
