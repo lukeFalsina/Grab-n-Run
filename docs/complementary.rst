@@ -35,7 +35,7 @@ Given these insights a first interesting situation to consider is when a develop
 
 .. image:: images/JarContStructure.png
 
-In such a scenario we have four classes (``ClassA``, ``ClassB``, ``ClassC``, ``ClassD``) which belongs to **three different packages**, whose names are respectively ``com.example``, ``com.example.system`` and ``com.example.system.preference``. Let use also assume that this container has being signed with a *valid self-signed certificate*, remotely located at ``https://something.somethelse.com/example_cert.pem``.
+In such a scenario we have four classes (``ClassA``, ``ClassB``, ``ClassC``, ``ClassD``) which belongs to **three different packages**, whose names are respectively ``com.example``, ``com.example.system`` and ``com.example.system.preference``. Let use also assume that this container has being signed with a *valid self-signed certificate*, remotely located at ``https://something.com/example_cert.pem``.
 
 Questions now for the developer are:
 
@@ -49,7 +49,8 @@ You can in fact handle this situation correctly by simply inserting into the ass
 		Map<String, URL> packageNamesToCertMap = new HashMap<String, URL>();
 
 		try {
-			packageNamesToCertMap.put("com.example", new URL("https://something.somethelse.com/example_cert.pem"));
+			packageNamesToCertMap.put(	"com.example", 
+							new URL("https://something.com/example_cert.pem"));
 
 		} catch (MalformedURLException e) {
 			
@@ -71,7 +72,7 @@ an application needs to have a **single** package name which more over must **no
 Anyway let us try to sketch the case of the previous cited jar archive and how to handle it with ``SecureDexClassLoader``. As an example we can consider the 
 scenario in which the goal is loading two classes, whose full class names are respectively ``com.example.MyFirstClass`` and ``com.test.MySecondClass`` and so 
 which **differs** in the **package name** but are **both stored** in the **same container** ``exampleJar.jar``.
-It is also supposed that this container has being signed with a *valid self-signed certificate*, remotely located at ``https://something.somethelse.com/example_cert.pem``.
+It is also supposed that this container has being signed with a *valid self-signed certificate*, remotely located at ``https://something.com/example_cert.pem``.
 
 In order to handle this situation correctly the developer is required to fill the **associative map** which links package names and certificates
 with **two entries**, one per each package name, which will *point to the same remote certificate*. This is exemplified in the following snippet of code::
@@ -79,8 +80,10 @@ with **two entries**, one per each package name, which will *point to the same r
 		Map<String, URL> packageNamesToCertMap = new HashMap<String, URL>();
 
 		try {
-			packageNamesToCertMap.put("com.example", new URL("https://something.somethelse.com/example_cert.pem"));
-			packageNamesToCertMap.put("com.test", new URL("https://something.somethelse.com/example_cert.pem"));
+			packageNamesToCertMap.put(	"com.example",
+							new URL("https://something.com/example_cert.pem"));
+			packageNamesToCertMap.put(	"com.test",
+							new URL("https://something.com/example_cert.pem"));
 
 		} catch (MalformedURLException e) {
 			
@@ -111,7 +114,7 @@ Here is a simple snippet of code to exemplify::
 
 		Map<String, URL> packageNamesToCertMap = new HashMap<String, URL>();
 
-		// A null entry can't raise a MalformedURLException..
+		// Notice that a null entry won't raise a MalformedURLException..
 		packageNamesToCertMap.put("it.polimi.necst.mylibrary", null);
 
 What is going on behind the curtains is that whenever GNR find an entry with *a valid package name associated to a null value*, it will **reverse the package name** with the following convention:
@@ -143,19 +146,26 @@ As an example let us consider the case in which we want to *concurrently load so
 	// separated by :
 	SecureLoaderFactory mSecureLoaderFactory = new SecureLoaderFactory(this);
 	// Initialize a SecureDexClassLoader instance in LAZY mode.
-	SecureDexClassLoader mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	longListOfDexPath, 
-												null, 
-												packageNamesToCertMap, 
-												getClass().getClassLoader()
-												true);
+	SecureDexClassLoader mSecureDexClassLoader = 
+		mSecureLoaderFactory.createDexClassLoader(	longListOfDexPath, 
+								null,
+								getClass().getClassLoader(),
+								packageNamesToCertMap, 
+								true);
 
-	// Suppose these classes belongs only to three different containers; while longListOfDexPath points to ten containers..
-	String[] classesToLoad = new String[] {"com.example.classA", "it.polimi.classB", "de.application.classC", "com.example.classD", "it.polimi.classE"};
+	// Suppose these classes belongs only to three different containers;
+	// while longListOfDexPath points to ten containers..
+	String[] classesToLoad = new String[] {	"com.example.classA",
+						"it.polimi.classB",
+						"de.application.classC",
+						"com.example.classD",
+						"it.polimi.classE"};
 
 	// Suppose to store the loaded classes here..
 	Set<Class<?>> loadedClassesSet = Collections.synchronizedSet(new HashSet<Class<?>>());
 
-	// Initialize the thread pool executor with number of thread equals to the number of classes to load..
+	// Initialize the thread pool executor with number of thread 
+	// equals to the number of classes to load..
 	ExecutorService threadLoadClassPool = Executors.newFixedThreadPool(classesToLoad.size());			
 	List<Future<?>> futureTaskList = new ArrayList<Future<?>>();
 			
@@ -165,8 +175,12 @@ As an example let us consider the case in which we want to *concurrently load so
 				
 		String classNameToLoad = classesToLoadIterator.next();
 			
-		// Submit a new class load thread on a container and store a reference in the future objects list.
-		Future<?> futureTask = threadLoadClassPool.submit(new classLoadingTask(mSecureDexClassLoader, classNameToLoad, loadedClassesSet));
+		// Submit a new class load thread on a container and store 
+		// a reference in the future objects list.
+		Future<?> futureTask = 
+			threadLoadClassPool.submit(new classLoadingTask(mSecureDexClassLoader, 
+									classNameToLoad,
+									loadedClassesSet));
 		futureTaskList.add(futureTask);
 	}
 			
@@ -190,10 +204,12 @@ As an example let us consider the case in which we want to *concurrently load so
 	try {
 				
 		// Join all the threads here.. Use a timeout eventually..
-		threadLoadClassPool.awaitTermination(KEEP_ALIVE_NUMBER_OF_TIME_UNITS, KEEP_ALIVE_TIME_UNIT);
+		threadLoadClassPool.awaitTermination(	KEEP_ALIVE_NUMBER_OF_TIME_UNITS,
+							KEEP_ALIVE_TIME_UNIT);
 	} catch (InterruptedException e) {
 				
-		// One or more of the thread were still busy.. This should not happen..
+		// One or more of the threads objects were still busy..
+		// And this should not happen..
 		e.printStackTrace()
 	}
 
@@ -208,7 +224,9 @@ And finally here it is the ``classLoadingTask``, an implementation of the `Runna
 		// Concurrent set of class objects that were successfully loaded.
 		private Set<String> successLoadedClassesSet;
 		
-		public classLoadingTask(SecureDexClassLoader mSecureDexClassLoader, String classNameToLoad, Set<String> successLoadedClassesSet) {
+		public classLoadingTask(	SecureDexClassLoader mSecureDexClassLoader, 
+						String classNameToLoad, 
+						Set<String> successLoadedClassesSet) {
 			
 			// Simply copy all the incoming parameters..
 			this.mSecureDexClassLoader = mSecureDexClassLoader;
@@ -219,8 +237,8 @@ And finally here it is the ``classLoadingTask``, an implementation of the `Runna
 		@Override
 		public void run() {
 			
-			// Moves the current Thread into the background
-	        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
+			// Set current thread priority to DEFAULT.
+	        	android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
 			
 			try {
 
@@ -236,8 +254,8 @@ And finally here it is the ``classLoadingTask``, an implementation of the `Runna
 				}
 
 			} catch (ClassNotFoundException e) {
-				// This exception will be raised when the container of the target class
-				// is genuine but this class file is missing..
+				// This exception will be raised when the container of the 
+				// target class is genuine but this class file is missing..
 				e.printStackTrace();
 			} catch (InstantiationException e) {
 				e.printStackTrace();
@@ -383,18 +401,22 @@ On the other hand the **application developer**, who wants to make use of the cl
 		try {
 			Map<String, URL> packageNamesToCertMap = new HashMap<String, URL>();
 
-			// The package "com.example" is always signed by the library developer with the same private key
-			// and so it can always be verified with the same remote certificate.
-			packageNamesToCertMap.put("com.example", new URL("https://myLibrary.com/developerCert.pem"));
+			// The package "com.example" is always signed by the library developer with 
+			// the same private key and so it can always be verified with the same 
+			// remote certificate.
+			packageNamesToCertMap.put(	"com.example", 
+							new URL("https://myLibrary.com/developerCert.pem"));
 
-			// The second parameter used here specifies how many days are counted before a cached copy of
-			// the remote library container is considered rotten and automatically discarded.
+			// The second parameter used here specifies how many days are counted before 
+			// a cached copy of the remote library container is considered rotten 
+			// and automatically discarded.
 			// Default value is 5 days, here the value is lowered to 3..
 			SecureLoaderFactory mSecureLoaderFactory = new SecureLoaderFactory(this, 3);
-			SecureDexClassLoader mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerRemotePath, 
-														null, 
-														packageNamesToCertMap, 
-														getClass().getClassLoader());
+			SecureDexClassLoader mSecureDexClassLoader = 
+				mSecureLoaderFactory.createDexClassLoader(	jarContainerRemotePath, 
+										null, 
+										packageNamesToCertMap, 
+										getClass().getClassLoader());
 		
 			Class<?> loadedClass = mSecureDexClassLoader.loadClass("com.example.ClassA");
 

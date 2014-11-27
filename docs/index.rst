@@ -12,11 +12,11 @@ For a **quick start** on how to include the library and how to use it in your pr
 
 For a brief explanation on the **issue** of *insecure dynamic class loading* and on Grab'n Run purpose check the :doc:`security` section.
 
-A concise **example** of use of the library is provided into an Android toy-application `here <http://link.me>`_. A *full explanation* of key extracts of this code is given into the :doc:`example` section.
+A concise **example** of use of the library is provided into an Android toy-application `here <https://github.com/lukeFalsina/Grab-n-Run/tree/master/example>`_. A *full explanation* of key extracts of this code is given into the :doc:`example` section.
 
 For those willing for more **technicalities** and **advanced features** implemented in *Grab'n Run*, the section on :doc:`complementary` is a *must-read*. This part of the documentation can also be used for **reference** as it presents how to handle properly some **tricky situations** that may occur while using *GNR*.
 
-Finally for a description on Grab'n Run **API** in *JavaDoc* style please refer to the `API documentation <file:../../javaDoc/index.html>`_. 
+Finally for a description on Grab'n Run **API** in *JavaDoc* style please refer to the `API documentation <https://github.com/lukeFalsina/Grab-n-Run/raw/master/docs/javaDoc/index.html>`_. 
 
 .. toctree::
    :maxdepth: 2
@@ -25,7 +25,6 @@ Finally for a description on Grab'n Run **API** in *JavaDoc* style please refer 
    security
    example
    complementary
-..   javaAPI/packages
 
 Indices and tables
 ==================

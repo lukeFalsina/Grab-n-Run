@@ -1,8 +1,8 @@
-# ![Logo](https://github.com/lukeFalsina/Grab-n-Run/raw/master/gnr/logo.png) Grab'n Run
+# ![Logo](https://github.com/lukeFalsina/Grab-n-Run/raw/master/gnr/res/drawable-mdpi/logo_no_name.png) Grab'n Run
 
 *Grab’n Run* (aka **GNR**) is a **simple** and **effective** Java Library that you can easily add to your Android projects to *secure dynamic class loading* operations over standard [DexClassLoader](http://developer.android.com/reference/dalvik/system/DexClassLoader.html).
 
-For a **brief presentation** of the library and some of its features you can give a look at these [slides](http://goo.gl/oiYAZB). On the other hand if you prefer a more **structured and complete description** with *set up information, tutorials, examples, tips&tricks and a full presentation of the API* you should definitely check the [documentation](https://readthedocs.com/something).
+For a **brief presentation** of the library and some of its features you can give a look at these [slides](http://goo.gl/oiYAZB). On the other hand if you prefer a more **structured and complete description** with *set up information, tutorials, examples, tips&tricks and a full presentation of the API* you should definitely check the [documentation](http://grab-n-run.readthedocs.org/en/latest/).
 
 *Grab'n Run* is currently a work in progress so, if you desire to suggest new *features, improvements, criticisms* or whatever, I would be more than glad to hear **any kind of constructive feedback** :D 
 
@@ -15,7 +15,7 @@ Moreover if you have just spent a bit of time playing with *Grab'n Run*, why don
 - *11/26/2014* - **Grab'n Run is on line!**
 
 ## Main features
-Securely load code dynamically into your Android application from **APK** containers or **JAR** libraries translated to be *executable by the Dalvik Virtual Machine* (don't worry a [section]() of the docs explains how to do it).
+Securely load code dynamically into your Android application from **APK** containers or **JAR** libraries translated to be *executable by the Dalvik Virtual Machine* (don't worry a [section](http://grab-n-run.readthedocs.org/en/latest/complementary.html#on-library-developer-side-how-to-prepare-a-valid-library-container-compatible-with-gnr) of the docs explains how to do it).
 
 - *JAR* and *APK* containers can be either already stored on the device or **automatically fetched from remote locations** by GNR.
 - Retrieved containers signatures are compared against a **valid developer certificate**. Only containers that are **correctly signed** are allowed to have their classes loaded dynamically. This ensures **integrity** and **developer authentication** on all the retrieved containers.
@@ -23,7 +23,7 @@ Securely load code dynamically into your Android application from **APK** contai
 - *Cached classes, containers and certificates* used for the signature verification are stored into *application-private* folders. This **prevents** your application **from code injection attacks** at runtime.
 - GNR implements an **effective caching system** that speeds up its execution and at the same time enables it to *work in most cases also when no connectivity is available*.
 - Transition to GNR is **smooth** for the application developer since its **API** where thought to be *as close as possible to the standard API* provided by the Android framework.
-- When *many containers* are provided as sources for class loading, Grab'n Run performs a **concurrent multi-thread signature verification** in order to *limit the performance overhead*.
+- When *many containers* are provided as sources for class loading, *Grab'n Run* performs a **concurrent multi-thread signature verification** in order to *limit the performance overhead*.
 - GNR helps the application developer to **implement silent updating** on *remote third-party libraries in a secure and concise way*. 
 
 ## Quick Setup
@@ -148,10 +148,10 @@ try {
 
 ## Next steps :)
 
-* If you want to learn how to use *Grab'n Run* I suggest to start from the [tutorial]() and then moving on by analyzing the [example application]().
-* If you are interested in understanding what are the **security threats** of *improper dynamic code loading* fixed by GNR check out the [security resume]().
-* If you would like to implement cool features of GNR like **silent updates**, **handling more containers**, **concurrent code loading** or **dynamically loading JAR libraries in your applications** you should give a look at the [complementary topics]().
-* Finally you may also need to **consult** the *JavaDoc-like* [API documentation](). 
+* If you want to learn how to use *Grab'n Run* I suggest to start from the [tutorial](http://grab-n-run.readthedocs.org/en/latest/tutorial.html) and then moving on by analyzing the [example application](http://grab-n-run.readthedocs.org/en/latest/example.html).
+* If you are interested in understanding what are the **security threats** of *improper dynamic code loading* fixed by GNR check out the [security resume](http://grab-n-run.readthedocs.org/en/latest/security.html).
+* If you would like to implement cool features of GNR like **silent updates**, **handling more containers**, **concurrent code loading** or **dynamically loading JAR libraries in your applications** you should give a look at the [complementary topics](http://grab-n-run.readthedocs.org/en/latest/complementary.html).
+* Finally you may also need to **consult** the *JavaDoc-like* [API documentation](https://github.com/lukeFalsina/Grab-n-Run/raw/master/docs/javaDoc/index.html). 
 
 ## License
 

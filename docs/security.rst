@@ -35,10 +35,11 @@ Moreover, for even *more performance concerned developers*, it is also possible 
 2. **Eager Strategy**: in this mode the process of **signature and integrity** will be carried out on **all** the containers **immediately and concurrently** before returning an instance of ``SecureDexClassLoader``. This choice implies that you will have to pay an **initial penalty (but still reduced since the verification process is driven concurrently among the containers)** on time of execution but then the time required for a ``loadClass()`` operation becomes almost equal to the corresponding operation performed with standard ``DexClassLoader``.
 
 **By default eager strategy** is applied but developers can *pick* the *lazy version* by adding a final ``true`` attribute to the ``createDexClassLoader()`` method invocation
-in ``SecureLoaderFactory``. An example of use is shown in the following snippet of code (this is just a slight modification of one of the calls that you may have seen in :doc:`tutorial` )::
+in ``SecureLoaderFactory``. An example of use is shown in the following snippet of code (this is just a *slight modification* of one of the calls that you may have seen in :doc:`tutorial` )::
 
-		SecureDexClassLoader mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
-													null, 
-													packageNamesToCertMap, 
-													getClass().getClassLoader(),
-													true);
+		SecureDexClassLoader mSecureDexClassLoader = 
+			mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
+									null, 
+									getClass().getClassLoader(),
+									packageNamesToCertMap,
+									true);

@@ -18,11 +18,14 @@ Setting up GNR as an **additional library** for your *Android application* is ve
 3. Modify the *Android Manifest* of your application by adding a couple of required permissions::
 
 	<manifest>
-		<!-- Include following permission to be able to download remote resources like containers and certificates -->
+		<!-- 	Include following permission to be able to download remote resources 
+			like containers and certificates -->
 		<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-		<!-- Include following permission to be able to download remote resources like containers and certificates -->
+		<!-- 	Include following permission to be able to download remote resources 
+			like containers and certificates -->
 		<uses-permission android:name="android.permission.INTERNET" />
-		<!-- Include following permission to be able to import local containers on SD card -->
+		<!-- 	Include following permission to be able to import local containers 
+			on SD card -->
 		<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 		...
 	</manifest>
@@ -41,7 +44,8 @@ Let's assume, for example, that you want to load an instance of ``com.example.My
 Anyway a snippet of code to achieve this task is the following::
 
 		MyClass myClassInstance = null;
-		String jarContainerPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/exampleJar.jar";
+		String jarContainerPath = 	Environment.getExternalStorageDirectory().getAbsolutePath() + 
+						"/Download/exampleJar.jar";
 		File dexOutputDir = getDir("dex", MODE_PRIVATE);
 		DexClassLoader mDexClassLoader = new DexClassLoader(	jarContainerPath, 
 									dexOutputDir.getAbsolutePath(), 
@@ -109,12 +113,13 @@ to sign the *jar* or *apk* container which holds those classes.
 	For more details on signing applications and certificate, please check `here <http://developer.android.com/tools/publishing/app-signing.html#cert>`_.
 
 So in this example we assume that all the classes belonging to the package ``com.example`` have been signed 
-with a self-signed certificate, stored at ``https://something.somethelse.com/example_cert.pem``.
+with a self-signed certificate, stored at ``https://something.com/example_cert.pem``.
 Since here you just want to load ``com.example.MyClass`` the following snippet of code is enough::
 
 		Map<String, URL> packageNamesToCertMap = new HashMap<String, URL>();
 		try {
-			packageNamesToCertMap.put("com.example", new URL("https://something.somethelse.com/example_cert.pem"));
+			packageNamesToCertMap.put(	"com.example",
+							new URL("https://something.com/example_cert.pem"));
 
 		} catch (MalformedURLException e) {
 			// The previous URL used for the packageNamesToCertMap entry was a malformed one.
@@ -148,10 +153,11 @@ Since here you just want to load ``com.example.MyClass`` the following snippet o
 Now it comes the time to initialize a ``SecureDexClassLoader`` object through the method ``createDexClassLoader()``
 of ``SecureLoaderFactory``::
 
-		SecureDexClassLoader mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
-													null, 
-													getClass().getClassLoader(),
-													packageNamesToCertMap);
+		SecureDexClassLoader mSecureDexClassLoader = 
+			mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
+									null, 
+									getClass().getClassLoader(),
+									packageNamesToCertMap);
 
 ``mSecureDexClassLoader`` will be able to load the classes whose container path is listed in ``jarContainerPath`` and 
 it will use the ``packageNamesToCertMap`` to retrieve all the required certificate from the web and import them into 
@@ -172,7 +178,7 @@ since ``SecureDexClassLoader`` will automatically reserve such a folder.
 	
 	Example::
 
-		jarContainerPath = "http://something.somethingelse.com/dev/exampleJar.jar";
+		jarContainerPath = "http://something.com/dev/exampleJar.jar";
 
 	This ``jarContainerPath`` will retrieve no resource when used in the constructor of ``DexClassLoader`` but it 
 	is perfectly fine as a first parameter of the ``mSecureLoaderFactory.createDexClassLoader()`` call, as long as
@@ -220,7 +226,7 @@ return ``null``  whenever **at least one of the following security constraints i
 * The *container file* of the required class was **not signed with the certificate associated** to the package name 
   of the class. [Missing trusted certificate]
 * At least one of the **entry** of the *container file* do **not match its signature** even if the certificate used to sign
-  the container file is the trusted one. [Possibility of repackaged container]
+  the container file is the trusted one. [Possibility of **repackaged container**]
 
 For all of these reasons you should always check and pay attention when a **null** pointer is returned after a 
 ``mSecureDexClassLoader.loadClass()`` call since this is a clear clue to establish either a wrong set up of 
@@ -237,20 +243,22 @@ to help you figure out what it is happening.
 Please notice, on the other hand, that the three exceptions caught in the try-catch block surrounding the ``loadClass()`` method 
 behaves and are thrown in the same way as it would happen with ``DexClassLoader``.
 
-Finally for clarity the full snippet of code presented in this section is reported here::
+Finally for clarity the **full snippet of code** presented in this section is reported here::
 
 		MyClass myClassInstance = null;
-		jarContainerPath = "http://something.somethingelse.com/dev/exampleJar.jar";
+		jarContainerPath = "http://something.com/dev/exampleJar.jar";
 
 		try {
 			Map<String, URL> packageNamesToCertMap = new HashMap<String, URL>();
-			packageNamesToCertMap.put("com.example", new URL("https://something.somethelse.com/example_cert.pem"));
+			packageNamesToCertMap.put(	"com.example",
+							new URL("https://something.com/example_cert.pem"));
 
 			SecureLoaderFactory mSecureLoaderFactory = new SecureLoaderFactory(this);
-			SecureDexClassLoader mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
-														null, 
-														packageNamesToCertMap, 
-														getClass().getClassLoader());
+			SecureDexClassLoader mSecureDexClassLoader = 
+				mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
+										null, 
+										getClass().getClassLoader(),
+										packageNamesToCertMap);
 		
 			Class<?> loadedClass = mSecureDexClassLoader.loadClass("com.example.MyClass");
 

@@ -109,7 +109,7 @@ In order to understand correctly the following detailed discussion, it is fundam
 MainActivity.java
 -----------------
 
-`MainActivity <http://fill.link.com>`_ is the **entry point** of the sample application. In its overloaded method ``onCreate()`` it initializes through a ``ListView`` a set of buttons used to select the *different test cases* present in the application.
+`MainActivity <https://github.com/lukeFalsina/Grab-n-Run/blob/master/example/src/it/polimi/poccodeloading/MainActivity.java>`_ is the **entry point** of the sample application. In its overloaded method ``onCreate()`` it initializes through a ``ListView`` a set of buttons used to select the *different test cases* present in the application.
 
 DexClassLoader (apk) vs SecureDexClassLoader (apk)
 ----------------------------------------------------
