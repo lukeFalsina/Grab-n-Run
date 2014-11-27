@@ -16,7 +16,7 @@ A concise **example** of use of the library is provided into an Android toy-appl
 
 For those willing for more **technicalities** and **advanced features** implemented in *Grab'n Run*, the section on :doc:`complementary` is a *must-read*. This part of the documentation can also be used for **reference** as it presents how to handle properly some **tricky situations** that may occur while using *GNR*.
 
-Finally for a description on Grab'n Run **API** in *JavaDoc* style please refer to the `API documentation <https://github.com/lukeFalsina/Grab-n-Run/raw/master/docs/javaDoc/index.html>`_. 
+Finally for a description on Grab'n Run **API** in *JavaDoc* style please refer to the `API documentation <https://rawgit.com/lukeFalsina/Grab-n-Run/master/docs/javaDoc/index.html>`_. 
 
 .. toctree::
    :maxdepth: 2

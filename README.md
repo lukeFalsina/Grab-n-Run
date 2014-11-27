@@ -1,4 +1,4 @@
-# ![Logo](https://github.com/lukeFalsina/Grab-n-Run/raw/master/gnr/res/drawable-mdpi/logo_no_name.png) Grab'n Run
+# ![Logo](https://github.com/lukeFalsina/Grab-n-Run/raw/master/gnr/res/drawable-mdpi/logo_with_name.png)
 
 *Grab’n Run* (aka **GNR**) is a **simple** and **effective** Java Library that you can easily add to your Android projects to *secure dynamic class loading* operations over standard [DexClassLoader](http://developer.android.com/reference/dalvik/system/DexClassLoader.html).
 
@@ -74,7 +74,7 @@ $	keytool -exportcert -keystore my-tests-key.keystore -alias test_dev_key
 #### 2. Publish your developer certificate on line at a remote location which uses HTTPS protocol
 
 You can publish the certificate in many places as long as **HTTPS** protocol is used and **everyone can access this location** from the web.
-As a **test** example you could store the *certificate.pem* in your "Public" *Dropbox* folder and then retrieve the **associated public link**, which could be for example something like "https://dl.dropboxusercontent.com/u/28681922/test_cert.pem". You will need this URL soon.
+As a **test** example you could store the *certificate.pem* in your "Public" *Dropbox* folder and then retrieve the **associated public link**, which could be for example something like "https://dl.dropboxusercontent.com/u/00000000/certificate.pem". You will need this URL soon.
 
 #### 3. Export an unsigned container and sign it with your developer key
 
@@ -95,7 +95,7 @@ $	<path_to_your_sdk>/sdk/build-tools/<sdk_version_number>/zipalign -v 4
 ```
 #### 4. Publish the signed and aligned version of the source container
 
-Once that you have obtained *LoaderAppAligned.apk* you need to make also this resource **available on line**. Notice that in this case both remote locations that uses **HTTP** or **HTTPS** protocols are fine as long as they are accessible from the web. As an example again you can store the container in your "Public" *Dropbox* folder and get back a **public URL** like "https://dl.dropboxusercontent.com/u/28681922/LoaderAppAligned.apk".
+Once that you have obtained *LoaderAppAligned.apk* you need to make also this resource **available on line**. Notice that in this case both remote locations that uses **HTTP** or **HTTPS** protocols are fine as long as they are accessible from the web. As an example again you can store the container in your "Public" *Dropbox* folder and get back a **public URL** like "https://dl.dropboxusercontent.com/u/00000000/LoaderAppAligned.apk".
 
 #### 5. Set up dynamic code loading with GNR in the application
 
@@ -105,11 +105,11 @@ In the end it is time to set up a *SecureDexClassLoader* instance to **fetch you
 ``` java
 
 MyClass myClassInstance = null;
-jarContainerPath = "https://dl.dropboxusercontent.com/u/28681922/LoaderAppAligned.apk";
+jarContainerPath = "https://dl.dropboxusercontent.com/u/00000000/LoaderAppAligned.apk";
 
 try {
 	Map<String, URL> packageNamesToCertMap = new HashMap<String, URL>();
-	packageNamesToCertMap.put("com.example", new URL("https://dl.dropboxusercontent.com/u/28681922/test_cert.pem"));
+	packageNamesToCertMap.put("com.example", new URL("https://dl.dropboxusercontent.com/u/00000000/certificate.pem"));
 
 	SecureLoaderFactory mSecureLoaderFactory = new SecureLoaderFactory(this);
 	SecureDexClassLoader mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
@@ -151,8 +151,8 @@ try {
 * If you want to learn how to use *Grab'n Run* I suggest to start from the [tutorial](http://grab-n-run.readthedocs.org/en/latest/tutorial.html) and then moving on by analyzing the [example application](http://grab-n-run.readthedocs.org/en/latest/example.html).
 * If you are interested in understanding what are the **security threats** of *improper dynamic code loading* fixed by GNR check out the [security resume](http://grab-n-run.readthedocs.org/en/latest/security.html).
 * If you would like to implement cool features of GNR like **silent updates**, **handling more containers**, **concurrent code loading** or **dynamically loading JAR libraries in your applications** you should give a look at the [complementary topics](http://grab-n-run.readthedocs.org/en/latest/complementary.html).
-* Finally you may also need to **consult** the *JavaDoc-like* [API documentation](https://github.com/lukeFalsina/Grab-n-Run/raw/master/docs/javaDoc/index.html). 
+* Finally you may also need to **consult** the *JavaDoc-like* [API documentation](https://rawgit.com/lukeFalsina/Grab-n-Run/master/docs/javaDoc/index.html). 
 
 ## License
 
-*Grab'n Run* is released under the *Apache* license. Check the COPYRIGHT file for further details.
+*Grab'n Run* is released under the *Apache* license. Check the *COPYRIGHT* file for further details.

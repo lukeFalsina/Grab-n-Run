@@ -44,8 +44,8 @@ Let's assume, for example, that you want to load an instance of ``com.example.My
 Anyway a snippet of code to achieve this task is the following::
 
 		MyClass myClassInstance = null;
-		String jarContainerPath = 	Environment.getExternalStorageDirectory().getAbsolutePath() + 
-						"/Download/exampleJar.jar";
+		String jarContainerPath = 	Environment.getExternalStorageDirectory().getAbsolutePath() 
+						+ "/Download/exampleJar.jar";
 		File dexOutputDir = getDir("dex", MODE_PRIVATE);
 		DexClassLoader mDexClassLoader = new DexClassLoader(	jarContainerPath, 
 									dexOutputDir.getAbsolutePath(), 
