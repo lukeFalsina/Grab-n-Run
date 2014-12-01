@@ -2,9 +2,9 @@
 
 *Grab’n Run* (aka **GNR**) is a **simple** and **effective** Java Library that you can easily add to your Android projects to perform *secure dynamic class loading* operations over standard [DexClassLoader](http://developer.android.com/reference/dalvik/system/DexClassLoader.html).
 
-Previous research has shown that many applications often need to perform dynamic class loading to implement, for example, less invasive self-update features. However, research has also shown that it is really challenging to *safely* implement these features. This is of particular importance as, in this context, one single mistake could open the application (and, therefore, the entire device) to serious security vulnerabilies, such as remote code execution.
+Previous research has shown that many applications often need to perform dynamic class loading to implement, for example, non-invasive self-update features. However, research has also shown that it is really challenging to *safely* implement these features. This is of particular importance as, in this context, **one single mistake** could open the application (and, therefore, the entire device) to **serious security vulnerabilies**, such as *remote code execution*.
 
-The main goal of *Grab's Run* is to offer an alternative to the standard Android APIs, and it is designed so that even the most inexperienced developer cannot commit well-known, serious mistakes.
+The main goal of *Grab's Run* is to offer an alternative to the standard Android APIs, and its design enforces that even the most inexperienced developer cannot commit well-known, serious mistakes.
 
 For a **brief presentation** of the library and some of its features you can give a look at these [slides](http://goo.gl/oiYAZB), while if you prefer a more **structured and complete description** with *set up information, tutorials, examples, tips&tricks, and a full presentation of the API* you should definitely check the [documentation](http://grab-n-run.readthedocs.org/en/latest/).
 
@@ -12,7 +12,7 @@ Note that *Grab'n Run* is currently a work in progress: if you desire to suggest
 
 You can contact me either by dropping an email at luca.falsina@mail.polimi.it or by pinging me on Twitter [@lfalsina](https://twitter.com/lfalsina).
 
-Moreover, if you happened to spend a little bit of time with *Grab'n Run*, we would be extremely thankful if you could **fill in** this form: [evaluation form](http://goo.gl/forms/k500h7cYiv). This will be a tremendous help to make our library a better one for other developers like you :)
+Moreover, if you happened to spend a little bit of time with *Grab'n Run*, we would be *extremely* thankful if you could **fill in** this form: [evaluation form](http://goo.gl/forms/k500h7cYiv). This will be a tremendous help to make our library a better one for other developers like you :)
 
 ## News
 
