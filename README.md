@@ -1,14 +1,18 @@
 # ![Logo](https://github.com/lukeFalsina/Grab-n-Run/raw/master/gnr/res/drawable-mdpi/logo_with_name.png)
 
-*Grab’n Run* (aka **GNR**) is a **simple** and **effective** Java Library that you can easily add to your Android projects to *secure dynamic class loading* operations over standard [DexClassLoader](http://developer.android.com/reference/dalvik/system/DexClassLoader.html).
+*Grab’n Run* (aka **GNR**) is a **simple** and **effective** Java Library that you can easily add to your Android projects to perform *secure dynamic class loading* operations over standard [DexClassLoader](http://developer.android.com/reference/dalvik/system/DexClassLoader.html).
 
-For a **brief presentation** of the library and some of its features you can give a look at these [slides](http://goo.gl/oiYAZB). On the other hand if you prefer a more **structured and complete description** with *set up information, tutorials, examples, tips&tricks and a full presentation of the API* you should definitely check the [documentation](http://grab-n-run.readthedocs.org/en/latest/).
+Previous research has shown that many applications often need to perform dynamic class loading to implement, for example, less invasive self-update features. However, research has also shown that it is really challenging to *safely* implement these features. This is of particular importance as, in this context, one single mistake could open the application (and, therefore, the entire device) to serious security vulnerabilies, such as remote code execution.
 
-*Grab'n Run* is currently a work in progress so, if you desire to suggest new *features, improvements, criticisms* or whatever, I would be more than glad to hear **any kind of constructive feedback** :D 
+The main goal of *Grab's Run* is to offer an alternative to the standard Android APIs, and it is designed so that even the most inexperienced developer cannot commit well-known, serious mistakes.
 
-You can contact me either by dropping an email at luca.falsina@mail.polimi.it or by pinging on Twitter [@lfalsina](https://twitter.com/lfalsina).
+For a **brief presentation** of the library and some of its features you can give a look at these [slides](http://goo.gl/oiYAZB), while if you prefer a more **structured and complete description** with *set up information, tutorials, examples, tips&tricks, and a full presentation of the API* you should definitely check the [documentation](http://grab-n-run.readthedocs.org/en/latest/).
 
-Moreover if you have just spent a bit of time playing with *Grab'n Run*, why don't you try to **fill in** this [evaluation form](http://goo.gl/forms/k500h7cYiv)? This will help once again to **make GNR a better tool** to use for other developers like you :)
+Note that *Grab'n Run* is currently a work in progress: if you desire to suggest new *features, improvements, criticisms* or whatever, I would be more than glad to hear **any kind of constructive feedback** :D 
+
+You can contact me either by dropping an email at luca.falsina@mail.polimi.it or by pinging me on Twitter [@lfalsina](https://twitter.com/lfalsina).
+
+Moreover, if you happened to spend a little bit of time with *Grab'n Run*, we would be extremely thankful if you could **fill in** this form: [evaluation form](http://goo.gl/forms/k500h7cYiv). This will be a tremendous help to make our library a better one for other developers like you :)
 
 ## News
 
@@ -55,7 +59,7 @@ Modify the *Android Manifest* of your application by adding a couple of **requir
 
 ## Quick example of use
 
-This quick use case gives you a taste on how to use GNR once that you have added it to your project.
+This quick use case gives you a taste on how to use GNR once you have added it to your project.
 
 #### 1. Create a key pair to sign your code and export your developer certificate
 
@@ -73,12 +77,12 @@ $	keytool -exportcert -keystore my-tests-key.keystore -alias test_dev_key
 
 #### 2. Publish your developer certificate on line at a remote location which uses HTTPS protocol
 
-You can publish the certificate in many places as long as **HTTPS** protocol is used and **everyone can access this location** from the web.
-As a **test** example you could store the *certificate.pem* in your "Public" *Dropbox* folder and then retrieve the **associated public link**, which could be for example something like "https://dl.dropboxusercontent.com/u/00000000/certificate.pem". You will need this URL soon.
+You can publish the certificate wherever you like as long as **HTTPS** protocol is used and **everyone can access this location** from the web.
+As a **test** example you could store the *certificate.pem* in your "Public" *Dropbox* folder and then retrieve the **associated public link**, which could be for example something like "https://dl.dropboxusercontent.com/u/00000000/certificate.pem". Note this URL down, you will need it soon.
 
 #### 3. Export an unsigned container and sign it with your developer key
 
-Let's say that in your IDE (i.e. the *Android Development Tool (ADT)*) you have an Android project called **"LoaderApp"** from which you want to load some of its classes dynamically in another project.
+Let's say that in your IDE (i.e., the *Android Development Tools (ADT)*) you have an Android project called **"LoaderApp"** from which you want to load some of its classes dynamically in another project.
 
 * In the *ADT Package Explorer* **right** click on **"LoaderApp"** -> Android Tools -> Export Unsigned Application Package...
 ![Screenshot](https://github.com/lukeFalsina/Grab-n-Run/raw/master/docs/images/ExportUnsignedContainer.png)
@@ -95,11 +99,11 @@ $	<path_to_your_sdk>/sdk/build-tools/<sdk_version_number>/zipalign -v 4
 ```
 #### 4. Publish the signed and aligned version of the source container
 
-Once that you have obtained *LoaderAppAligned.apk* you need to make also this resource **available on line**. Notice that in this case both remote locations that uses **HTTP** or **HTTPS** protocols are fine as long as they are accessible from the web. As an example again you can store the container in your "Public" *Dropbox* folder and get back a **public URL** like "https://dl.dropboxusercontent.com/u/00000000/LoaderAppAligned.apk".
+Once you have obtained *LoaderAppAligned.apk*, you need to make also this resource **available on line**. Notice that, in this case, both remote locations that use **HTTP** or **HTTPS** protocols are fine as long as they are accessible from the web. Again, as an example, you can store the container in your "Public" *Dropbox* folder and get back a **public URL** like "https://dl.dropboxusercontent.com/u/00000000/LoaderAppAligned.apk".
 
 #### 5. Set up dynamic code loading with GNR in the application
 
-In the end it is time to set up a *SecureDexClassLoader* instance to **fetch your remote container and developer certificate**, **store it in a safe place** and **perform a signature verification** before dynamically loading your code.
+In the end, it is time to set up a *SecureDexClassLoader* instance to **fetch your remote container and developer certificate**, **store it in a safe place** and **perform a signature verification** before dynamically loading your code.
 
 **Copy and paste** the code below in one of the Activity in your target Android project, where you have *already imported GNR*, to **dynamically and securely load** an instance of the class *"com.example.MyClass"*:
 ``` java
