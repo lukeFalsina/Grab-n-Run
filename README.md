@@ -12,7 +12,7 @@ Note that *Grab'n Run* is currently a work in progress: if you desire to suggest
 
 You can contact me either by dropping an email at luca.falsina@mail.polimi.it or by pinging me on Twitter [@lfalsina](https://twitter.com/lfalsina).
 
-Moreover, if you happened to spend a little bit of time with *Grab'n Run*, we would be *extremely* thankful if you could **fill in** this form: [evaluation form](http://goo.gl/forms/k500h7cYiv). This will be a tremendous help to make our library a better one for other developers like you :)
+Moreover, if you happened to spend a bit of time using *Grab'n Run*, we would be *extremely* thankful if you could **fill in** this form: [evaluation form](http://goo.gl/forms/k500h7cYiv). This will be a tremendous help to make our library a better one for other developers like you :)
 
 ## News
 
