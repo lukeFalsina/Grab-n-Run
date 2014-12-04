@@ -17,6 +17,7 @@ Moreover, if you happened to spend a little bit of time with *Grab'n Run*, we wo
 ## News
 
 - *11/26/2014* - **Grab'n Run is on line!**
+
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Grab--n--Run-brightgreen.svg?style=flat)](https://android-arsenal.com/details/1/1185)
 
 ## Main features
