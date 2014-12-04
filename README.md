@@ -18,8 +18,6 @@ Moreover, if you happened to spend a little bit of time with *Grab'n Run*, we wo
 
 - *11/26/2014* - **Grab'n Run is on line!**
 
-[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Grab--n--Run-brightgreen.svg?style=flat)](https://android-arsenal.com/details/1/1185)
-
 ## Main features
 Securely load code dynamically into your Android application from **APK** containers or **JAR** libraries translated to be *executable by the Dalvik Virtual Machine* (don't worry a [section](http://grab-n-run.readthedocs.org/en/latest/complementary.html#on-library-developer-side-how-to-prepare-a-valid-library-container-compatible-with-gnr) of the docs explains how to do it).
 
@@ -162,3 +160,5 @@ try {
 ## License
 
 *Grab'n Run* is released under the *Apache* license. Check the *COPYRIGHT* file for further details.
+
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Grab--n--Run-brightgreen.svg?style=flat)](https://android-arsenal.com/details/1/1185)
