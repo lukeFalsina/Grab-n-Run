@@ -15,7 +15,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashSet;
@@ -210,12 +209,15 @@ public class MainFrame extends Frame {
 	private void apkChoose() {
 		
 		final FileDialog fileDialog = new FileDialog(this, "Choose an APK container..", FileDialog.LOAD);
-		fileDialog.setFile("*.apk");
+		// fileDialog.setFile("*.apk");
 		fileDialog.setAlwaysOnTop(true);
 		fileDialog.setVisible(true);
-		if (fileDialog.getFile() != null) {
+		
+		// Select an APK from "Recent tabs.." does not work.
+		// This is a known issue of current JDK.. Oracle should fix it..
+		if (fileDialog.getDirectory() != null && fileDialog.getFiles() != null && fileDialog.getFiles().length == 1) {
 			
-			String apkPath = new File(fileDialog.getFile()).getAbsolutePath();
+			String apkPath = fileDialog.getFiles()[0].getAbsolutePath();
 			if (apkPath.toLowerCase().endsWith(".apk")) {
 				
 				this.apkField.setBackground(SystemColor.GREEN);
