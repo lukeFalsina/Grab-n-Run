@@ -19,7 +19,7 @@ Moreover, if you happened to spend a bit of time using *Grab'n Run*, we would be
 - *11/26/2014* - **Grab'n Run is on line!**
 
 ## Main features
-Securely load code dynamically into your Android application from **APK** containers or **JAR** libraries translated to be *executable by the Dalvik Virtual Machine* (don't worry a [section](http://grab-n-run.readthedocs.org/en/latest/complementary.html#on-library-developer-side-how-to-prepare-a-valid-library-container-compatible-with-gnr) of the docs explains how to do it).
+Securely load code dynamically into your Android application from **APK** containers or **JAR** libraries translated to be *executable by both the Dalvik Virtual Machine (DVM) and the Android Runtime (ART)* (don't worry a [section](http://grab-n-run.readthedocs.org/en/latest/complementary.html#on-library-developer-side-how-to-prepare-a-valid-library-container-compatible-with-gnr) of the docs explains step-by-step how to do it).
 
 - *JAR* and *APK* containers can be either already stored on the device or **automatically fetched from remote locations** by GNR.
 - Retrieved containers signatures are compared against a **valid developer certificate**. Only containers that are **correctly signed** are allowed to have their classes loaded dynamically. This ensures **integrity** and **developer authentication** on all the retrieved containers.

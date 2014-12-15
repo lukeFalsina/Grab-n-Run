@@ -315,6 +315,9 @@ You have now successfully exported your project into a *jar* container.
 
 After having exported your project into a *jar* container you now have code that can run on a **Java Virtual Machine (JVM)** in the form of class file with the extensions ``.class``. Nevertheless in order to have your **code running** with ``SecureDexClassLoader`` **on an Android phone** it is necessary to **translate** the class files from Java Bytecode to **Dalvik Bytecode**. This task can be accomplished easily thanks to the ``dx`` tool, present in the Android SDK folder.
 
+.. note::
+	Notice that **Dalvik Bytecode** is also compatible with the new `Android Runtime (ART) <https://source.android.com/devices/tech/dalvik/art.html>`_ system. This means that, except for narrow cases, you won't generally need to worry since your library code should execute fine on both the *Dalvik Virtual Machine (DVM)* and the *Android Runtime (ART)*. As related to this guide and more in general to *Grab'n Run*, *choosing one runtime system in stead of the other should not be an issue at all*.
+
 ..	highlight:: bash
 
 So by assuming that you have just exported the project into a file called *myLibrary.jar* in a terminal type the following commands::
