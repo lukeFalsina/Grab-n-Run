@@ -298,6 +298,6 @@ public class MainFrame extends Frame {
 
 	private void quit() {
         this.setVisible(false);
-        System.exit(0);
+        System.exit(1);
     }
 }
