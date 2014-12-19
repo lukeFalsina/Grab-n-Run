@@ -29,15 +29,24 @@ from pyparsing import *
 # Library used to launch and check results on command line
 import subprocess
 
+# Library used to parse the Android Manifest.
+import xml.etree.ElementTree as ET
+
 # Androguard script which automatizes collection of useful information
 # on JAR and APK.
 import androlyze
 
-# Store app to patch permissions here
-# to_add_permissions = list()
-
-# An helper list which points put classes using standard DexClassLoader
-# classesToPatch = list()
+# Grammar elements for smali code (Used for smali parsing)
+INTEGER = Word( nums, max = 1 )
+CLASS_PATH = Combine( Word( alphas ) + OneOrMore( "/" + Word( alphas )) + Optional( "$" + Or(Word( alphas ) + Word( nums )) ) )
+CLASS_STRING = Group("L" + CLASS_PATH + ";")
+RETURN_TYPE = Word( alphas, max = 1 )
+OPERAND = Or( RETURN_TYPE + CLASS_STRING )
+METHOD_NAME = Or( "<init>" + Word( alphas ))
+METHOD_DECL = Group(METHOD_NAME + "(" + ZeroOrMore(OPERAND) + ")" + OPERAND)
+NUMBER_EXA = Group("(" + Combine( "0x" + Word( "0123456789abcdef" )) + ")")
+ACCESS_ATTR = Optional(oneOf("private protected public"))
+VAR = Combine( Word('pv', max = 1) + Word( nums ) ) 
 
 # Required standard permission
 required_permissions = ['android.permission.ACCESS_NETWORK_STATE', 'android.permission.INTERNET', 'android.permission.READ_EXTERNAL_STORAGE']
@@ -188,7 +197,7 @@ def buildRepackagedAPK(decodeDirName):
 
 	if decodeDirName and os.path.isdir(decodeDirName):
 
-		print "[In progress] Rebuild patched APK.."
+		print "[In progress] Rebuilding patched APK.."
 		rebuildAPK = subprocess.call(["java","-jar", APKTOOL_JAR, "b", decodeDirName])
 
 		if (rebuildAPK == SUCCESS):
@@ -256,23 +265,15 @@ def performAnalysis(apkPath):
 		sys.stdout = stdout
 
 	with open(dynamicCallsFilePath, 'r') as dynamicCallsFile:
+
+		#print INTEGER.parseString("1")
+		#print CLASS_STRING.parseString("Lcom/example/extractapp/MainActivity;")
+		#print METHOD_DECL.parseString("setUpNormal()V")
+		#print NUMBER_EXA.parseString("(0x66)")
+		#print CLASS_STRING.parseString("Ldalvik/system/DexClassLoader;")
+
 		# Define a grammar to parse line of the input file.
-		integer = Word( nums, max = 1 )
-		path = Combine( Word( alphas ) + OneOrMore( "/" + Word( alphas )) )
-		class_string = Group("L" + path + ";")
-		return_type = Word("VZ", max = 1)
-		operand = Or( return_type + class_string )
-		method_name = Or( "<init>" + Word( alphas ))
-		method_decl = Group(method_name + "(" + ZeroOrMore(operand) + ")" + operand)
-		number_exa = Group("(" + Combine( "0x" + Word( "0123456789abcdef" )) + ")")
-
-		#print integer.parseString("1")
-		#print class_string.parseString("Lcom/example/extractapp/MainActivity;")
-		#print method_decl.parseString("setUpNormal()V")
-		#print number_exa.parseString("(0x66)")
-		#print class_string.parseString("Ldalvik/system/DexClassLoader;")
-
-		parsing_format = integer + class_string + "->" + method_decl + number_exa + "--->" + class_string + "->" + method_decl
+		parsing_format = INTEGER + CLASS_STRING + "->" + METHOD_DECL + NUMBER_EXA + "--->" + CLASS_STRING + "->" + METHOD_DECL
 
 		# Reference to global variable
 		classesWithDynCodeLoad = list()
@@ -308,18 +309,230 @@ def performAnalysis(apkPath):
 	print "[Exit] Dynamic calls have not been detected!"
 	return sys.exit(FAILURE)
 
-def addMissingPermsToAndroidManifest(decodeDirName):
+def addMissingPermsToAndroidManifest(decodeDirName, missingPerms):
+	
+	if not decodeDirName or not(os.path.isdir(decodeDirName)):
+		print "[Exit] Invalid folder was provided!"
+		sys.exit(FAILURE)
 
 	print "[In progress] Adding missing permission to AndroidManifest.xml.."
 
+	androidManifestPath = decodeDirName + os.sep + "AndroidManifest.xml"
+
+	if not os.path.exists(androidManifestPath):
+		print "[Exit] Decoded APK does not have an AndroidManifest.xml entry!"
+		sys.exit(FAILURE)
+
+	# Generate an XML tree from the Manifest
+	tree = ET.parse(androidManifestPath)
+	# Get the root entry which is manifest tag
+	root = tree.getroot()
+	# Add the scheme attibute for namespace
+	root.set('xmlns:android', 'http://schemas.android.com/apk/res/android')
+
+	# For each permission add an entry to the manifest
+	for perm in missingPerms:
+
+		# Setup a new Element under the root
+		newPermNode = ET.Element('uses-permission')
+		# And fix the required permission as a property
+		newPermNode.set('android:name', perm)
+		# Append this node to the root element
+		root.insert(0, newPermNode)
+
+	# Finally write the modifications on the original manifest
+	tree.write(androidManifestPath, encoding='utf-8')
+
+def addBlankPadding(line):
+
+	padding = ''
+	blanks = len(line) - len(line.lstrip())
+
+	padding = padding + blanks * ' '
+
+	return padding
+
 def patchSmaliClasses(decodeDirName, classesWithDynCodeLoad):
 
+	if not decodeDirName or not(os.path.isdir(decodeDirName)):
+		print "[Exit] Invalid folder was provided!"
+		sys.exit(FAILURE)
+
 	print "[In progress] Patching .smali classes.."
+
+	smaliFolder = decodeDirName + os.sep + "smali"
+
+	firstLineFormat = ".class" + ACCESS_ATTR + Optional("final") + Optional("interface") + Optional("abstract") + CLASS_STRING
+	repackHandler = "Lit/necst/grabnrun/RepackHandler;"
+	labelNumber = 0
+
+	# Analyze all the elements inside the smali folder incrementally.. 
+	for root, dirs, files in os.walk(smaliFolder):
+		
+		if root == smaliFolder:
+			# Remove from analysis smali classes in "android" folder
+			index = 0
+			while(index < len(dirs)):
+				if dirs[index] == 'android':
+					del dirs[index]
+					break
+				index = index + 1
+
+		for smaliFile in files:
+
+			smaliFilePath = os.path.join(root, smaliFile)
+
+			# A couple of flags to see if the target file needs
+			# to be patched
+			mayBeAnActivity = False
+			containDynCode = False
+
+			smaliClassName = ''
+			superClassName = ''
+
+			with open(smaliFilePath, 'r') as smaliFileDesc:
+				
+				# Extract class name from first line of the smali file
+				# and check whether this is in the classes set
+				firstLine = smaliFileDesc.readline()
+				#print firstLine
+				tokens = firstLineFormat.parseString( firstLine )
+				#print tokens
+				smaliClassName = tokens[len(tokens) - 1][1]
+				if smaliClassName in classesWithDynCodeLoad:
+					containDynCode = True
+
+				# Extract the superclass name and if it ends with Activity then mark
+				# this class as a possible activity [Heuristic!!!]
+				secondLine = smaliFileDesc.readline()
+				superClassName = secondLine.lstrip(".super L").rstrip().rstrip(";")
+				# print secondLine
+				if superClassName.endswith("Activity"):
+					mayBeAnActivity = True
+
+			# Check whether one of the two flags was raised..
+			if mayBeAnActivity or containDynCode:
+
+				# This smali file needs to be patched
+				print "[In progress] Patching " + smaliFilePath + ".."
+
+				fileName, extension = os.path.splitext(smaliFilePath)
+				smaliPatchedFilePath = fileName + "Patch" + extension
+
+				with open(smaliFilePath, 'r') as original:
+					with open(smaliPatchedFilePath, 'w') as patched:
+
+						# Different grammars for the relevant lines to patch
+						onCreateFormat = "invoke-super {" + VAR + "," + VAR + "}," + "L" + superClassName + ";->onCreate(Landroid/os/Bundle;)V"
+						newInstanceDexClassLoader = "new-instance" + VAR + ", Ldalvik/system/DexClassLoader;"
+						initDexClassLoader = "invoke-direct {" + delimitedList(VAR, delim = ',') + "}, Ldalvik/system/DexClassLoader;-><init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)V"
+						loadClass = "invoke-virtual {" + VAR + "," + VAR + "}, Ldalvik/system/DexClassLoader;->loadClass(Ljava/lang/String;)Ljava/lang/Class;"
+						movResAfterLoad = "move-result-object" + VAR
+
+						# Flag variable..
+						afterDynLoadInstruction = False
+
+						# Read each line in the original file and if necessary
+						# write changes in the patched version..
+						for line in original:
+
+							if afterDynLoadInstruction:
+								
+								if line.strip():
+									afterDynLoadInstruction = False
+									try:
+										# Read and patch also next line since the move result 
+										# must be integrated with a check on not null values 
+										tokens = movResAfterLoad.parseString(line)
+										patched.write(line + "\n")
+										secGNRlabel = ":sec_checkgnr_" + str(labelNumber)
+										labelNumber = labelNumber + 1
+										# Write down sanity check on the final object..
+										padding = addBlankPadding(line)
+										patched.write(padding + "if-nez " + tokens[1] + ", " + secGNRlabel + "\n")
+										patched.write(padding + "invoke-static {}, " + repackHandler + "->raiseSecurityException()V" + "\n")
+										patched.write(padding + secGNRlabel + "\n")
+										print "Added sanity check"
+										continue
+									except ParseException:
+										print "[Exit] Unexpected line while patching smali file!"
+										sys.exit(1)
+
+								else:
+									patched.write(line)
+
+							try:
+								tokens = onCreateFormat.parseString(line)
+								patched.write(line + "\n")
+								onCreatePatch = addBlankPadding(line) + "invoke-static {" + tokens[1] + "}, " + repackHandler + "->enqueRunningActivity(Landroid/app/Activity;)V" + "\n"
+								patched.write(onCreatePatch)
+								print onCreatePatch
+								continue
+							except ParseException:
+								pass
+
+							if 'Ldalvik/system/DexClassLoader;' in line:
+
+								try:
+									tokens = newInstanceDexClassLoader.parseString(line)
+									# If no exception is raised do not write anything back
+									# since this line should be erased
+									print "Line removed"
+									continue
+								except ParseException:
+									pass
+
+								try:
+									tokens = initDexClassLoader.parseString(line)
+									if len(tokens) != 7:
+										print "[Exit] Unexpected line while patching smali file!"
+										sys.exit(1)
+
+									initSecDex = addBlankPadding(line) + "invoke-static {" + tokens[2] + ", " + tokens[3] + ", " + tokens[4] + ", " + tokens[5] + "}, " + repackHandler + "->generateSecureDexClassLoader(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Lit/necst/grabnrun/SecureDexClassLoader;" + "\n"
+									moveRes = addBlankPadding(line) + "move-result-object " + tokens[1] + "\n"
+									patched.write(initSecDex + "\n")
+									patched.write(moveRes)
+									print initSecDex
+									print moveRes
+									continue
+								except ParseException:
+									pass
+
+								try:
+									loadClass.parseString(line)
+									loadSecLine = line.replace('Ldalvik/system/DexClassLoader;', 'Lit/necst/grabnrun/SecureDexClassLoader;')
+									patched.write(loadSecLine)
+									# Inform that the next instruction must be a move-result-object..
+									afterDynLoadInstruction = True
+									print loadSecLine
+									continue
+								except ParseException:
+									pass
+
+								# All the particular cases have been handled. If the line reaches this part of the code,
+								# simply replace standard DexClassLoader string..
+								patchedLine = line.replace('Ldalvik/system/DexClassLoader;', 'Lit/necst/grabnrun/SecureDexClassLoader;')
+								patched.write(patchedLine)
+								print patchedLine
+
+							else:
+								# Those lines which reach this flow are the ones that do not match any relevant case.
+								# Simply copy them in the patched file as they were in the original version.
+								patched.write(line)
+
+						# Here the process of patching the smali file is finished
+						print "[In progress] " + smaliFilePath + " has been patched.."						
+
+				# Erase the old copy and rename the patched version to the original name
+				os.remove(smaliFilePath)
+				os.rename(smaliPatchedFilePath, smaliFilePath)
+
 
 def setUpRepackHandler(decodeDirName, hasStaticAssociativeMap, entriesDictionary):
 
 	if not decodeDirName or not(os.path.isdir(decodeDirName)):
 		print "[Exit] Invalid folder was provided!"
+		sys.exit(FAILURE)
 
 	print "[In progress] Copying Grab'n Run .smali classes"
 	pathGNRparentFolder = decodeDirName + os.sep + "smali" + os.sep + "it" + os.sep + "necst"
@@ -384,7 +597,7 @@ def main(argv):
 				# Here we also check whether this APK needs to be patched
 				missingPerms, classesWithDynCodeLoad = performAnalysis(apkPath)
 
-				print missingPerms
+				# print missingPerms
 				print classesWithDynCodeLoad
 				
 				# test subroutine
@@ -394,7 +607,7 @@ def main(argv):
 				decodeDirName = decodeTargetAPK(apkPath)
 
 				# Then missing permissions, if any, must be added.
-				addMissingPermsToAndroidManifest(decodeDirName)
+				addMissingPermsToAndroidManifest(decodeDirName, missingPerms)
 
 				# Next all extension classes of Activities and classes
 				# which uses dynamic code loading must be patched.
@@ -406,7 +619,7 @@ def main(argv):
 
 				## Retrieve user preferences (first the boolean value)
 				hasStaticAssociativeMap = userPrefsFile.readline().rstrip().lower().capitalize();
-				print hasStaticAssociativeMap
+				#print hasStaticAssociativeMap
 
 				## Initialize dictionary and add entries in the file to it
 				entriesDictionary = {}
@@ -424,7 +637,7 @@ def main(argv):
 
 					entriesDictionary[subfields[0].strip()] = subfields[1].strip()
 
-				print entriesDictionary
+				#print entriesDictionary
 
 				setUpRepackHandler(decodeDirName, hasStaticAssociativeMap, entriesDictionary)
 
