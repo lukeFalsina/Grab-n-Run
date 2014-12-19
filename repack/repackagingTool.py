@@ -1,4 +1,5 @@
 import sys, argparse, shutil, os
+
 # Customize this variable to match the local folder 
 # where Androguard is located on your machine 
 androguard_location = '/home/luca/TesiCS/androguard/' 
@@ -8,7 +9,7 @@ sys.path.insert(1, androguard_location)
 #from androguard.core.androgen import *
 #from androguard.core.androconf import *
 #from androguard.core.bytecode import *
-#from androguard.core.bytecodes.jvm import *
+import androguard.core.bytecodes.jvm as jvm
 import androguard.core.bytecodes.dvm as dvm
 import androguard.core.bytecodes.apk as apk
 
@@ -34,7 +35,7 @@ import xml.etree.ElementTree as ET
 
 # Androguard script which automatizes collection of useful information
 # on JAR and APK.
-import androlyze
+import androlyze, zipfile
 
 # Grammar elements for smali code (Used for smali parsing)
 INTEGER = Word( nums, max = 1 )
@@ -58,113 +59,166 @@ FAILURE = 1
 # Apktool lib path
 APKTOOL_JAR = "libs" + os.sep + "apktool.jar"
 
-def downloadRemoteContainer(containerRemotePath):
+def isAValidContainer(containerPath):
 
-	if containerRemotePath:
-		# Parse and check this remote URL
-		parsePath = urlparse.urlparse(containerRemotePath)
+	if containerPath:
 
-		if 	(parsePath.scheme == "http" or parsePath.scheme == "https") and	(parsePath.path.endswith('.apk') or parsePath.path.endswith('.jar')):
+		if os.path.exists(containerPath) and os.path.isfile(containerPath):
+			# Try to open this as an APK container..
+			try:
+				a = apk.APK(containerPath)
+
+				if a.is_valid_APK():
+					return True
+			except zipfile.BadZipfile:
+				# This is not a valid APK container..
+				pass
+
+			# Try to open this as a JAR container..
+			try:
+				j = jvm.JAR(containerPath)
+
+				# Check that in this JAR there is the
+				# required 'classes.dex' entry.
+				if 'classes.dex' in j.zip.namelist():
+					return True
+
+			except zipfile.BadZipfile:
+				# This is not even a valid JAR container..
+				pass
+
+	# If the file reaches this branch, it means that 
+	# this is not a valid container
+	return False
+
+def isARemoteURL(candidateRemoteURL, onlyHTTPSrequired = False):
+
+	# Parse and check this remote URL
+	parsePath = urlparse.urlparse(candidateRemoteURL)
+
+	if onlyHTTPSrequired:
+		if parsePath.scheme == "https":
+			return True
+	else:
+		if parsePath.scheme == "http" or parsePath.scheme == "https":
+			return True
+
+	return False
+
+def downloadRemoteContainer(containerRemoteURL):
+
+	if containerRemoteURL:
+		# Check this remote URL
+		if isARemoteURL(containerRemoteURL):
 
 			# Download the remote file and store it in the current directory
-			downloadResult = urllib.urlretrieve(containerRemotePath, os.path.basename(containerRemotePath))
+			downloadResult = urllib.urlretrieve(containerRemoteURL, os.path.basename(containerRemoteURL))
 
-			# Return final local path
-			return downloadResult[0]
+			if isAValidContainer(downloadResult[0]):
 
-	# If any of the previous steps fail return None
-	print "[Warning] Impossible to retrieve resource at " + containerRemotePath + ". This resource will be skipped!"
+				# Return final local path of the valid container
+				print "[In progress] Found a valid container at " + containerRemoteURL
+				return downloadResult[0]
+
+			else:
+
+				# Remove this resource and skip it
+				print "[Warning] Found an invalid container at " + containerRemoteURL + ". This resource will be skipped!"
+				os.remove(downloadResult[0])
+				return None
+
+	# If any of the previous steps fail, return None
+	print "[Warning] Impossible to retrieve a resource at " + containerRemoteURL
 	return None
 
-def extractPackageNameFromLocalContainer(containerPath):
+def extractPackageNamesFromLocalContainer(containerPath):
 
 	if containerPath:
 
-		# Extract and check container extension:
-		fileName, fileExtension = os.path.splitext(containerPath)
+		if os.path.exists(containerPath) and os.path.isfile(containerPath):
 
-		packageNameSet = list()
+			# Initialize package name list
+			packageNamesList = list()
 
-		if fileExtension == ".apk":
+			if isAValidContainer(containerPath):
 
-			# In case of an APK it is pretty easy to extract package names
-			a = apk.APK(containerPath)
-			packageNameSet.append(str(a.get_package()))
-			return packageNameSet
-
-		if fileExtension == ".jar":
-
-			# In case of a JAR at first retrieve the classes.dex entry
-			a = apk.APK(containerPath)
-			d = dvm.DalvikVMFormat(a.get_dex())
-
-			# Then extract the list of the full class names
-			classNamesList = d.get_classes_names()
-
-			for fullClassName in classNamesList:
-
-				# Retrieve simple class name and package name
-				simpleClassName = os.path.basename(fullClassName)
-				packageName = fullClassName.lstrip("L").replace("/", ".").rstrip(simpleClassName).rstrip(".")
-				
-				# Filter out all packages which comes from standard Android libraries
-				if not(packageName.startswith("android")) and len(packageName.split(".")) > 1:
-					packageNameSet.append(packageName)
-
-			# Remove duplicates from this set and order it in a list
-			packageNameSet = list(sorted(set(packageNameSet)))
-
-			# Analyze couples of package names
-			counter = 0
-
-			while (counter < len(packageNameSet) - 1):
-
-				couple = list([packageNameSet[counter], packageNameSet[counter + 1]])
-				common = os.path.commonprefix(couple)
-
-				if not(common) or len(common.split(".")) <= 1:
-					# There is no common path among the two packages
-					# so the first one is valid
-					counter = counter + 1
+				a = apk.APK(containerPath)
+	
+				if a.is_valid_APK():
+					# In case of an APK it is pretty easy to extract the app package name
+					packageNamesList.append(str(a.get_package()))
+					return packageNamesList
 
 				else:
-					# There is a common prefix so only the shortest among the 
-					# two packages should be kept
-					# Could also simply be:
-					# del packageNameSet[counter + 1]
-					# since following strings are always longer in this scenario.. 
-					if (len(packageNameSet[counter]) > len(packageNameSet[counter + 1])):
-						del packageNameSet[counter]
-					else:
-						del packageNameSet[counter + 1]
+					# In case of a JAR at first retrieve the dex translation of the classes
+					d = dvm.DalvikVMFormat(a.get_dex())
 
-			# Finally the returned the purged and final package list
-			return packageNameSet
+					# Then extract the list of the full class names
+					classNamesList = d.get_classes_names()
 
+					for fullClassName in classNamesList:
+
+						# Retrieve simple class name and package name
+						simpleClassName = os.path.basename(fullClassName)
+						packageName = fullClassName.lstrip("L").replace("/", ".").rstrip(simpleClassName).rstrip(".")
+				
+						# Filter out all packages which comes from standard Android libraries
+						if not(packageName.startswith("android")) and len(packageName.split(".")) > 1:
+							packageNamesList.append(packageName)
+
+					# Remove duplicates from this set and order it in a list
+					packageNamesList = list(sorted(set(packageNamesList)))
+
+					# Analyze couples of adjacent package names
+					counter = 0
+
+					while (counter < len(packageNamesList) - 1):
+
+						couple = list([packageNamesList[counter], packageNamesList[counter + 1]])
+						common = os.path.commonprefix(couple)
+
+						if not(common) or len(common.split(".")) <= 1:
+							# There is no common path among the two packages
+							# so the first one is valid
+							counter = counter + 1
+
+						else:
+							# There is a common prefix so only the shortest among the 
+							# two packages should be kept
+							# Could also simply be:
+							# del packageNamesList[counter + 1]
+							# since following strings are always longer in this scenario.. 
+							if (len(packageNamesList[counter]) > len(packageNamesList[counter + 1])):
+								del packageNamesList[counter]
+							else:
+								del packageNamesList[counter + 1]
+
+					# Finally the returned the purged and final package list
+					return packageNamesList
+
+	# If this branch is reached than the package extraction failed
+	print "[Warning] Impossible to extract package names for " + containerPath
 	return None
 
-def computeDigestEncode(containerPath):
+def computeDigestEncode(filePath):
 
-	if containerPath:
-		# Initialize sha1 hash object
-		sha1 = hashlib.sha1()
+	if filePath:
 
-		# Try to open local file in read byte mode
-		with open(containerPath, 'rb') as fileToDigest:
+		if os.path.exists(filePath) and os.path.isfile(filePath):
+				# Initialize sha1 hash object
+				sha1 = hashlib.sha1()
 
-			# Insert the byte of the file to digest
-			sha1.update(fileToDigest.read())
+				# Try to open local file in read byte mode
+				with open(filePath, 'rb') as fileToDigest:
 
-			# Recover the base64 safe URL encode of the
-			# digested file
-			return base64.urlsafe_b64encode(sha1.digest())
+					# Insert the byte of the file to digest
+					sha1.update(fileToDigest.read())
 
-			# Finally look for the extension of the initial file
-			# fileName, fileExtension = os.path.splitext(containerPath)
+					# Recover the base64 safe URL encode of the
+					# digested file
+					return base64.urlsafe_b64encode(sha1.digest())
 
-			#if fileExtension:
-				#return digestString + "\n" + fileExtension
-
+	print "[Warning] Impossible to compute digest for " + filePath
 	return None
 
 def decodeTargetAPK(apkPath):
@@ -198,18 +252,18 @@ def buildRepackagedAPK(decodeDirName):
 	if decodeDirName and os.path.isdir(decodeDirName):
 
 		print "[In progress] Rebuilding patched APK.."
-		rebuildAPK = subprocess.call(["java","-jar", APKTOOL_JAR, "b", decodeDirName])
+		rebuildAPKcommand = subprocess.call(["java","-jar", APKTOOL_JAR, "b", decodeDirName])
 
-		if (rebuildAPK == SUCCESS):
+		if (rebuildAPKcommand == SUCCESS):
 
 			# An APK is expected now in dist folder
-			rebuiltAPK = decodeDirName + os.sep + "dist" + os.sep + decodeDirName + ".apk"
+			rebuiltAPKpath = decodeDirName + os.sep + "dist" + os.sep + decodeDirName + ".apk"
 			
-			if os.path.isfile(rebuiltAPK):
+			if os.path.isfile(rebuiltAPKpath):
 
 				# In this case the operation was successful so return the built APK path
 				print "[In progress] APK rebuilding was successful."
-				return rebuildAPK
+				return rebuiltAPKpath
 
 	print "[Exit] An error occured while rebuilding APK from patched resources."
 	sys.exit(FAILURE)
@@ -456,7 +510,7 @@ def patchSmaliClasses(decodeDirName, classesWithDynCodeLoad):
 										continue
 									except ParseException:
 										print "[Exit] Unexpected line while patching smali file!"
-										sys.exit(1)
+										sys.exit(FAILURE)
 
 								else:
 									patched.write(line)
@@ -486,7 +540,7 @@ def patchSmaliClasses(decodeDirName, classesWithDynCodeLoad):
 									tokens = initDexClassLoader.parseString(line)
 									if len(tokens) != 7:
 										print "[Exit] Unexpected line while patching smali file!"
-										sys.exit(1)
+										sys.exit(FAILURE)
 
 									initSecDex = addBlankPadding(line) + "invoke-static {" + tokens[2] + ", " + tokens[3] + ", " + tokens[4] + ", " + tokens[5] + "}, " + repackHandler + "->generateSecureDexClassLoader(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Lit/necst/grabnrun/SecureDexClassLoader;" + "\n"
 									moveRes = addBlankPadding(line) + "move-result-object " + tokens[1] + "\n"
@@ -551,11 +605,166 @@ def setUpRepackHandler(decodeDirName, hasStaticAssociativeMap, entriesDictionary
 	# Copy from the smaliRes folder GNR smali classes
 	shutil.copytree(resourceGNRfolder, pathGNRfolder)
 
-	print "[In progress] Creating RepackHandler .smali class"
+	print "[In progress] Creating RepackHandler.smali class"
+
+	repackHandlerFilePath = pathGNRfolder + os.sep + "RepackHandler.smali"
+	repackHandlerTailPath = pathGNRfolder + os.sep + "RepackHandlerTail.smali"
+
+	with open(repackHandlerFilePath, 'a') as repackHandlerFile:
+
+		if hasStaticAssociativeMap:
+			# Simply consider all the entries as tuples of package names
+			# and certificate remote URL. Populate the final map accordingly..
+			for packageName in entriesDictionary.keys():
+
+				# Get the certificate remote URL.
+				remoteCertificateURL = entriesDictionary[packageName]
+
+				if isARemoteURL(remoteCertificateURL, True):
+					linkPackageNameToCertURL(repackHandlerFile, packageName, entriesDictionary[packageName])
+
+			# Finally set the hasStaticAssociativeMap attribute to True
+			setHasStaticAssociativeMapBool(repackHandlerFile, True)
+
+		else:
+
+			# Flag initialization variable for package names set
+			needToReinitializePackageNameSet = False
+
+			# Each entry contains a container and a remote certificate URL that should be used
+			# to validate all classes in its package names
+			for containerPath in entriesDictionary.keys():
+
+				# Get the certificate remote URL.
+				remoteCertificateURL = entriesDictionary[containerPath]
+
+				# Check that the remote URL is valid..
+				if isARemoteURL(remoteCertificateURL, True):
+					
+					# Check whether this container path is a remote URL..
+					if isARemoteURL(containerPath):
+
+						# If remote, download the remote container at first..
+						localContPath = downloadRemoteContainer(containerPath)
+
+						if localContPath:
+
+							# Make a write iteration to RepackHandler smali file
+							makeOneWriteIteration(repackHandlerFile, needToReinitializePackageNameSet, localContPath, remoteCertificateURL, containerPath)
+							
+							# Reinitialize always after the first population of the set.
+							if not needToReinitializePackageNameSet:
+								needToReinitializePackageNameSet = True
+
+							# Remove downloaded container at local path
+							os.remove(localContPath)
+
+					else:
+						# Check that the local file is a valid container
+						if isAValidContainer(containerPath):
+
+							# Make a write iteration to RepackHandler smali file
+							makeOneWriteIteration(repackHandlerFile, needToReinitializePackageNameSet, containerPath, remoteCertificateURL)
+							
+							# Reinitialize always after the first population of the set.
+							if not needToReinitializePackageNameSet:
+								needToReinitializePackageNameSet = True
+						
+						else:
+							print "[Warning] Found an invalid container " + containerPath + ". This resource will be skipped!"
+
+				else:
+					print "[Warning] Found an invalid remote certificate URL " + remoteCertificateURL + ". The linked resource will be skipped!"
+
+			# Finally set the hasStaticAssociativeMap attribute to False
+			setHasStaticAssociativeMapBool(repackHandlerFile, False)
+
+		# In the end append the content of RepackHandlerTail.smali to RepackHandler.smali
+		with open(repackHandlerTailPath, 'r') as repackHandlerTail:
+
+			# Copy the whole content..
+			linesToAppend = repackHandlerTail.read()
+			# ..and append it.
+			repackHandlerFile.write(linesToAppend)
+
+		# Finally remove the helper tail file
+		os.remove(repackHandlerTailPath)
+
+	print "[In progress] RepackHandler.smali class successfully created."
+
+def makeOneWriteIteration(repackHandlerFile, needToReinitializePackageNameSet, containerPath, remoteCertificateURL, remoteContReference = ''):
+
+	# A valid container was found. At first extract the package names
+	# list from this container
+	packageNamesList = extractPackageNamesFromLocalContainer(containerPath)
+
+	if needToReinitializePackageNameSet:
+		reinitializeSet(repackHandlerFile)
+
+	# Insert all package names in a set in the smali class. 
+	for packageName in packageNamesList:
+		insertPackageNameInSet(repackHandlerFile, packageName)
+
+	# Link the extracted package names to its remote container, if provided..
+	if remoteContReference:  
+		linkContainerToCurrentPackageNameSet(repackHandlerFile, remoteContReference)
+
+	# Compute digest on the downloaded local copy of the file.
+	containerDigest = computeDigestEncode(containerPath)
+
+	if containerDigest:
+		# Link the extracted package names to the digest as well.
+		linkContainerToCurrentPackageNameSet(repackHandlerFile, containerDigest)
+
+	# Finally associate each package name to the remote URL of the certificate
+	for packageName in packageNamesList:
+		linkPackageNameToCertURL(repackHandlerFile, packageName, remoteCertificateURL)
+
+def reinitializeSet(repackHandlerFile):
+
+	repackHandlerFile.write('    new-instance v1, Ljava/util/HashSet;' + 2 * '\n')
+	repackHandlerFile.write('    .end local v1    # "packageNamesSet":Ljava/util/Set;, "Ljava/util/Set<Ljava/lang/String;>;"' + '\n')
+	repackHandlerFile.write('    invoke-direct {v1}, Ljava/util/HashSet;-><init>()V' + 2 * '\n')
+	repackHandlerFile.write('    .restart local v1    # "packageNamesSet":Ljava/util/Set;, "Ljava/util/Set<Ljava/lang/String;>;"' + 2 * '\n')
+
+	print '[DEBUG] Set of package names reinitialized.'
+
+def insertPackageNameInSet(repackHandlerFile, packageName):
+
+	repackHandlerFile.write('    const-string v2, "' + packageName + '"' + 2 * '\n')
+	repackHandlerFile.write('    invoke-interface {v1, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z' + 2 * '\n')
+
+	print '[DEBUG] Added package name ' + packageName + ' to set.'
+
+def linkContainerToCurrentPackageNameSet(repackHandlerFile, container):
+
+	repackHandlerFile.write('    sget-object v2, Lit/necst/grabnrun/RepackHandler;->containerToPackageNamesMap:Ljava/util/Map;' + 2 * '\n')
+	repackHandlerFile.write('    const-string v3, "' + container + '"' + 2 * '\n')
+	repackHandlerFile.write('    invoke-interface {v2, v3, v1}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;' + 2 * '\n')
+
+	print '[DEBUG] Linked container ' + container + ' to current set of package names.'	
+
+def linkPackageNameToCertURL(repackHandlerFile, packageName, certificateURL):
+
+	repackHandlerFile.write('    sget-object v2, Lit/necst/grabnrun/RepackHandler;->packageNameToCertificateURLMap:Ljava/util/Map;' + 2 * '\n')
+	repackHandlerFile.write('    const-string v3, "' + packageName + '"' + 2 * '\n')
+	repackHandlerFile.write('    const-string v4, "' + certificateURL + '"' + 2 * '\n')
+	repackHandlerFile.write('    invoke-interface {v2, v3, v4}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;' + 2 * '\n')
+
+	print '[DEBUG] Linked package name ' + packageName + ' to remote certificate at ' + certificateURL
+
+def setHasStaticAssociativeMapBool(repackHandlerFile, boolValue):
+
+	if boolValue:
+		repackHandlerFile.write('    const/4 v2, 0x1' + 2 * '\n')
+	else:
+		repackHandlerFile.write('    const/4 v2, 0x0' + 2 * '\n')
+
+	print '[DEBUG] Set attribute hasStaticAssociativeMap to ' + str(boolValue)
 
 def test(apkPath):
 
-	print extractPackageNameFromLocalContainer(apkPath)
+	print extractPackageNamesFromLocalContainer(apkPath)
 
 	print computeDigestEncode(apkPath)
 
@@ -565,7 +774,7 @@ def test(apkPath):
 
 	print downloadLocation
 
-	print extractPackageNameFromLocalContainer(downloadLocation)
+	print extractPackageNamesFromLocalContainer(downloadLocation)
 
 	print computeDigestEncode(downloadLocation)
 
@@ -598,7 +807,7 @@ def main(argv):
 				missingPerms, classesWithDynCodeLoad = performAnalysis(apkPath)
 
 				# print missingPerms
-				print classesWithDynCodeLoad
+				# print classesWithDynCodeLoad
 				
 				# test subroutine
 				# test(apkPath)
@@ -614,12 +823,22 @@ def main(argv):
 				patchSmaliClasses(decodeDirName, classesWithDynCodeLoad)
 
 				# In the end the RepackHandler should be set up
-				# depending on user preferences. Here are also smali classes
-				# from GNR library will be copied.
+				# depending on user preferences. Here smali classes from GNR
+				# library will be copied as well.
 
 				## Retrieve user preferences (first the boolean value)
 				hasStaticAssociativeMap = userPrefsFile.readline().rstrip().lower().capitalize();
-				#print hasStaticAssociativeMap
+				
+				## Required casting from String to bool value
+				if hasStaticAssociativeMap == 'True':
+					hasStaticAssociativeMap = True
+				else:
+					if hasStaticAssociativeMap == 'False':
+						hasStaticAssociativeMap = False
+					else:
+						print "[Error] Invalid format of the preference file! Aborting.."
+						shutil.rmtree(decodeDirName)
+						sys.exit(FAILURE)
 
 				## Initialize dictionary and add entries in the file to it
 				entriesDictionary = {}
@@ -657,7 +876,7 @@ def main(argv):
 			# shutil.rmtree(decodeDirName)
 
 			# The repackaging process is finished with no errors :)
-			finalPath = os.getcwd() + os.sep +  + os.path.basename(rebuiltAPK)
+			finalPath = os.getcwd() + os.sep + os.path.basename(rebuiltAPK)
 			print "[Success] Target APK was successfully patched! Result container can be found at " + finalPath
 			sys.exit(SUCCESS)
 
