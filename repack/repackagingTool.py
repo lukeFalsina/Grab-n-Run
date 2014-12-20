@@ -59,7 +59,7 @@ FAILURE = 1
 # Apktool lib path
 APKTOOL_JAR = "libs" + os.sep + "apktool.jar"
 
-def isAValidContainer(containerPath):
+def isAValidContainer(containerPath, onlyAPKallowed = False):
 
 	if containerPath:
 
@@ -74,18 +74,19 @@ def isAValidContainer(containerPath):
 				# This is not a valid APK container..
 				pass
 
-			# Try to open this as a JAR container..
-			try:
-				j = jvm.JAR(containerPath)
+			if not onlyAPKallowed:
+				# Try to open this as a JAR container..
+				try:
+					j = jvm.JAR(containerPath)
 
-				# Check that in this JAR there is the
-				# required 'classes.dex' entry.
-				if 'classes.dex' in j.zip.namelist():
-					return True
+					# Check that in this JAR there is the
+					# required 'classes.dex' entry.
+					if 'classes.dex' in j.zip.namelist():
+						return True
 
-			except zipfile.BadZipfile:
-				# This is not even a valid JAR container..
-				pass
+				except zipfile.BadZipfile:
+					# This is not even a valid JAR container..
+					pass
 
 	# If the file reaches this branch, it means that 
 	# this is not a valid container
@@ -638,40 +639,45 @@ def setUpRepackHandler(decodeDirName, hasStaticAssociativeMap, entriesDictionary
 				# Get the certificate remote URL.
 				remoteCertificateURL = entriesDictionary[containerPath]
 
-				# Check that the remote URL is valid..
+				# Check that the remote URL of the certificate is valid..
 				if isARemoteURL(remoteCertificateURL, True):
 					
-					# Check whether this container path is a remote URL..
-					if isARemoteURL(containerPath):
-
-						# If remote, download the remote container at first..
-						localContPath = downloadRemoteContainer(containerPath)
-
-						if localContPath:
-
-							# Make a write iteration to RepackHandler smali file
-							makeOneWriteIteration(repackHandlerFile, needToReinitializePackageNameSet, localContPath, remoteCertificateURL, containerPath)
-							
-							# Reinitialize always after the first population of the set.
-							if not needToReinitializePackageNameSet:
-								needToReinitializePackageNameSet = True
-
-							# Remove downloaded container at local path
-							os.remove(localContPath)
+					# Check whether this entry is the special one used for default case
+					if containerPath == 'default':
+						linkPackageNameToCertURL(repackHandlerFile, containerPath, remoteCertificateURL)
 
 					else:
-						# Check that the local file is a valid container
-						if isAValidContainer(containerPath):
+						# Check whether this container path is a remote URL..
+						if isARemoteURL(containerPath):
 
-							# Make a write iteration to RepackHandler smali file
-							makeOneWriteIteration(repackHandlerFile, needToReinitializePackageNameSet, containerPath, remoteCertificateURL)
+							# If remote, download the remote container at first..
+							localContPath = downloadRemoteContainer(containerPath)
+
+							if localContPath:
+
+								# Make a write iteration to RepackHandler smali file
+								makeOneWriteIteration(repackHandlerFile, needToReinitializePackageNameSet, localContPath, remoteCertificateURL, containerPath)
 							
-							# Reinitialize always after the first population of the set.
-							if not needToReinitializePackageNameSet:
-								needToReinitializePackageNameSet = True
-						
+								# Reinitialize always after the first population of the set.
+								if not needToReinitializePackageNameSet:
+									needToReinitializePackageNameSet = True
+
+								# Remove downloaded container at local path
+								os.remove(localContPath)
+
 						else:
-							print "[Warning] Found an invalid container " + containerPath + ". This resource will be skipped!"
+							# Check that the local file is a valid container
+							if isAValidContainer(containerPath):
+
+								# Make a write iteration to RepackHandler smali file
+								makeOneWriteIteration(repackHandlerFile, needToReinitializePackageNameSet, containerPath, remoteCertificateURL)
+							
+								# Reinitialize always after the first population of the set.
+								if not needToReinitializePackageNameSet:
+									needToReinitializePackageNameSet = True
+						
+							else:
+								print "[Warning] Found an invalid container " + containerPath + ". This resource will be skipped!"
 
 				else:
 					print "[Warning] Found an invalid remote certificate URL " + remoteCertificateURL + ". The linked resource will be skipped!"
@@ -762,137 +768,140 @@ def setHasStaticAssociativeMapBool(repackHandlerFile, boolValue):
 
 	print '[DEBUG] Set attribute hasStaticAssociativeMap to ' + str(boolValue)
 
-def test(apkPath):
-
-	print extractPackageNamesFromLocalContainer(apkPath)
-
-	print computeDigestEncode(apkPath)
-
-	remoteContainerURL = "https://dl.dropboxusercontent.com/u/28681922/jsoup-dex-1.8.1.jar"
-
-	downloadLocation = downloadRemoteContainer(remoteContainerURL)
-
-	print downloadLocation
-
-	print extractPackageNamesFromLocalContainer(downloadLocation)
-
-	print computeDigestEncode(downloadLocation)
-
 def main(argv):
 
-	# Invoke the Java GUI to recover user preferences on the 
-	# repackaging operation
-	print "[Start] A GUI is shown to select repackaging options."
-	inputSelector = subprocess.call(["java", "-jar", "libs" + os.sep + "RepackInputSelector.jar"])
+	# An argument parser is set up to handle user command line input.
+	parser = argparse.ArgumentParser(description='Process an APK to automatically port it to use GNR secure API for dynamic code loading.')
+	parser.add_argument('-p', '--preference-file', metavar = 'local file path', help='local path pointing to the preference file used to choose how the repackaging operation will be handled. If missing, a GUI will be shown to setup necessary options')
+	parser.add_argument('-k', '--keep-resources', action='store_true', help='avoid temprary files being erased at the end of the process')
 
+	args = parser.parse_args()
+
+	# Default path for the preference file in case that the GUI is used to
+	# select preferences.
 	userPrefsFilePath = os.curdir + os.sep + "preferences"
 
-	if inputSelector == SUCCESS:
-		# User completes successfully the preferences 
-		# selection step. Now the repackaging operation starts..
-		repackageSuccessful = False
-		rebuiltAPK = ""
+	if args.preference_file:
 
-		with open(userPrefsFilePath, 'r') as userPrefsFile:
-		
-			# First line is the apk path.
-			apkPath = userPrefsFile.readline().rstrip();
+		# The user provide the location of a preference file so check that this
+		# file actually exists..
+		userPrefsFilePath = args.preference_file
 
-			# Check that the apk path is not null and ends 
-			# with an APK extension.
-			if apkPath and apkPath.endswith('.apk'):
-
-				# Start Androguard analysis on this APK
-				# Here we also check whether this APK needs to be patched
-				missingPerms, classesWithDynCodeLoad = performAnalysis(apkPath)
-
-				# print missingPerms
-				# print classesWithDynCodeLoad
-				
-				# test subroutine
-				# test(apkPath)
-
-				# At first this APK should be decoded with apktool.
-				decodeDirName = decodeTargetAPK(apkPath)
-
-				# Then missing permissions, if any, must be added.
-				addMissingPermsToAndroidManifest(decodeDirName, missingPerms)
-
-				# Next all extension classes of Activities and classes
-				# which uses dynamic code loading must be patched.
-				patchSmaliClasses(decodeDirName, classesWithDynCodeLoad)
-
-				# In the end the RepackHandler should be set up
-				# depending on user preferences. Here smali classes from GNR
-				# library will be copied as well.
-
-				## Retrieve user preferences (first the boolean value)
-				hasStaticAssociativeMap = userPrefsFile.readline().rstrip().lower().capitalize();
-				
-				## Required casting from String to bool value
-				if hasStaticAssociativeMap == 'True':
-					hasStaticAssociativeMap = True
-				else:
-					if hasStaticAssociativeMap == 'False':
-						hasStaticAssociativeMap = False
-					else:
-						print "[Error] Invalid format of the preference file! Aborting.."
-						shutil.rmtree(decodeDirName)
-						sys.exit(FAILURE)
-
-				## Initialize dictionary and add entries in the file to it
-				entriesDictionary = {}
-
-				for line in userPrefsFile:
-
-					# Split the line according to the separator..
-					subfields = line.split("|")
-
-					# Sanity check on the preference file format
-					if len(subfields) != 2:
-						print "[Error] Invalid format of the preference file! Aborting.."
-						shutil.rmtree(decodeDirName)
-						sys.exit(FAILURE)
-
-					entriesDictionary[subfields[0].strip()] = subfields[1].strip()
-
-				#print entriesDictionary
-
-				setUpRepackHandler(decodeDirName, hasStaticAssociativeMap, entriesDictionary)
-
-				# Finally rebuild the APK with the patched resources
-				rebuiltAPK = buildRepackagedAPK(decodeDirName)
-
-				# Copy repackaged APK in main folder
-				shutil.copy(rebuiltAPK, os.getcwd())
-
-				# Raise success flag
-				repackageSuccessful = True
-
-		if repackageSuccessful:
-
-			# Clean up of all the resources
-			os.remove(userPrefsFilePath)
-			# shutil.rmtree(decodeDirName)
-
-			# The repackaging process is finished with no errors :)
-			finalPath = os.getcwd() + os.sep + os.path.basename(rebuiltAPK)
-			print "[Success] Target APK was successfully patched! Result container can be found at " + finalPath
-			sys.exit(SUCCESS)
-
+		if os.path.exists(userPrefsFilePath) and os.path.isfile(userPrefsFilePath):
+			# The provided preference path seems acceptable. Start the program
+			print "[Start] User provided a preference file located at " + userPrefsFilePath
 		else:
-			print "[Exit] No preference file was found!"
-			sys.exit(FAILURE)	
+			# The provided preference path is invalid
+			print "[Error] No preference file was found at the provided location! Aborting.."
+			sys.exit(FAILURE)
 
 	else:
-		# User aborted the process. No repackaging will be done
-		print "[Exit] User aborted the parameter selection steps. No repackaging.."
-		sys.exit(FAILURE)
 
-	# parser = argparse.ArgumentParser(description='Process an input APK to generate information related to dynamic code loading')
-	# parser.add_argument('apkPath', metavar='apk_path', help='local path to the APK file to analyze')
+		# Invoke the Java GUI to recover user preferences on the 
+		# repackaging operation
+		print "[Start] A GUI is shown to select repackaging options."
+		inputSelector = subprocess.call(["java", "-jar", "libs" + os.sep + "RepackInputSelector.jar"])
 
-	# args = parser.parse_args()
+
+		if inputSelector != SUCCESS:
+			# User aborted the process. No repackaging will be done
+			print "[Exit] User aborted the parameter selection steps. No repackaging.."
+			sys.exit(FAILURE)
+
+	# User completes successfully the preferences 
+	# selection step. Now the repackaging operation starts..
+	rebuiltAPK = ""
+
+	with open(userPrefsFilePath, 'r') as userPrefsFile:
+		
+		# First line must be the apk path.
+		apkPath = userPrefsFile.readline().rstrip();
+
+		# Check that this path is actually pointing to
+		# a valid APK container. 
+		if isAValidContainer(apkPath, True):
+
+			# Start Androguard analysis on this APK
+			# Here we also check whether this APK needs to be patched
+			missingPerms, classesWithDynCodeLoad = performAnalysis(apkPath)
+
+			# print missingPerms
+			# print classesWithDynCodeLoad
+
+			# At first this APK should be decoded with apktool.
+			decodeDirName = decodeTargetAPK(apkPath)
+
+			# Then missing permissions, if any, must be added.
+			addMissingPermsToAndroidManifest(decodeDirName, missingPerms)
+
+			# Next all extension classes of Activities and classes
+			# which uses dynamic code loading must be patched.
+			patchSmaliClasses(decodeDirName, classesWithDynCodeLoad)
+
+			# In the end the RepackHandler should be set up
+			# depending on user preferences. Here smali classes from GNR
+			# library will be copied as well.
+
+			## Retrieve user preferences (first the boolean value)
+			hasStaticAssociativeMap = userPrefsFile.readline().rstrip().lower().capitalize();
+			
+			## Required casting from String to bool value
+			if hasStaticAssociativeMap == 'True':
+				hasStaticAssociativeMap = True
+			else:
+				if hasStaticAssociativeMap == 'False':
+					hasStaticAssociativeMap = False
+				else:
+					print "[Error] Invalid format of the preference file! Second line should be a True/False choice. Aborting.."
+					if not args.keep_resources:
+						shutil.rmtree(decodeDirName)
+					sys.exit(FAILURE)
+
+			## Initialize dictionary and add entries in the file to it
+			entriesDictionary = {}
+
+			for line in userPrefsFile:
+
+				# Split the line according to the separator..
+				subfields = line.split("|")
+
+				# Sanity check on the preference file format
+				if len(subfields) != 2:
+					print "[Error] Invalid format of the preference file! Aborting.."
+					if not args.keep_resources:
+						shutil.rmtree(decodeDirName)
+					sys.exit(FAILURE)
+
+				entriesDictionary[subfields[0].strip()] = subfields[1].strip()
+
+			#print entriesDictionary
+
+			setUpRepackHandler(decodeDirName, hasStaticAssociativeMap, entriesDictionary)
+
+			# Finally rebuild the APK with the patched resources
+			rebuiltAPK = buildRepackagedAPK(decodeDirName)
+
+			# Copy repackaged APK in main folder
+			shutil.copy(rebuiltAPK, os.getcwd())
+
+			# Raise success flag
+			repackageSuccessful = True
+
+		else:
+
+			# The preference file did not point to a valid APK container
+			print "[Error] Invalid format of the preference file! First line should point to a valid APK. Aborting.."
+			sys.exit(FAILURE)
+
+	# Clean up of all the resources
+	# os.remove(userPrefsFilePath)
+	if not args.keep_resources:
+		shutil.rmtree(decodeDirName)
+
+	# The repackaging process is finished with no errors :)
+	finalPath = os.getcwd() + os.sep + os.path.basename(rebuiltAPK)
+	print "[Success] Target APK was successfully patched! Result container can be found at " + finalPath
+	sys.exit(SUCCESS)
 
 if __name__ == "__main__":
 	main(sys.argv[1:])
