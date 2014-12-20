@@ -55,12 +55,12 @@
     .locals 1
 
     .prologue
-    .line 33
+    .line 39
     const/4 v0, 0x0
 
     sput-boolean v0, Lit/necst/grabnrun/RepackHandler;->gotUserInput:Z
 
-    .line 53
+    .line 59
     return-void
 .end method
 
@@ -68,7 +68,7 @@
     .locals 0
 
     .prologue
-    .line 30
+    .line 36
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -78,14 +78,14 @@
     .locals 3
 
     .prologue
-    .line 69
+    .line 75
     sget-object v2, Lit/necst/grabnrun/RepackHandler;->activityStack:Ljava/util/List;
 
     invoke-interface {v2}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 
     move-result-object v0
 
-    .line 73
+    .line 79
     .local v0, "activityStackIterator":Ljava/util/Iterator;, "Ljava/util/Iterator<Landroid/app/Activity;>;"
     :cond_0
     :goto_0
@@ -95,10 +95,10 @@
 
     if-nez v2, :cond_1
 
-    .line 83
+    .line 89
     return-void
 
-    .line 75
+    .line 81
     :cond_1
     invoke-interface {v0}, Ljava/util/Iterator;->next()Ljava/lang/Object;
 
@@ -106,7 +106,7 @@
 
     check-cast v1, Landroid/app/Activity;
 
-    .line 77
+    .line 83
     .local v1, "currentActivity":Landroid/app/Activity;
     if-eqz v1, :cond_2
 
@@ -116,7 +116,7 @@
 
     if-eqz v2, :cond_0
 
-    .line 80
+    .line 86
     :cond_2
     invoke-interface {v0}, Ljava/util/Iterator;->remove()V
 
@@ -132,14 +132,14 @@
 
     const/4 v8, 0x0
 
-    .line 265
+    .line 305
     const/4 v5, 0x0
 
-    .line 266
+    .line 306
     .local v5, "inStream":Ljava/io/FileInputStream;
     const/4 v2, 0x0
 
-    .line 269
+    .line 309
     .local v2, "digestString":Ljava/lang/String;
     if-eqz p0, :cond_0
 
@@ -153,12 +153,12 @@
 
     if-nez v9, :cond_1
 
-    .line 313
+    .line 353
     :cond_0
     :goto_0
     return-object v8
 
-    .line 272
+    .line 312
     :cond_1
     const-string v9, "."
 
@@ -166,16 +166,16 @@
 
     move-result v4
 
-    .line 274
+    .line 314
     .local v4, "extensionIndex":I
     if-eq v4, v10, :cond_0
 
-    .line 276
+    .line 316
     invoke-virtual {p0, v4}, Ljava/lang/String;->substring(I)Ljava/lang/String;
 
     move-result-object v3
 
-    .line 278
+    .line 318
     .local v3, "extension":Ljava/lang/String;
     const-string v9, ".apk"
 
@@ -193,7 +193,7 @@
 
     if-eqz v9, :cond_0
 
-    .line 282
+    .line 322
     :cond_2
     :try_start_0
     new-instance v6, Ljava/io/FileInputStream;
@@ -204,7 +204,7 @@
     .catch Ljava/io/IOException; {:try_start_0 .. :try_end_0} :catch_2
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 284
+    .line 324
     .end local v5    # "inStream":Ljava/io/FileInputStream;
     .local v6, "inStream":Ljava/io/FileInputStream;
     const/16 v8, 0x2000
@@ -212,7 +212,7 @@
     :try_start_1
     new-array v0, v8, [B
 
-    .line 286
+    .line 326
     .local v0, "buffer":[B
     :goto_1
     invoke-virtual {v6, v0}, Ljava/io/FileInputStream;->read([B)I
@@ -222,14 +222,14 @@
     .local v7, "length":I
     if-ne v7, v10, :cond_4
 
-    .line 291
+    .line 331
     sget-object v8, Lit/necst/grabnrun/RepackHandler;->messageDigest:Ljava/security/MessageDigest;
 
     invoke-virtual {v8}, Ljava/security/MessageDigest;->digest()[B
 
     move-result-object v1
 
-    .line 295
+    .line 335
     .local v1, "digestBytes":[B
     const/16 v8, 0x8
 
@@ -237,7 +237,7 @@
 
     move-result-object v2
 
-    .line 296
+    .line 336
     const-string v8, "line.separator"
 
     invoke-static {v8}, Ljava/lang/System;->getProperty(Ljava/lang/String;)Ljava/lang/String;
@@ -262,10 +262,10 @@
 
     move-result-object v2
 
-    .line 303
+    .line 343
     if-eqz v6, :cond_6
 
-    .line 305
+    .line 345
     :try_start_2
     invoke-virtual {v6}, Ljava/io/FileInputStream;->close()V
     :try_end_2
@@ -282,10 +282,10 @@
     :goto_2
     move-object v8, v2
 
-    .line 313
+    .line 353
     goto :goto_0
 
-    .line 288
+    .line 328
     .end local v5    # "inStream":Ljava/io/FileInputStream;
     .restart local v0    # "buffer":[B
     .restart local v6    # "inStream":Ljava/io/FileInputStream;
@@ -304,7 +304,7 @@
 
     goto :goto_1
 
-    .line 298
+    .line 338
     .end local v0    # "buffer":[B
     .end local v7    # "length":I
     :catch_0
@@ -312,13 +312,13 @@
 
     move-object v5, v6
 
-    .line 303
+    .line 343
     .end local v6    # "inStream":Ljava/io/FileInputStream;
     .restart local v5    # "inStream":Ljava/io/FileInputStream;
     :goto_3
     if-eqz v5, :cond_3
 
-    .line 305
+    .line 345
     :try_start_4
     invoke-virtual {v5}, Ljava/io/FileInputStream;->close()V
     :try_end_4
@@ -326,21 +326,21 @@
 
     goto :goto_2
 
-    .line 306
+    .line 346
     :catch_1
     move-exception v8
 
     goto :goto_2
 
-    .line 300
+    .line 340
     :catch_2
     move-exception v8
 
-    .line 303
+    .line 343
     :goto_4
     if-eqz v5, :cond_3
 
-    .line 305
+    .line 345
     :try_start_5
     invoke-virtual {v5}, Ljava/io/FileInputStream;->close()V
     :try_end_5
@@ -348,32 +348,32 @@
 
     goto :goto_2
 
-    .line 306
+    .line 346
     :catch_3
     move-exception v8
 
     goto :goto_2
 
-    .line 302
+    .line 342
     :catchall_0
     move-exception v8
 
-    .line 303
+    .line 343
     :goto_5
     if-eqz v5, :cond_5
 
-    .line 305
+    .line 345
     :try_start_6
     invoke-virtual {v5}, Ljava/io/FileInputStream;->close()V
     :try_end_6
     .catch Ljava/io/IOException; {:try_start_6 .. :try_end_6} :catch_5
 
-    .line 310
+    .line 350
     :cond_5
     :goto_6
     throw v8
 
-    .line 306
+    .line 346
     .end local v5    # "inStream":Ljava/io/FileInputStream;
     .restart local v0    # "buffer":[B
     .restart local v1    # "digestBytes":[B
@@ -396,7 +396,7 @@
 
     goto :goto_6
 
-    .line 302
+    .line 342
     .end local v5    # "inStream":Ljava/io/FileInputStream;
     .restart local v6    # "inStream":Ljava/io/FileInputStream;
     :catchall_1
@@ -408,7 +408,7 @@
     .restart local v5    # "inStream":Ljava/io/FileInputStream;
     goto :goto_5
 
-    .line 300
+    .line 340
     .end local v5    # "inStream":Ljava/io/FileInputStream;
     .restart local v6    # "inStream":Ljava/io/FileInputStream;
     :catch_6
@@ -420,7 +420,7 @@
     .restart local v5    # "inStream":Ljava/io/FileInputStream;
     goto :goto_4
 
-    .line 298
+    .line 338
     :catch_7
     move-exception v8
 
@@ -444,259 +444,368 @@
     .param p0, "newActivity"    # Landroid/app/Activity;
 
     .prologue
-    .line 58
+    .line 64
     sget-object v0, Lit/necst/grabnrun/RepackHandler;->activityStack:Ljava/util/List;
 
     if-nez v0, :cond_0
 
-    .line 59
+    .line 65
     new-instance v0, Ljava/util/ArrayList;
 
     invoke-direct {v0}, Ljava/util/ArrayList;-><init>()V
 
     sput-object v0, Lit/necst/grabnrun/RepackHandler;->activityStack:Ljava/util/List;
 
-    .line 62
+    .line 68
     :cond_0
     if-eqz p0, :cond_1
 
-    .line 63
+    .line 69
     sget-object v0, Lit/necst/grabnrun/RepackHandler;->activityStack:Ljava/util/List;
 
     invoke-interface {v0, p0}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 
-    .line 64
+    .line 70
     :cond_1
     return-void
 .end method
 
 .method public static generateSecureDexClassLoader(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Lit/necst/grabnrun/SecureDexClassLoader;
-    .locals 10
+    .locals 17
     .param p0, "dexPath"    # Ljava/lang/String;
     .param p1, "optimizedDirectory"    # Ljava/lang/String;
     .param p2, "libraryPath"    # Ljava/lang/String;
     .param p3, "parent"    # Ljava/lang/ClassLoader;
 
     .prologue
-    .line 171
-    sget-boolean v6, Lit/necst/grabnrun/RepackHandler;->gotUserInput:Z
+    .line 177
+    sget-boolean v13, Lit/necst/grabnrun/RepackHandler;->gotUserInput:Z
 
-    if-nez v6, :cond_0
+    if-nez v13, :cond_0
 
-    .line 172
+    .line 178
     invoke-static {}, Lit/necst/grabnrun/RepackHandler;->initializeUserInput()V
 
-    .line 175
-    :cond_0
-    new-instance v1, Ljava/util/HashMap;
-
-    invoke-direct {v1}, Ljava/util/HashMap;-><init>()V
-
-    .line 177
-    .local v1, "finalAssociativeMap":Ljava/util/Map;, "Ljava/util/Map<Ljava/lang/String;Ljava/net/URL;>;"
-    sget-boolean v6, Lit/necst/grabnrun/RepackHandler;->hasStaticAssociativeMap:Z
-
-    if-eqz v6, :cond_2
-
     .line 181
-    sget-object v6, Lit/necst/grabnrun/RepackHandler;->packageNameToCertificateURLMap:Ljava/util/Map;
+    :cond_0
+    new-instance v7, Ljava/util/HashMap;
 
-    invoke-interface {v6}, Ljava/util/Map;->keySet()Ljava/util/Set;
+    invoke-direct {v7}, Ljava/util/HashMap;-><init>()V
 
-    move-result-object v6
+    .line 183
+    .local v7, "finalAssociativeMap":Ljava/util/Map;, "Ljava/util/Map<Ljava/lang/String;Ljava/net/URL;>;"
+    sget-boolean v13, Lit/necst/grabnrun/RepackHandler;->hasStaticAssociativeMap:Z
 
-    invoke-interface {v6}, Ljava/util/Set;->iterator()Ljava/util/Iterator;
+    if-eqz v13, :cond_2
 
-    move-result-object v6
+    .line 187
+    sget-object v13, Lit/necst/grabnrun/RepackHandler;->packageNameToCertificateURLMap:Ljava/util/Map;
 
-    invoke-static {v1, v6}, Lit/necst/grabnrun/RepackHandler;->insertURLEntriesInMap(Ljava/util/Map;Ljava/util/Iterator;)V
+    invoke-interface {v13}, Ljava/util/Map;->keySet()Ljava/util/Set;
 
-    .line 236
+    move-result-object v13
+
+    invoke-interface {v13}, Ljava/util/Set;->iterator()Ljava/util/Iterator;
+
+    move-result-object v13
+
+    invoke-static {v7, v13}, Lit/necst/grabnrun/RepackHandler;->insertURLEntriesInMap(Ljava/util/Map;Ljava/util/Iterator;)V
+
+    .line 276
     :cond_1
-    new-instance v6, Lit/necst/grabnrun/SecureLoaderFactory;
+    new-instance v13, Lit/necst/grabnrun/SecureLoaderFactory;
 
     invoke-static {}, Lit/necst/grabnrun/RepackHandler;->getLastRunningActivity()Landroid/app/Activity;
 
-    move-result-object v7
+    move-result-object v14
 
-    invoke-direct {v6, v7}, Lit/necst/grabnrun/SecureLoaderFactory;-><init>(Landroid/content/ContextWrapper;)V
+    invoke-direct {v13, v14}, Lit/necst/grabnrun/SecureLoaderFactory;-><init>(Landroid/content/ContextWrapper;)V
 
-    sput-object v6, Lit/necst/grabnrun/RepackHandler;->mSecureLoaderFactory:Lit/necst/grabnrun/SecureLoaderFactory;
+    sput-object v13, Lit/necst/grabnrun/RepackHandler;->mSecureLoaderFactory:Lit/necst/grabnrun/SecureLoaderFactory;
 
-    .line 239
-    sget-object v6, Lit/necst/grabnrun/RepackHandler;->mSecureLoaderFactory:Lit/necst/grabnrun/SecureLoaderFactory;
+    .line 279
+    sget-object v13, Lit/necst/grabnrun/RepackHandler;->mSecureLoaderFactory:Lit/necst/grabnrun/SecureLoaderFactory;
 
-    invoke-virtual {v6, p0, p2, p3, v1}, Lit/necst/grabnrun/SecureLoaderFactory;->createDexClassLoader(Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;Ljava/util/Map;)Lit/necst/grabnrun/SecureDexClassLoader;
+    move-object/from16 v0, p0
 
-    move-result-object v6
+    move-object/from16 v1, p2
 
-    return-object v6
+    move-object/from16 v2, p3
 
-    .line 190
-    :cond_2
-    const-string v6, "http://"
+    invoke-virtual {v13, v0, v1, v2, v7}, Lit/necst/grabnrun/SecureLoaderFactory;->createDexClassLoader(Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;Ljava/util/Map;)Lit/necst/grabnrun/SecureDexClassLoader;
 
-    const-string v7, "http//"
+    move-result-object v13
 
-    invoke-virtual {p0, v6, v7}, Ljava/lang/String;->replaceAll(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
-
-    move-result-object v5
-
-    .line 191
-    .local v5, "tempPath":Ljava/lang/String;
-    const-string v6, "https://"
-
-    const-string v7, "https//"
-
-    invoke-virtual {v5, v6, v7}, Ljava/lang/String;->replaceAll(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
-
-    move-result-object v5
-
-    .line 194
-    sget-object v6, Ljava/io/File;->pathSeparator:Ljava/lang/String;
-
-    invoke-static {v6}, Ljava/util/regex/Pattern;->quote(Ljava/lang/String;)Ljava/lang/String;
-
-    move-result-object v6
-
-    invoke-virtual {v5, v6}, Ljava/lang/String;->split(Ljava/lang/String;)[Ljava/lang/String;
-
-    move-result-object v4
+    return-object v13
 
     .line 196
-    .local v4, "strings":[Ljava/lang/String;
-    array-length v7, v4
+    :cond_2
+    const-string v13, "http://"
 
-    const/4 v6, 0x0
+    const-string v14, "http//"
 
-    :goto_0
-    if-ge v6, v7, :cond_1
+    move-object/from16 v0, p0
 
-    aget-object v3, v4, v6
+    invoke-virtual {v0, v13, v14}, Ljava/lang/String;->replaceAll(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+
+    move-result-object v12
+
+    .line 197
+    .local v12, "tempPath":Ljava/lang/String;
+    const-string v13, "https://"
+
+    const-string v14, "https//"
+
+    invoke-virtual {v12, v13, v14}, Ljava/lang/String;->replaceAll(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+
+    move-result-object v12
+
+    .line 200
+    sget-object v13, Ljava/io/File;->pathSeparator:Ljava/lang/String;
+
+    invoke-static {v13}, Ljava/util/regex/Pattern;->quote(Ljava/lang/String;)Ljava/lang/String;
+
+    move-result-object v13
+
+    invoke-virtual {v12, v13}, Ljava/lang/String;->split(Ljava/lang/String;)[Ljava/lang/String;
+
+    move-result-object v11
 
     .line 202
-    .local v3, "path":Ljava/lang/String;
-    const-string v8, "http//"
+    .local v11, "strings":[Ljava/lang/String;
+    array-length v15, v11
 
-    invoke-virtual {v3, v8}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
+    const/4 v13, 0x0
 
-    move-result v8
+    move v14, v13
 
-    if-nez v8, :cond_3
+    :goto_0
+    if-ge v14, v15, :cond_1
 
-    const-string v8, "https//"
+    aget-object v10, v11, v14
 
-    invoke-virtual {v3, v8}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
+    .line 208
+    .local v10, "path":Ljava/lang/String;
+    const-string v13, "http//"
 
-    move-result v8
+    invoke-virtual {v10, v13}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
 
-    if-eqz v8, :cond_6
+    move-result v13
 
-    .line 206
+    if-nez v13, :cond_3
+
+    const-string v13, "https//"
+
+    invoke-virtual {v10, v13}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
+
+    move-result v13
+
+    if-eqz v13, :cond_6
+
+    .line 212
     :cond_3
-    const-string v8, "http//"
+    const-string v13, "http//"
 
-    invoke-virtual {v3, v8}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
+    invoke-virtual {v10, v13}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
 
-    move-result v8
+    move-result v13
 
-    if-eqz v8, :cond_5
+    if-eqz v13, :cond_5
 
-    .line 207
-    new-instance v8, Ljava/lang/StringBuilder;
+    .line 213
+    new-instance v13, Ljava/lang/StringBuilder;
 
-    const-string v9, "http:"
+    const-string v16, "http:"
 
-    invoke-direct {v8, v9}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
+    move-object/from16 v0, v16
 
-    const/4 v9, 0x4
+    invoke-direct {v13, v0}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
 
-    invoke-virtual {v3, v9}, Ljava/lang/String;->substring(I)Ljava/lang/String;
+    const/16 v16, 0x4
 
-    move-result-object v9
+    move/from16 v0, v16
 
-    invoke-virtual {v8, v9}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    invoke-virtual {v10, v0}, Ljava/lang/String;->substring(I)Ljava/lang/String;
 
-    move-result-object v8
+    move-result-object v16
 
-    invoke-virtual {v8}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+    move-object/from16 v0, v16
 
-    move-result-object v0
+    invoke-virtual {v13, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
-    .line 219
-    .local v0, "containerIdentifier":Ljava/lang/String;
-    :goto_1
-    if-eqz v0, :cond_4
+    move-result-object v13
 
-    .line 222
-    sget-object v8, Lit/necst/grabnrun/RepackHandler;->containerToPackageNamesMap:Ljava/util/Map;
+    invoke-virtual {v13}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
 
-    invoke-interface {v8, v0}, Ljava/util/Map;->containsKey(Ljava/lang/Object;)Z
-
-    move-result v8
-
-    if-eqz v8, :cond_4
+    move-result-object v3
 
     .line 225
-    sget-object v8, Lit/necst/grabnrun/RepackHandler;->containerToPackageNamesMap:Ljava/util/Map;
-
-    invoke-interface {v8, v0}, Ljava/util/Map;->get(Ljava/lang/Object;)Ljava/lang/Object;
-
-    move-result-object v2
-
-    check-cast v2, Ljava/util/Set;
+    .local v3, "containerIdentifier":Ljava/lang/String;
+    :goto_1
+    if-eqz v3, :cond_4
 
     .line 228
-    .local v2, "packageNamesSet":Ljava/util/Set;, "Ljava/util/Set<Ljava/lang/String;>;"
-    invoke-interface {v2}, Ljava/util/Set;->iterator()Ljava/util/Iterator;
+    sget-object v13, Lit/necst/grabnrun/RepackHandler;->containerToPackageNamesMap:Ljava/util/Map;
+
+    invoke-interface {v13, v3}, Ljava/util/Map;->containsKey(Ljava/lang/Object;)Z
+
+    move-result v13
+
+    if-eqz v13, :cond_7
+
+    .line 231
+    sget-object v13, Lit/necst/grabnrun/RepackHandler;->containerToPackageNamesMap:Ljava/util/Map;
+
+    invoke-interface {v13, v3}, Ljava/util/Map;->get(Ljava/lang/Object;)Ljava/lang/Object;
 
     move-result-object v8
 
-    invoke-static {v1, v8}, Lit/necst/grabnrun/RepackHandler;->insertURLEntriesInMap(Ljava/util/Map;Ljava/util/Iterator;)V
+    check-cast v8, Ljava/util/Set;
 
-    .line 196
-    .end local v2    # "packageNamesSet":Ljava/util/Set;, "Ljava/util/Set<Ljava/lang/String;>;"
+    .line 234
+    .local v8, "packageNamesSet":Ljava/util/Set;, "Ljava/util/Set<Ljava/lang/String;>;"
+    invoke-interface {v8}, Ljava/util/Set;->iterator()Ljava/util/Iterator;
+
+    move-result-object v13
+
+    invoke-static {v7, v13}, Lit/necst/grabnrun/RepackHandler;->insertURLEntriesInMap(Ljava/util/Map;Ljava/util/Iterator;)V
+
+    .line 202
+    .end local v8    # "packageNamesSet":Ljava/util/Set;, "Ljava/util/Set<Ljava/lang/String;>;"
     :cond_4
-    add-int/lit8 v6, v6, 0x1
+    :goto_2
+    add-int/lit8 v13, v14, 0x1
+
+    move v14, v13
 
     goto :goto_0
 
-    .line 209
-    .end local v0    # "containerIdentifier":Ljava/lang/String;
+    .line 215
+    .end local v3    # "containerIdentifier":Ljava/lang/String;
     :cond_5
-    new-instance v8, Ljava/lang/StringBuilder;
+    new-instance v13, Ljava/lang/StringBuilder;
 
-    const-string v9, "https:"
+    const-string v16, "https:"
 
-    invoke-direct {v8, v9}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
+    move-object/from16 v0, v16
 
-    const/4 v9, 0x5
+    invoke-direct {v13, v0}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
 
-    invoke-virtual {v3, v9}, Ljava/lang/String;->substring(I)Ljava/lang/String;
+    const/16 v16, 0x5
 
-    move-result-object v9
+    move/from16 v0, v16
 
-    invoke-virtual {v8, v9}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    invoke-virtual {v10, v0}, Ljava/lang/String;->substring(I)Ljava/lang/String;
+
+    move-result-object v16
+
+    move-object/from16 v0, v16
+
+    invoke-virtual {v13, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    move-result-object v13
+
+    invoke-virtual {v13}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+
+    move-result-object v3
+
+    .line 217
+    .restart local v3    # "containerIdentifier":Ljava/lang/String;
+    goto :goto_1
+
+    .line 221
+    .end local v3    # "containerIdentifier":Ljava/lang/String;
+    :cond_6
+    invoke-static {v10}, Lit/necst/grabnrun/RepackHandler;->computeDigestEncodeFromFilePath(Ljava/lang/String;)Ljava/lang/String;
+
+    move-result-object v3
+
+    .restart local v3    # "containerIdentifier":Ljava/lang/String;
+    goto :goto_1
+
+    .line 240
+    :cond_7
+    sget-object v13, Lit/necst/grabnrun/RepackHandler;->packageNameToCertificateURLMap:Ljava/util/Map;
+
+    const-string v16, "default"
+
+    move-object/from16 v0, v16
+
+    invoke-interface {v13, v0}, Ljava/util/Map;->containsKey(Ljava/lang/Object;)Z
+
+    move-result v13
+
+    if-eqz v13, :cond_4
+
+    .line 242
+    sget-object v13, Lit/necst/grabnrun/RepackHandler;->packageNameToCertificateURLMap:Ljava/util/Map;
+
+    const-string v16, "default"
+
+    move-object/from16 v0, v16
+
+    invoke-interface {v13, v0}, Ljava/util/Map;->get(Ljava/lang/Object;)Ljava/lang/Object;
+
+    move-result-object v4
+
+    check-cast v4, Ljava/lang/String;
+
+    .line 247
+    .local v4, "defaultRemoteCert":Ljava/lang/String;
+    :try_start_0
+    new-instance v5, Ljava/net/URL;
+
+    invoke-direct {v5, v4}, Ljava/net/URL;-><init>(Ljava/lang/String;)V
+
+    .line 251
+    .local v5, "defaultRemoteCertURL":Ljava/net/URL;
+    invoke-static {v10}, Lit/necst/grabnrun/RepackHandler;->getPackageNamesFromContainerPath(Ljava/lang/String;)Ljava/util/Set;
 
     move-result-object v8
 
-    invoke-virtual {v8}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+    .line 253
+    .restart local v8    # "packageNamesSet":Ljava/util/Set;, "Ljava/util/Set<Ljava/lang/String;>;"
+    if-eqz v8, :cond_4
 
-    move-result-object v0
+    .line 255
+    invoke-interface {v8}, Ljava/util/Set;->iterator()Ljava/util/Iterator;
 
-    .line 211
-    .restart local v0    # "containerIdentifier":Ljava/lang/String;
-    goto :goto_1
+    move-result-object v9
 
-    .line 215
-    .end local v0    # "containerIdentifier":Ljava/lang/String;
-    :cond_6
-    invoke-static {v3}, Lit/necst/grabnrun/RepackHandler;->computeDigestEncodeFromFilePath(Ljava/lang/String;)Ljava/lang/String;
+    .line 257
+    .local v9, "packageNamesSetIterator":Ljava/util/Iterator;, "Ljava/util/Iterator<Ljava/lang/String;>;"
+    :goto_3
+    invoke-interface {v9}, Ljava/util/Iterator;->hasNext()Z
 
-    move-result-object v0
+    move-result v13
 
-    .restart local v0    # "containerIdentifier":Ljava/lang/String;
-    goto :goto_1
+    if-eqz v13, :cond_4
+
+    .line 261
+    invoke-interface {v9}, Ljava/util/Iterator;->next()Ljava/lang/Object;
+
+    move-result-object v13
+
+    check-cast v13, Ljava/lang/String;
+
+    invoke-interface {v7, v13, v5}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+    :try_end_0
+    .catch Ljava/net/MalformedURLException; {:try_start_0 .. :try_end_0} :catch_0
+
+    goto :goto_3
+
+    .line 265
+    .end local v5    # "defaultRemoteCertURL":Ljava/net/URL;
+    .end local v8    # "packageNamesSet":Ljava/util/Set;, "Ljava/util/Set<Ljava/lang/String;>;"
+    .end local v9    # "packageNamesSetIterator":Ljava/util/Iterator;, "Ljava/util/Iterator<Ljava/lang/String;>;"
+    :catch_0
+    move-exception v6
+
+    .line 267
+    .local v6, "e":Ljava/net/MalformedURLException;
+    invoke-virtual {v6}, Ljava/net/MalformedURLException;->printStackTrace()V
+
+    goto :goto_2
 .end method
 
 .method private static getLastRunningActivity()Landroid/app/Activity;
@@ -705,7 +814,7 @@
     .prologue
     const/4 v0, 0x0
 
-    .line 87
+    .line 93
     sget-object v1, Lit/necst/grabnrun/RepackHandler;->activityStack:Ljava/util/List;
 
     if-eqz v1, :cond_0
@@ -718,16 +827,16 @@
 
     if-eqz v1, :cond_1
 
-    .line 97
+    .line 103
     :cond_0
     :goto_0
     return-object v0
 
-    .line 91
+    .line 97
     :cond_1
     invoke-static {}, Lit/necst/grabnrun/RepackHandler;->cleanUpFinishedActivities()V
 
-    .line 93
+    .line 99
     sget-object v1, Lit/necst/grabnrun/RepackHandler;->activityStack:Ljava/util/List;
 
     invoke-interface {v1}, Ljava/util/List;->isEmpty()Z
@@ -736,7 +845,7 @@
 
     if-nez v1, :cond_0
 
-    .line 97
+    .line 103
     sget-object v0, Lit/necst/grabnrun/RepackHandler;->activityStack:Ljava/util/List;
 
     sget-object v1, Lit/necst/grabnrun/RepackHandler;->activityStack:Ljava/util/List;
@@ -756,29 +865,560 @@
     goto :goto_0
 .end method
 
+.method private static getPackageNamesFromContainerPath(Ljava/lang/String;)Ljava/util/Set;
+    .locals 20
+    .param p0, "containerPath"    # Ljava/lang/String;
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "(",
+            "Ljava/lang/String;",
+            ")",
+            "Ljava/util/Set",
+            "<",
+            "Ljava/lang/String;",
+            ">;"
+        }
+    .end annotation
+
+    .prologue
+    .line 364
+    if-eqz p0, :cond_0
+
+    invoke-virtual/range {p0 .. p0}, Ljava/lang/String;->isEmpty()Z
+
+    move-result v18
+
+    if-nez v18, :cond_0
+
+    new-instance v18, Ljava/io/File;
+
+    move-object/from16 v0, v18
+
+    move-object/from16 v1, p0
+
+    invoke-direct {v0, v1}, Ljava/io/File;-><init>(Ljava/lang/String;)V
+
+    invoke-virtual/range {v18 .. v18}, Ljava/io/File;->exists()Z
+
+    move-result v18
+
+    if-nez v18, :cond_1
+
+    :cond_0
+    const/16 v17, 0x0
+
+    .line 485
+    :goto_0
+    return-object v17
+
+    .line 367
+    :cond_1
+    const-string v18, "."
+
+    move-object/from16 v0, p0
+
+    move-object/from16 v1, v18
+
+    invoke-virtual {v0, v1}, Ljava/lang/String;->lastIndexOf(Ljava/lang/String;)I
+
+    move-result v8
+
+    .line 369
+    .local v8, "extensionIndex":I
+    const/16 v18, -0x1
+
+    move/from16 v0, v18
+
+    if-ne v8, v0, :cond_2
+
+    const/16 v17, 0x0
+
+    goto :goto_0
+
+    .line 371
+    :cond_2
+    move-object/from16 v0, p0
+
+    invoke-virtual {v0, v8}, Ljava/lang/String;->substring(I)Ljava/lang/String;
+
+    move-result-object v7
+
+    .line 373
+    .local v7, "extension":Ljava/lang/String;
+    new-instance v17, Ljava/util/HashSet;
+
+    invoke-direct/range {v17 .. v17}, Ljava/util/HashSet;-><init>()V
+
+    .line 375
+    .local v17, "packageNameSet":Ljava/util/Set;, "Ljava/util/Set<Ljava/lang/String;>;"
+    invoke-static {}, Lit/necst/grabnrun/RepackHandler;->getLastRunningActivity()Landroid/app/Activity;
+
+    move-result-object v12
+
+    .line 377
+    .local v12, "lastRunningActivity":Landroid/content/ContextWrapper;
+    if-nez v12, :cond_3
+
+    const/16 v17, 0x0
+
+    goto :goto_0
+
+    .line 379
+    :cond_3
+    const-string v18, ".apk"
+
+    move-object/from16 v0, v18
+
+    invoke-virtual {v7, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v18
+
+    if-eqz v18, :cond_5
+
+    .line 383
+    invoke-virtual {v12}, Landroid/content/ContextWrapper;->getPackageManager()Landroid/content/pm/PackageManager;
+
+    move-result-object v13
+
+    .line 385
+    .local v13, "mPackageManager":Landroid/content/pm/PackageManager;
+    const/16 v18, 0x0
+
+    move-object/from16 v0, p0
+
+    move/from16 v1, v18
+
+    invoke-virtual {v13, v0, v1}, Landroid/content/pm/PackageManager;->getPackageArchiveInfo(Ljava/lang/String;I)Landroid/content/pm/PackageInfo;
+
+    move-result-object v18
+
+    if-eqz v18, :cond_4
+
+    .line 387
+    const/16 v18, 0x0
+
+    move-object/from16 v0, p0
+
+    move/from16 v1, v18
+
+    invoke-virtual {v13, v0, v1}, Landroid/content/pm/PackageManager;->getPackageArchiveInfo(Ljava/lang/String;I)Landroid/content/pm/PackageInfo;
+
+    move-result-object v18
+
+    move-object/from16 v0, v18
+
+    iget-object v0, v0, Landroid/content/pm/PackageInfo;->packageName:Ljava/lang/String;
+
+    move-object/from16 v18, v0
+
+    invoke-interface/range {v17 .. v18}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
+
+    goto :goto_0
+
+    .line 391
+    :cond_4
+    const/16 v17, 0x0
+
+    goto :goto_0
+
+    .line 394
+    .end local v13    # "mPackageManager":Landroid/content/pm/PackageManager;
+    :cond_5
+    const-string v18, ".jar"
+
+    move-object/from16 v0, v18
+
+    invoke-virtual {v7, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v18
+
+    if-eqz v18, :cond_e
+
+    .line 401
+    const/4 v10, 0x0
+
+    .line 402
+    .local v10, "isAValidJar":Z
+    const/4 v2, 0x0
+
+    .line 407
+    .local v2, "containerJar":Ljava/util/jar/JarFile;
+    :try_start_0
+    new-instance v3, Ljava/util/jar/JarFile;
+
+    move-object/from16 v0, p0
+
+    invoke-direct {v3, v0}, Ljava/util/jar/JarFile;-><init>(Ljava/lang/String;)V
+    :try_end_0
+    .catch Ljava/io/IOException; {:try_start_0 .. :try_end_0} :catch_1
+    .catchall {:try_start_0 .. :try_end_0} :catchall_0
+
+    .line 410
+    .end local v2    # "containerJar":Ljava/util/jar/JarFile;
+    .local v3, "containerJar":Ljava/util/jar/JarFile;
+    :try_start_1
+    const-string v18, "classes.dex"
+
+    move-object/from16 v0, v18
+
+    invoke-virtual {v3, v0}, Ljava/util/jar/JarFile;->getJarEntry(Ljava/lang/String;)Ljava/util/jar/JarEntry;
+    :try_end_1
+    .catch Ljava/io/IOException; {:try_start_1 .. :try_end_1} :catch_5
+    .catchall {:try_start_1 .. :try_end_1} :catchall_1
+
+    move-result-object v18
+
+    if-eqz v18, :cond_6
+
+    .line 411
+    const/4 v10, 0x1
+
+    .line 416
+    :cond_6
+    if-eqz v3, :cond_7
+
+    .line 418
+    :try_start_2
+    invoke-virtual {v3}, Ljava/util/jar/JarFile;->close()V
+    :try_end_2
+    .catch Ljava/io/IOException; {:try_start_2 .. :try_end_2} :catch_4
+
+    .line 424
+    :cond_7
+    :goto_1
+    if-eqz v10, :cond_d
+
+    .line 427
+    const/4 v5, 0x0
+
+    .line 437
+    .local v5, "dexFile":Ldalvik/system/DexFile;
+    :try_start_3
+    const-string v18, "packagesExtractor"
+
+    const/16 v19, 0x0
+
+    move-object/from16 v0, v18
+
+    move/from16 v1, v19
+
+    invoke-virtual {v12, v0, v1}, Landroid/content/ContextWrapper;->getDir(Ljava/lang/String;I)Ljava/io/File;
+
+    move-result-object v15
+
+    .line 440
+    .local v15, "packageExtractFolder":Ljava/io/File;
+    new-instance v18, Ljava/lang/StringBuilder;
+
+    invoke-virtual {v15}, Ljava/io/File;->getAbsolutePath()Ljava/lang/String;
+
+    move-result-object v19
+
+    invoke-static/range {v19 .. v19}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
+
+    move-result-object v19
+
+    invoke-direct/range {v18 .. v19}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
+
+    sget-object v19, Ljava/io/File;->separator:Ljava/lang/String;
+
+    invoke-virtual/range {v18 .. v19}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    move-result-object v18
+
+    const-string v19, "container.odex"
+
+    invoke-virtual/range {v18 .. v19}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    move-result-object v18
+
+    invoke-virtual/range {v18 .. v18}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+
+    move-result-object v14
+
+    .line 443
+    .local v14, "outputDexTempPath":Ljava/lang/String;
+    const/16 v18, 0x0
+
+    move-object/from16 v0, p0
+
+    move/from16 v1, v18
+
+    invoke-static {v0, v14, v1}, Ldalvik/system/DexFile;->loadDex(Ljava/lang/String;Ljava/lang/String;I)Ldalvik/system/DexFile;
+
+    move-result-object v5
+
+    .line 445
+    invoke-virtual {v5}, Ldalvik/system/DexFile;->entries()Ljava/util/Enumeration;
+
+    move-result-object v4
+
+    .line 447
+    .local v4, "dexEntries":Ljava/util/Enumeration;, "Ljava/util/Enumeration<Ljava/lang/String;>;"
+    :cond_8
+    :goto_2
+    invoke-interface {v4}, Ljava/util/Enumeration;->hasMoreElements()Z
+
+    move-result v18
+
+    if-nez v18, :cond_b
+
+    .line 469
+    new-instance v18, Ljava/io/File;
+
+    move-object/from16 v0, v18
+
+    invoke-direct {v0, v14}, Ljava/io/File;-><init>(Ljava/lang/String;)V
+
+    invoke-virtual/range {v18 .. v18}, Ljava/io/File;->delete()Z
+    :try_end_3
+    .catch Ljava/io/IOException; {:try_start_3 .. :try_end_3} :catch_0
+
+    goto/16 :goto_0
+
+    .line 471
+    .end local v4    # "dexEntries":Ljava/util/Enumeration;, "Ljava/util/Enumeration<Ljava/lang/String;>;"
+    .end local v14    # "outputDexTempPath":Ljava/lang/String;
+    .end local v15    # "packageExtractFolder":Ljava/io/File;
+    :catch_0
+    move-exception v6
+
+    .line 473
+    .local v6, "e":Ljava/io/IOException;
+    const/16 v17, 0x0
+
+    goto/16 :goto_0
+
+    .line 413
+    .end local v3    # "containerJar":Ljava/util/jar/JarFile;
+    .end local v5    # "dexFile":Ldalvik/system/DexFile;
+    .end local v6    # "e":Ljava/io/IOException;
+    .restart local v2    # "containerJar":Ljava/util/jar/JarFile;
+    :catch_1
+    move-exception v6
+
+    .line 416
+    .restart local v6    # "e":Ljava/io/IOException;
+    :goto_3
+    if-eqz v2, :cond_9
+
+    .line 418
+    :try_start_4
+    invoke-virtual {v2}, Ljava/util/jar/JarFile;->close()V
+    :try_end_4
+    .catch Ljava/io/IOException; {:try_start_4 .. :try_end_4} :catch_2
+
+    .line 414
+    :cond_9
+    :goto_4
+    const/16 v17, 0x0
+
+    goto/16 :goto_0
+
+    .line 419
+    :catch_2
+    move-exception v6
+
+    .line 420
+    invoke-virtual {v6}, Ljava/io/IOException;->printStackTrace()V
+
+    goto :goto_4
+
+    .line 415
+    .end local v6    # "e":Ljava/io/IOException;
+    :catchall_0
+    move-exception v18
+
+    .line 416
+    :goto_5
+    if-eqz v2, :cond_a
+
+    .line 418
+    :try_start_5
+    invoke-virtual {v2}, Ljava/util/jar/JarFile;->close()V
+    :try_end_5
+    .catch Ljava/io/IOException; {:try_start_5 .. :try_end_5} :catch_3
+
+    .line 422
+    :cond_a
+    :goto_6
+    throw v18
+
+    .line 419
+    :catch_3
+    move-exception v6
+
+    .line 420
+    .restart local v6    # "e":Ljava/io/IOException;
+    invoke-virtual {v6}, Ljava/io/IOException;->printStackTrace()V
+
+    goto :goto_6
+
+    .line 419
+    .end local v2    # "containerJar":Ljava/util/jar/JarFile;
+    .end local v6    # "e":Ljava/io/IOException;
+    .restart local v3    # "containerJar":Ljava/util/jar/JarFile;
+    :catch_4
+    move-exception v6
+
+    .line 420
+    .restart local v6    # "e":Ljava/io/IOException;
+    invoke-virtual {v6}, Ljava/io/IOException;->printStackTrace()V
+
+    goto :goto_1
+
+    .line 450
+    .end local v6    # "e":Ljava/io/IOException;
+    .restart local v4    # "dexEntries":Ljava/util/Enumeration;, "Ljava/util/Enumeration<Ljava/lang/String;>;"
+    .restart local v5    # "dexFile":Ldalvik/system/DexFile;
+    .restart local v14    # "outputDexTempPath":Ljava/lang/String;
+    .restart local v15    # "packageExtractFolder":Ljava/io/File;
+    :cond_b
+    :try_start_6
+    invoke-interface {v4}, Ljava/util/Enumeration;->nextElement()Ljava/lang/Object;
+
+    move-result-object v9
+
+    check-cast v9, Ljava/lang/String;
+
+    .line 455
+    .local v9, "fullClassName":Ljava/lang/String;
+    :goto_7
+    const-string v18, " "
+
+    move-object/from16 v0, v18
+
+    invoke-virtual {v9, v0}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
+
+    move-result v18
+
+    if-nez v18, :cond_c
+
+    .line 458
+    const-string v18, "."
+
+    move-object/from16 v0, v18
+
+    invoke-virtual {v9, v0}, Ljava/lang/String;->lastIndexOf(Ljava/lang/String;)I
+
+    move-result v11
+
+    .line 460
+    .local v11, "lastIndexPackageName":I
+    const/16 v18, -0x1
+
+    move/from16 v0, v18
+
+    if-eq v11, v0, :cond_8
+
+    .line 462
+    const/16 v18, 0x0
+
+    move/from16 v0, v18
+
+    invoke-virtual {v9, v0, v11}, Ljava/lang/String;->substring(II)Ljava/lang/String;
+
+    move-result-object v16
+
+    .line 463
+    .local v16, "packageName":Ljava/lang/String;
+    move-object/from16 v0, v17
+
+    move-object/from16 v1, v16
+
+    invoke-interface {v0, v1}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
+
+    goto :goto_2
+
+    .line 456
+    .end local v11    # "lastIndexPackageName":I
+    .end local v16    # "packageName":Ljava/lang/String;
+    :cond_c
+    const/16 v18, 0x1
+
+    invoke-virtual {v9}, Ljava/lang/String;->length()I
+
+    move-result v19
+
+    move/from16 v0, v18
+
+    move/from16 v1, v19
+
+    invoke-virtual {v9, v0, v1}, Ljava/lang/String;->substring(II)Ljava/lang/String;
+    :try_end_6
+    .catch Ljava/io/IOException; {:try_start_6 .. :try_end_6} :catch_0
+
+    move-result-object v9
+
+    goto :goto_7
+
+    .line 480
+    .end local v4    # "dexEntries":Ljava/util/Enumeration;, "Ljava/util/Enumeration<Ljava/lang/String;>;"
+    .end local v5    # "dexFile":Ldalvik/system/DexFile;
+    .end local v9    # "fullClassName":Ljava/lang/String;
+    .end local v14    # "outputDexTempPath":Ljava/lang/String;
+    .end local v15    # "packageExtractFolder":Ljava/io/File;
+    :cond_d
+    const/16 v17, 0x0
+
+    goto/16 :goto_0
+
+    .line 485
+    .end local v3    # "containerJar":Ljava/util/jar/JarFile;
+    .end local v10    # "isAValidJar":Z
+    :cond_e
+    const/16 v17, 0x0
+
+    goto/16 :goto_0
+
+    .line 415
+    .restart local v3    # "containerJar":Ljava/util/jar/JarFile;
+    .restart local v10    # "isAValidJar":Z
+    :catchall_1
+    move-exception v18
+
+    move-object v2, v3
+
+    .end local v3    # "containerJar":Ljava/util/jar/JarFile;
+    .restart local v2    # "containerJar":Ljava/util/jar/JarFile;
+    goto :goto_5
+
+    .line 413
+    .end local v2    # "containerJar":Ljava/util/jar/JarFile;
+    .restart local v3    # "containerJar":Ljava/util/jar/JarFile;
+    :catch_5
+    move-exception v6
+
+    move-object v2, v3
+
+    .end local v3    # "containerJar":Ljava/util/jar/JarFile;
+    .restart local v2    # "containerJar":Ljava/util/jar/JarFile;
+    goto :goto_3
+.end method
+
 .method private static initializeUserInput()V
     .locals 5
 
     .prologue
-    .line 105
+    .line 111
     new-instance v2, Ljava/util/HashMap;
 
     invoke-direct {v2}, Ljava/util/HashMap;-><init>()V
 
     sput-object v2, Lit/necst/grabnrun/RepackHandler;->containerToPackageNamesMap:Ljava/util/Map;
 
-    .line 106
+    .line 112
     new-instance v2, Ljava/util/HashMap;
 
     invoke-direct {v2}, Ljava/util/HashMap;-><init>()V
 
     sput-object v2, Lit/necst/grabnrun/RepackHandler;->packageNameToCertificateURLMap:Ljava/util/Map;
 
-    .line 109
+    .line 115
     new-instance v1, Ljava/util/HashSet;
 
     invoke-direct {v1}, Ljava/util/HashSet;-><init>()V
 
-    .line 112
+    .line 118
     .local v1, "packageNamesSet":Ljava/util/Set;, "Ljava/util/Set<Ljava/lang/String;>;"
 
