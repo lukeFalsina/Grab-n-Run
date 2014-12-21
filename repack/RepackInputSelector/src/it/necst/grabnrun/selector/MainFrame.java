@@ -15,6 +15,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashSet;
@@ -41,7 +42,7 @@ public class MainFrame extends Frame {
 	
 	private TextField[] contURLFields;
 	
-	private Set<String> validURLContSet;
+	private Set<String> validURIContSet;
 	
 	/**
 	 * @param args
@@ -154,8 +155,9 @@ public class MainFrame extends Frame {
 		contSelectPanel.add(new JSeparator());
 		contSelectPanel.add(contNumberPanel);
 		
-		contSelectPanel.add(new Label("Write down for each white line below the URL of a remote JAR/APK container"));
-		contSelectPanel.add(new Label("that you would like to use as a source for dynamic loading opertions."));
+		contSelectPanel.add(new Label("Write down for each white line below either the remote URL or"));
+		contSelectPanel.add(new Label("the local path of a JAR/APK container that you intend to use as"));
+		contSelectPanel.add(new Label("a possible source for classes to dynamically load at runtime."));
 		
 		// TextFields for containers URL are initialized..
 		for (int i = 0; i < MAX_NUM_CONT; i++) {
@@ -251,7 +253,7 @@ public class MainFrame extends Frame {
 		
 		if (isValidApkToPatch) {
 			
-			validURLContSet = new HashSet<String>();
+			validURIContSet = new HashSet<String>();
 			
 			for (TextField textField : contURLFields) {
 			
@@ -273,25 +275,34 @@ public class MainFrame extends Frame {
 						if (	containerURL.getProtocol().equals("http") || 
 								containerURL.getProtocol().equals("https")) {
 							
-							validURLContSet.add(containerURL.toString());
+							validURIContSet.add(containerURL.toString());
 						}
 						
 					} catch (MalformedURLException e) {
-						// Not a valid URL.. Just move on..
+						
+						// Not a valid remote URL.. Test if at least this string 
+						// matches a valid local container file on the system
+						if (	containerURLString.toLowerCase().endsWith(".apk") ||
+								containerURLString.toLowerCase().endsWith(".jar")) {
+							
+							File testForAFile = new File(containerURLString);
+							if (testForAFile.exists() && testForAFile.isFile())
+								validURIContSet.add(containerURLString);
+						}
 					}
 				}
 			}
 			
-			if (!validURLContSet.isEmpty())
+			if (!validURIContSet.isEmpty())
 				openDialog = true;
 			
 			if (openDialog) {
 				
-				new LinkContainerDialog(this, "Select validation method..", apkField.getText(), validURLContSet);
+				new LinkContainerDialog(this, "Select validation method..", apkField.getText(), validURIContSet);
 				//System.out.println("Found " + validURLContSet.size() + " valid distinct container URL.");
 			} else {
 				
-				JOptionPane.showMessageDialog(this, "Insert at least one valid remote URL in one of the white enabled fields!", "No valid container URL", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, "Insert at least one valid remote URL or local file path pointing to an APK/JAR container in one of the white enabled fields!", "No valid container remote URL or local path", JOptionPane.ERROR_MESSAGE);
 			}
 		}
 	}

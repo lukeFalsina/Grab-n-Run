@@ -106,6 +106,24 @@ def isARemoteURL(candidateRemoteURL, onlyHTTPSrequired = False):
 
 	return False
 
+def isAValidPackageName(candidatePackageName):
+
+	if candidatePackageName:
+
+		if len(candidatePackageName.split('.')) < 2:
+			# Too general package name: at least two fields dot separated..
+			return False
+
+		# Each subfield must be not empty..
+		for subString in candidatePackageName.split('.'):
+			if not subString:
+				return False
+
+		# If previous conditions are valid than the package name is OK.
+		return True
+
+	return False
+
 def downloadRemoteContainer(containerRemoteURL):
 
 	if containerRemoteURL:
@@ -621,8 +639,13 @@ def setUpRepackHandler(decodeDirName, hasStaticAssociativeMap, entriesDictionary
 				# Get the certificate remote URL.
 				remoteCertificateURL = entriesDictionary[packageName]
 
-				if isARemoteURL(remoteCertificateURL, True):
-					linkPackageNameToCertURL(repackHandlerFile, packageName, entriesDictionary[packageName])
+				if isAValidPackageName(packageName):
+					if isARemoteURL(remoteCertificateURL, True):
+						linkPackageNameToCertURL(repackHandlerFile, packageName, entriesDictionary[packageName])
+					else:
+						print "[Warning] Found an invalid remote certificate URL " + remoteCertificateURL + ". The linked package name will be skipped!"
+				else:
+					print "[Warning] Found an invalid package name " + packageName + ". It will be skipped!"
 
 			# Finally set the hasStaticAssociativeMap attribute to True
 			setHasStaticAssociativeMapBool(repackHandlerFile, True)
