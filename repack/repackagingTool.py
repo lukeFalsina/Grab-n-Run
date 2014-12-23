@@ -1,28 +1,21 @@
 import sys, argparse, shutil, os
 
 # Customize this variable to match the local folder 
-# where Androguard is located on your machine 
-androguard_location = '/home/luca/TesiCS/androguard/' 
+# where a running copy of Androguard is stored on your machine 
+androguard_location = '/<path-to-local-androguard-folder>/androguard/' 
 sys.path.insert(1, androguard_location)
 
-#from androguard.core import *
-#from androguard.core.androgen import *
-#from androguard.core.androconf import *
-#from androguard.core.bytecode import *
+# Modules imported from Androguard.
 import androguard.core.bytecodes.jvm as jvm
 import androguard.core.bytecodes.dvm as dvm
 import androguard.core.bytecodes.apk as apk
-
 import androguard.core.analysis.analysis as analysis
-#from androguard.core.analysis.ganalysis import *
-#from androguard.core.analysis.risk import *
-#from androguard.decompiler.decompiler import *
 
 # Library used for download of remote container
 import urllib, urlparse, os.path
 
 # Libary used for digest computation
-import hashlib, base64
+import hashlib, base64, zipfile
 
 # Library used to create grammars and parse files
 from pyparsing import *
@@ -35,7 +28,7 @@ import xml.etree.ElementTree as ET
 
 # Androguard script which automatizes collection of useful information
 # on JAR and APK.
-import androlyze, zipfile
+import androlyze
 
 # Grammar elements for smali code (Used for smali parsing)
 INTEGER = Word( nums, max = 1 )

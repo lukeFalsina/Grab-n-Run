@@ -1,0 +1,18 @@
+# Required modules you will need on your machine in order to run
+# 'Grab'n Run repackaging tool".
+# Type in a terminal the following command:
+# pip install -r /<local-path-to-GNR-folder>/repack/requirements.txt
+
+# You will also need to setup a local copy of Androguard to run this tool
+# and to link its local folder to the variable "androguard_location" 
+# at the beginning of the file named "repackagingTool.py".
+
+# For further details on Androguard installation see:
+# https://code.google.com/p/androguard/wiki/Installation
+
+# Finally notice that this script requires a Python version >= 2.6 and <= 3.
+# To run the script simply type:
+# python repackagingTool.py
+
+argparse>=1.2.1
+pyparsing>=2.0.1
