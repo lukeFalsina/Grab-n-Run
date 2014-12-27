@@ -507,11 +507,9 @@ public class SecureLoaderFactory {
 		    
 		    // ..and translated into a human readable string through Base64 encoding (Url safe).
 		    // Also remove the last /n part of the string
-		    // digestString = new String(Base64.encode(digestBytes, Base64.URL_SAFE));
 		    digestString = Base64.encodeToString(digestBytes, Base64.URL_SAFE);
+		    digestString = digestString.replace(System.getProperty("line.separator"), "").replace("\r", "");
 		    
-		    // Log.w(TAG_SECURE_FACTORY, digestString);
-		    // Log.w(TAG_SECURE_FACTORY, digestString.substring(0, digestString.length() - 3));
 		} catch (FileNotFoundException e) {
 			Log.w(TAG_SECURE_FACTORY, "No file found at " + filePath);
 		} catch (IOException e) {

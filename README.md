@@ -2,7 +2,7 @@
 
 *Grab’n Run* (aka **GNR**) is a **simple** and **effective** Java Library that you can easily add to your Android projects to perform *secure dynamic class loading* operations over standard [DexClassLoader](http://developer.android.com/reference/dalvik/system/DexClassLoader.html).
 
-Previous research has shown that many applications often need to perform dynamic class loading to implement, for example, non-invasive self-update features. However, research has also shown that it is really challenging to *safely* implement these features. This is of particular importance as, in this context, **one single mistake** could open the application (and, therefore, the entire device) to **serious security vulnerabilies**, such as *remote code execution*.
+Previous research has shown that many applications often need to perform dynamic class loading to implement, for example, non-invasive self-update features. However, research has also shown that it is really challenging to *safely* implement these features. This is of particular importance as, in this context, **one single mistake** could open the application (and, therefore, the entire device) to **serious security vulnerabilities**, such as *remote code execution*.
 
 The main goal of *Grab's Run* is to offer an alternative to the standard Android APIs, and its design enforces that even the most inexperienced developer cannot commit well-known, serious mistakes.
 

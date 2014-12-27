@@ -190,7 +190,7 @@ public class SecureDexClassLoader {
 			
 			// In jar containers you may have classes from different package names, while in apk
 			// there is usually only one of those.
-			List<String> packageNameList = getPackageNamesFromContainerPath(currentPath);
+			Set<String> packageNameList = getPackageNamesFromContainerPath(currentPath);
 			
 			if (packageNameList != null && !packageNameList.isEmpty()) {
 				
@@ -216,16 +216,19 @@ public class SecureDexClassLoader {
 		}
 	}
 
-	private List<String> getPackageNamesFromContainerPath(String containerPath) {
+	private Set<String> getPackageNamesFromContainerPath(String containerPath) {
 		
 		// Filter empty or missing path input
-		if (containerPath == null || containerPath.isEmpty()) return null;
+		if (containerPath == null || containerPath.isEmpty() || !(new File(containerPath).exists())) return null;
 		
 		// Check whether the selected resource is a container (jar or apk)
 		int extensionIndex = containerPath.lastIndexOf(".");
+		
+		if (extensionIndex == -1) return null;
+		
 		String extension = containerPath.substring(extensionIndex);
 		
-		List<String> packageNameList = new ArrayList<String>();
+		Set<String> packageNameSet = new HashSet<String>();
 		
 		if (extension.equals(".apk")) {
 			
@@ -233,8 +236,8 @@ public class SecureDexClassLoader {
 			// Use PackageManager to retrieve the package name of the APK container
 			if (mPackageManager.getPackageArchiveInfo(containerPath, 0) != null) {
 
-				packageNameList.add(mPackageManager.getPackageArchiveInfo(containerPath, 0).packageName);
-				return packageNameList;
+				packageNameSet.add(mPackageManager.getPackageArchiveInfo(containerPath, 0).packageName);
+				return packageNameSet;
 			}
 			
 			return null;
@@ -278,7 +281,7 @@ public class SecureDexClassLoader {
 				// Since in a jar there may be different package names for each class
 				// but at the same time I want to keep just one record for each package
 				// name, a set data structure fits well while processing.
-				Set<String> packageNameSet = new HashSet<String>();
+				// Set<String> packageNameSet = new HashSet<String>();
 				
 				try {
 					
@@ -319,15 +322,7 @@ public class SecureDexClassLoader {
 					return null;
 				}
 				
-				
-				// Populate the final list with the package names
-				// contained in the set.
-				Iterator<String> packageNameSetIterator = packageNameSet.iterator();
-				
-				while (packageNameSetIterator.hasNext())					
-					packageNameList.add(packageNameSetIterator.next());
-				
-				return packageNameList;
+				return packageNameSet;
 			}
 			
 			// If classes.dex is not present in the jar, the jar container is not valid
