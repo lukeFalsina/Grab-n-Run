@@ -36,7 +36,7 @@ This setup explains how to simply add *Grab'n Run* as a library for your Android
 
 #### 1. Include library
 
-* [Download JAR](https://github.com/lukeFalsina/Grab-n-Run/raw/master/downloads/gnr-1.0.jar)
+* [Download JAR](https://github.com/lukeFalsina/Grab-n-Run/raw/master/downloads/gnr-1.0.1.jar)
 * Put the JAR in the **libs** subfolder of your Android project
 
 #### 2. Android Manifest
