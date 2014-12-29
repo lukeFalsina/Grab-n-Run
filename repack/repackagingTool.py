@@ -32,14 +32,16 @@ import androlyze
 
 # Grammar elements for smali code (Used for smali parsing)
 INTEGER = Word( nums, max = 1 )
-CLASS_PATH = Combine( Word( alphas ) + OneOrMore( "/" + Word( alphas )) + Optional( "$" + Or(Word( alphas ) + Word( nums )) ) )
+ALPHABET = alphanums + '_-'
+CLASS_PATH = Combine( Word( alphas ) + OneOrMore( "/" + Word( ALPHABET )) + ZeroOrMore( "$" + Word( ALPHABET ) ) )
 CLASS_STRING = Group("L" + CLASS_PATH + ";")
 RETURN_TYPE = Word( alphas, max = 1 )
 OPERAND = Or( RETURN_TYPE + CLASS_STRING )
 METHOD_NAME = Or( "<init>" + Word( alphas ))
 METHOD_DECL = Group(METHOD_NAME + "(" + ZeroOrMore(OPERAND) + ")" + OPERAND)
 NUMBER_EXA = Group("(" + Combine( "0x" + Word( "0123456789abcdef" )) + ")")
-ACCESS_ATTR = Optional(oneOf("private protected public"))
+ACCESS_ATTR = Optional(oneOf("private protected public synthetic"))
+RESERVED_KEYWORDS = ZeroOrMore(oneOf("final interface abstract enum annotation"))
 VAR = Combine( Word('pv', max = 1) + Word( nums ) ) 
 
 # Required standard permission
@@ -428,7 +430,7 @@ def patchSmaliClasses(decodeDirName, classesWithDynCodeLoad):
 
 	smaliFolder = decodeDirName + os.sep + "smali"
 
-	firstLineFormat = ".class" + ACCESS_ATTR + Optional("final") + Optional("interface") + Optional("abstract") + CLASS_STRING
+	firstLineFormat = ".class" + ACCESS_ATTR + RESERVED_KEYWORDS + CLASS_STRING
 	repackHandler = "Lit/necst/grabnrun/RepackHandler;"
 	labelNumber = 0
 
