@@ -18,10 +18,10 @@
     .param p1, "certificateName"    # Ljava/lang/String;
 
     .prologue
-    .line 31
+    .line 46
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 17
+    .line 32
     const/4 v0, 0x1
 
     new-array v0, v0, [Ljava/lang/String;
@@ -34,10 +34,10 @@
 
     iput-object v0, p0, Lit/necst/grabnrun/CertFileFilter;->okCertsExtensions:[Ljava/lang/String;
 
-    .line 33
+    .line 48
     iput-object p1, p0, Lit/necst/grabnrun/CertFileFilter;->certificateName:Ljava/lang/String;
 
-    .line 34
+    .line 49
     return-void
 .end method
 
@@ -50,19 +50,19 @@
     .prologue
     const/4 v1, 0x0
 
-    .line 41
+    .line 56
     invoke-virtual {p1}, Ljava/io/File;->isDirectory()Z
 
     move-result v2
 
     if-eqz v2, :cond_1
 
-    .line 56
+    .line 71
     :cond_0
     :goto_0
     return v1
 
-    .line 43
+    .line 58
     :cond_1
     invoke-virtual {p1}, Ljava/io/File;->isFile()Z
 
@@ -70,7 +70,7 @@
 
     if-eqz v2, :cond_0
 
-    .line 48
+    .line 63
     iget-object v3, p0, Lit/necst/grabnrun/CertFileFilter;->okCertsExtensions:[Ljava/lang/String;
 
     array-length v4, v3
@@ -82,7 +82,7 @@
 
     aget-object v0, v3, v2
 
-    .line 50
+    .line 65
     .local v0, "extension":Ljava/lang/String;
     invoke-virtual {p1}, Ljava/io/File;->getName()Ljava/lang/String;
 
@@ -112,12 +112,12 @@
 
     if-eqz v5, :cond_2
 
-    .line 51
+    .line 66
     const/4 v1, 0x1
 
     goto :goto_0
 
-    .line 48
+    .line 63
     :cond_2
     add-int/lit8 v2, v2, 0x1
 

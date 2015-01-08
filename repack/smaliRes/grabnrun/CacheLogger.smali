@@ -54,7 +54,7 @@
     .locals 1
 
     .prologue
-    .line 29
+    .line 44
     const-class v0, Lit/necst/grabnrun/CacheLogger;
 
     invoke-virtual {v0}, Ljava/lang/Class;->getSimpleName()Ljava/lang/String;
@@ -63,7 +63,7 @@
 
     sput-object v0, Lit/necst/grabnrun/CacheLogger;->TAG_FILE_CACHE_LOGGER:Ljava/lang/String;
 
-    .line 47
+    .line 62
     return-void
 .end method
 
@@ -73,32 +73,32 @@
     .param p2, "daysTillConsideredFresh"    # I
 
     .prologue
-    .line 66
+    .line 81
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 70
+    .line 85
     new-instance v7, Ljava/util/HashMap;
 
     invoke-direct {v7}, Ljava/util/HashMap;-><init>()V
 
     iput-object v7, p0, Lit/necst/grabnrun/CacheLogger;->remoteURLToLocalFileMap:Ljava/util/Map;
 
-    .line 71
+    .line 86
     new-instance v7, Ljava/util/HashMap;
 
     invoke-direct {v7}, Ljava/util/HashMap;-><init>()V
 
     iput-object v7, p0, Lit/necst/grabnrun/CacheLogger;->remoteURLToCreationTimestamp:Ljava/util/Map;
 
-    .line 73
+    .line 88
     iput-object p1, p0, Lit/necst/grabnrun/CacheLogger;->cacheDirectoryPath:Ljava/lang/String;
 
-    .line 75
+    .line 90
     const/4 v7, 0x0
 
     iput-boolean v7, p0, Lit/necst/grabnrun/CacheLogger;->hasBeenAlreadyFinalized:Z
 
-    .line 80
+    .line 95
     new-instance v7, Ljava/io/File;
 
     new-instance v10, Ljava/lang/StringBuilder;
@@ -129,7 +129,7 @@
 
     iput-object v7, p0, Lit/necst/grabnrun/CacheLogger;->helperFile:Ljava/io/File;
 
-    .line 82
+    .line 97
     iget-object v7, p0, Lit/necst/grabnrun/CacheLogger;->helperFile:Ljava/io/File;
 
     invoke-virtual {v7}, Ljava/io/File;->exists()Z
@@ -138,10 +138,10 @@
 
     if-eqz v7, :cond_1
 
-    .line 84
+    .line 99
     const/4 v5, 0x0
 
-    .line 90
+    .line 105
     .local v5, "in":Ljava/util/Scanner;
     :try_start_0
     new-instance v7, Ljava/util/Scanner;
@@ -156,7 +156,7 @@
 
     move-result-object v5
 
-    .line 92
+    .line 107
     :cond_0
     :goto_0
     invoke-virtual {v5}, Ljava/util/Scanner;->hasNext()Z
@@ -168,19 +168,19 @@
 
     if-nez v7, :cond_2
 
-    .line 131
+    .line 146
     if-eqz v5, :cond_1
 
-    .line 132
+    .line 147
     invoke-virtual {v5}, Ljava/util/Scanner;->close()V
 
-    .line 136
+    .line 151
     .end local v5    # "in":Ljava/util/Scanner;
     :cond_1
     :goto_1
     return-void
 
-    .line 95
+    .line 110
     .restart local v5    # "in":Ljava/util/Scanner;
     :cond_2
     :try_start_1
@@ -188,7 +188,7 @@
 
     move-result-object v1
 
-    .line 96
+    .line 111
     .local v1, "currentLine":Ljava/lang/String;
     const-string v7, " "
 
@@ -196,7 +196,7 @@
 
     move-result-object v6
 
-    .line 98
+    .line 113
     .local v6, "lineTokens":[Ljava/lang/String;
     array-length v7, v6
 
@@ -204,7 +204,7 @@
 
     if-ne v7, v10, :cond_0
 
-    .line 100
+    .line 115
     new-instance v0, Ljava/io/File;
 
     new-instance v7, Ljava/lang/StringBuilder;
@@ -235,7 +235,7 @@
 
     invoke-direct {v0, v7}, Ljava/io/File;-><init>(Ljava/lang/String;)V
 
-    .line 102
+    .line 117
     .local v0, "checkContainerFile":Ljava/io/File;
     invoke-virtual {v0}, Ljava/io/File;->exists()Z
 
@@ -243,7 +243,7 @@
 
     if-eqz v7, :cond_0
 
-    .line 106
+    .line 121
     invoke-static {}, Ljava/lang/System;->currentTimeMillis()J
 
     move-result-wide v10
@@ -262,7 +262,7 @@
 
     sub-long v2, v10, v12
 
-    .line 109
+    .line 124
     .local v2, "currentLivedTime":J
     mul-int/lit8 v7, p2, 0x18
 
@@ -272,13 +272,13 @@
 
     int-to-long v8, v7
 
-    .line 111
+    .line 126
     .local v8, "maximumTimeToLive":J
     cmp-long v7, v2, v8
 
     if-gez v7, :cond_3
 
-    .line 114
+    .line 129
     iget-object v7, p0, Lit/necst/grabnrun/CacheLogger;->remoteURLToLocalFileMap:Ljava/util/Map;
 
     const/4 v10, 0x0
@@ -291,7 +291,7 @@
 
     invoke-interface {v7, v10, v11}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 
-    .line 115
+    .line 130
     iget-object v7, p0, Lit/necst/grabnrun/CacheLogger;->remoteURLToCreationTimestamp:Ljava/util/Map;
 
     const/4 v10, 0x0
@@ -313,7 +313,7 @@
 
     goto :goto_0
 
-    .line 127
+    .line 142
     .end local v0    # "checkContainerFile":Ljava/io/File;
     .end local v1    # "currentLine":Ljava/lang/String;
     .end local v2    # "currentLivedTime":J
@@ -322,7 +322,7 @@
     :catch_0
     move-exception v4
 
-    .line 128
+    .line 143
     .local v4, "e":Ljava/io/FileNotFoundException;
     :try_start_2
     sget-object v7, Lit/necst/grabnrun/CacheLogger;->TAG_FILE_CACHE_LOGGER:Ljava/lang/String;
@@ -333,15 +333,15 @@
     :try_end_2
     .catchall {:try_start_2 .. :try_end_2} :catchall_0
 
-    .line 131
+    .line 146
     if-eqz v5, :cond_1
 
-    .line 132
+    .line 147
     invoke-virtual {v5}, Ljava/util/Scanner;->close()V
 
     goto :goto_1
 
-    .line 120
+    .line 135
     .end local v4    # "e":Ljava/io/FileNotFoundException;
     .restart local v0    # "checkContainerFile":Ljava/io/File;
     .restart local v1    # "currentLine":Ljava/lang/String;
@@ -356,7 +356,7 @@
 
     if-eqz v7, :cond_0
 
-    .line 121
+    .line 136
     sget-object v7, Lit/necst/grabnrun/CacheLogger;->TAG_FILE_CACHE_LOGGER:Ljava/lang/String;
 
     new-instance v10, Ljava/lang/StringBuilder;
@@ -384,7 +384,7 @@
 
     goto/16 :goto_0
 
-    .line 129
+    .line 144
     .end local v0    # "checkContainerFile":Ljava/io/File;
     .end local v1    # "currentLine":Ljava/lang/String;
     .end local v2    # "currentLivedTime":J
@@ -393,13 +393,13 @@
     :catchall_0
     move-exception v7
 
-    .line 131
+    .line 146
     if-eqz v5, :cond_4
 
-    .line 132
+    .line 147
     invoke-virtual {v5}, Ljava/util/Scanner;->close()V
 
-    .line 134
+    .line 149
     :cond_4
     throw v7
 .end method
@@ -412,16 +412,16 @@
     .param p2, "localFileName"    # Ljava/lang/String;
 
     .prologue
-    .line 175
+    .line 190
     iget-boolean v0, p0, Lit/necst/grabnrun/CacheLogger;->hasBeenAlreadyFinalized:Z
 
     if-eqz v0, :cond_0
 
-    .line 180
+    .line 195
     :goto_0
     return-void
 
-    .line 178
+    .line 193
     :cond_0
     iget-object v0, p0, Lit/necst/grabnrun/CacheLogger;->remoteURLToCreationTimestamp:Ljava/util/Map;
 
@@ -435,7 +435,7 @@
 
     invoke-interface {v0, p1, v1}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 
-    .line 179
+    .line 194
     iget-object v0, p0, Lit/necst/grabnrun/CacheLogger;->remoteURLToLocalFileMap:Ljava/util/Map;
 
     invoke-interface {v0, p1, p2}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -450,18 +450,18 @@
     .prologue
     const/4 v1, 0x0
 
-    .line 150
+    .line 165
     iget-boolean v0, p0, Lit/necst/grabnrun/CacheLogger;->hasBeenAlreadyFinalized:Z
 
     if-eqz v0, :cond_0
 
     move-object v0, v1
 
-    .line 159
+    .line 174
     :goto_0
     return-object v0
 
-    .line 154
+    .line 169
     :cond_0
     iget-object v0, p0, Lit/necst/grabnrun/CacheLogger;->remoteURLToLocalFileMap:Ljava/util/Map;
 
@@ -471,7 +471,7 @@
 
     if-eqz v0, :cond_1
 
-    .line 155
+    .line 170
     new-instance v2, Ljava/io/File;
 
     new-instance v0, Ljava/lang/StringBuilder;
@@ -514,7 +514,7 @@
 
     if-eqz v0, :cond_1
 
-    .line 156
+    .line 171
     iget-object v0, p0, Lit/necst/grabnrun/CacheLogger;->remoteURLToLocalFileMap:Ljava/util/Map;
 
     invoke-interface {v0, p1}, Ljava/util/Map;->get(Ljava/lang/Object;)Ljava/lang/Object;
@@ -528,7 +528,7 @@
     :cond_1
     move-object v0, v1
 
-    .line 159
+    .line 174
     goto :goto_0
 .end method
 
@@ -536,23 +536,23 @@
     .locals 7
 
     .prologue
-    .line 194
+    .line 209
     iget-boolean v5, p0, Lit/necst/grabnrun/CacheLogger;->hasBeenAlreadyFinalized:Z
 
     if-eqz v5, :cond_1
 
-    .line 240
+    .line 255
     :cond_0
     :goto_0
     return-void
 
-    .line 195
+    .line 210
     :cond_1
     const/4 v5, 0x1
 
     iput-boolean v5, p0, Lit/necst/grabnrun/CacheLogger;->hasBeenAlreadyFinalized:Z
 
-    .line 198
+    .line 213
     iget-object v5, p0, Lit/necst/grabnrun/CacheLogger;->helperFile:Ljava/io/File;
 
     invoke-virtual {v5}, Ljava/io/File;->exists()Z
@@ -561,7 +561,7 @@
 
     if-eqz v5, :cond_2
 
-    .line 199
+    .line 214
     iget-object v5, p0, Lit/necst/grabnrun/CacheLogger;->helperFile:Ljava/io/File;
 
     invoke-virtual {v5}, Ljava/io/File;->delete()Z
@@ -570,14 +570,14 @@
 
     if-nez v5, :cond_2
 
-    .line 200
+    .line 215
     sget-object v5, Lit/necst/grabnrun/CacheLogger;->TAG_FILE_CACHE_LOGGER:Ljava/lang/String;
 
     const-string v6, "Problem while erasing old copy of helper file!"
 
     invoke-static {v5, v6}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 202
+    .line 217
     :cond_2
     iget-object v5, p0, Lit/necst/grabnrun/CacheLogger;->remoteURLToLocalFileMap:Ljava/util/Map;
 
@@ -587,10 +587,10 @@
 
     if-nez v5, :cond_0
 
-    .line 207
+    .line 222
     const/4 v2, 0x0
 
-    .line 211
+    .line 226
     .local v2, "mPrintWriter":Ljava/io/PrintWriter;
     :try_start_0
     new-instance v3, Ljava/io/PrintWriter;
@@ -602,7 +602,7 @@
     .catch Ljava/io/IOException; {:try_start_0 .. :try_end_0} :catch_1
     .catchall {:try_start_0 .. :try_end_0} :catchall_1
 
-    .line 213
+    .line 228
     .end local v2    # "mPrintWriter":Ljava/io/PrintWriter;
     .local v3, "mPrintWriter":Ljava/io/PrintWriter;
     :try_start_1
@@ -616,7 +616,7 @@
 
     move-result-object v4
 
-    .line 215
+    .line 230
     .local v4, "remoteURLIterator":Ljava/util/Iterator;, "Ljava/util/Iterator<Ljava/lang/String;>;"
     :cond_3
     :goto_1
@@ -626,14 +626,14 @@
 
     if-nez v5, :cond_4
 
-    .line 227
+    .line 242
     invoke-virtual {v3}, Ljava/io/PrintWriter;->checkError()Z
 
     move-result v5
 
     if-eqz v5, :cond_6
 
-    .line 228
+    .line 243
     new-instance v5, Ljava/io/IOException;
 
     invoke-direct {v5}, Ljava/io/IOException;-><init>()V
@@ -643,14 +643,14 @@
     .catch Ljava/io/IOException; {:try_start_1 .. :try_end_1} :catch_0
     .catchall {:try_start_1 .. :try_end_1} :catchall_0
 
-    .line 232
+    .line 247
     .end local v4    # "remoteURLIterator":Ljava/util/Iterator;, "Ljava/util/Iterator<Ljava/lang/String;>;"
     :catch_0
     move-exception v1
 
     move-object v2, v3
 
-    .line 233
+    .line 248
     .end local v3    # "mPrintWriter":Ljava/io/PrintWriter;
     .local v1, "e":Ljava/io/IOException;
     .restart local v2    # "mPrintWriter":Ljava/io/PrintWriter;
@@ -664,15 +664,15 @@
     :try_end_2
     .catchall {:try_start_2 .. :try_end_2} :catchall_1
 
-    .line 236
+    .line 251
     if-eqz v2, :cond_0
 
-    .line 237
+    .line 252
     invoke-virtual {v2}, Ljava/io/PrintWriter;->close()V
 
     goto :goto_0
 
-    .line 217
+    .line 232
     .end local v1    # "e":Ljava/io/IOException;
     .end local v2    # "mPrintWriter":Ljava/io/PrintWriter;
     .restart local v3    # "mPrintWriter":Ljava/io/PrintWriter;
@@ -685,7 +685,7 @@
 
     check-cast v0, Ljava/lang/String;
 
-    .line 219
+    .line 234
     .local v0, "currentRemoteURL":Ljava/lang/String;
     iget-object v5, p0, Lit/necst/grabnrun/CacheLogger;->remoteURLToCreationTimestamp:Ljava/util/Map;
 
@@ -695,7 +695,7 @@
 
     if-eqz v5, :cond_3
 
-    .line 223
+    .line 238
     new-instance v5, Ljava/lang/StringBuilder;
 
     invoke-static {v0}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
@@ -755,7 +755,7 @@
 
     goto :goto_1
 
-    .line 234
+    .line 249
     .end local v0    # "currentRemoteURL":Ljava/lang/String;
     .end local v4    # "remoteURLIterator":Ljava/util/Iterator;, "Ljava/util/Iterator<Ljava/lang/String;>;"
     :catchall_0
@@ -763,20 +763,20 @@
 
     move-object v2, v3
 
-    .line 236
+    .line 251
     .end local v3    # "mPrintWriter":Ljava/io/PrintWriter;
     .restart local v2    # "mPrintWriter":Ljava/io/PrintWriter;
     :goto_3
     if-eqz v2, :cond_5
 
-    .line 237
+    .line 252
     invoke-virtual {v2}, Ljava/io/PrintWriter;->close()V
 
-    .line 238
+    .line 253
     :cond_5
     throw v5
 
-    .line 230
+    .line 245
     .end local v2    # "mPrintWriter":Ljava/io/PrintWriter;
     .restart local v3    # "mPrintWriter":Ljava/io/PrintWriter;
     .restart local v4    # "remoteURLIterator":Ljava/util/Iterator;, "Ljava/util/Iterator<Ljava/lang/String;>;"
@@ -791,15 +791,15 @@
     .catch Ljava/io/IOException; {:try_start_4 .. :try_end_4} :catch_0
     .catchall {:try_start_4 .. :try_end_4} :catchall_0
 
-    .line 236
+    .line 251
     if-eqz v3, :cond_0
 
-    .line 237
+    .line 252
     invoke-virtual {v3}, Ljava/io/PrintWriter;->close()V
 
     goto/16 :goto_0
 
-    .line 234
+    .line 249
     .end local v3    # "mPrintWriter":Ljava/io/PrintWriter;
     .end local v4    # "remoteURLIterator":Ljava/util/Iterator;, "Ljava/util/Iterator<Ljava/lang/String;>;"
     .restart local v2    # "mPrintWriter":Ljava/io/PrintWriter;
@@ -808,7 +808,7 @@
 
     goto :goto_3
 
-    .line 232
+    .line 247
     :catch_1
     move-exception v1
 

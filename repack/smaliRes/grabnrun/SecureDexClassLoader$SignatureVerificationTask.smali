@@ -54,22 +54,22 @@
     .end annotation
 
     .prologue
-    .line 647
+    .line 665
     .local p4, "successVerifiedContainerSet":Ljava/util/Set;, "Ljava/util/Set<Ljava/lang/String;>;"
     iput-object p1, p0, Lit/necst/grabnrun/SecureDexClassLoader$SignatureVerificationTask;->this$0:Lit/necst/grabnrun/SecureDexClassLoader;
 
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 650
+    .line 668
     iput-object p2, p0, Lit/necst/grabnrun/SecureDexClassLoader$SignatureVerificationTask;->containerPath:Ljava/lang/String;
 
-    .line 651
+    .line 669
     iput-object p3, p0, Lit/necst/grabnrun/SecureDexClassLoader$SignatureVerificationTask;->rootPackageNameWithCertificate:Ljava/lang/String;
 
-    .line 652
+    .line 670
     iput-object p4, p0, Lit/necst/grabnrun/SecureDexClassLoader$SignatureVerificationTask;->successVerifiedContainerSet:Ljava/util/Set;
 
-    .line 653
+    .line 671
     return-void
 .end method
 
@@ -79,12 +79,12 @@
     .locals 5
 
     .prologue
-    .line 659
+    .line 677
     const/4 v2, 0x0
 
     invoke-static {v2}, Landroid/os/Process;->setThreadPriority(I)V
 
-    .line 665
+    .line 683
     iget-object v2, p0, Lit/necst/grabnrun/SecureDexClassLoader$SignatureVerificationTask;->this$0:Lit/necst/grabnrun/SecureDexClassLoader;
 
     iget-object v3, p0, Lit/necst/grabnrun/SecureDexClassLoader$SignatureVerificationTask;->rootPackageNameWithCertificate:Ljava/lang/String;
@@ -94,11 +94,11 @@
 
     move-result-object v1
 
-    .line 667
+    .line 685
     .local v1, "verifiedCertificate":Ljava/security/cert/X509Certificate;
     if-eqz v1, :cond_0
 
-    .line 673
+    .line 691
     iget-object v2, p0, Lit/necst/grabnrun/SecureDexClassLoader$SignatureVerificationTask;->this$0:Lit/necst/grabnrun/SecureDexClassLoader;
 
     iget-object v3, p0, Lit/necst/grabnrun/SecureDexClassLoader$SignatureVerificationTask;->containerPath:Ljava/lang/String;
@@ -108,16 +108,16 @@
 
     move-result v0
 
-    .line 676
+    .line 694
     .local v0, "signatureCheckIsSuccessful":Z
     if-eqz v0, :cond_0
 
-    .line 680
+    .line 698
     iget-object v3, p0, Lit/necst/grabnrun/SecureDexClassLoader$SignatureVerificationTask;->successVerifiedContainerSet:Ljava/util/Set;
 
     monitor-enter v3
 
-    .line 682
+    .line 700
     :try_start_0
     iget-object v2, p0, Lit/necst/grabnrun/SecureDexClassLoader$SignatureVerificationTask;->successVerifiedContainerSet:Ljava/util/Set;
 
@@ -125,15 +125,15 @@
 
     invoke-interface {v2, v4}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
 
-    .line 680
+    .line 698
     monitor-exit v3
 
-    .line 686
+    .line 704
     .end local v0    # "signatureCheckIsSuccessful":Z
     :cond_0
     return-void
 
-    .line 680
+    .line 698
     .restart local v0    # "signatureCheckIsSuccessful":Z
     :catchall_0
     move-exception v2

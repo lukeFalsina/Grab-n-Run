@@ -19,16 +19,16 @@
     .param p2, "extension"    # Ljava/lang/String;
 
     .prologue
-    .line 27
+    .line 42
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 29
+    .line 44
     iput-object p1, p0, Lit/necst/grabnrun/FileFilterByName;->name:Ljava/lang/String;
 
-    .line 30
+    .line 45
     iput-object p2, p0, Lit/necst/grabnrun/FileFilterByName;->extension:Ljava/lang/String;
 
-    .line 31
+    .line 46
     return-void
 .end method
 
@@ -41,19 +41,19 @@
     .prologue
     const/4 v0, 0x0
 
-    .line 38
+    .line 53
     invoke-virtual {p1}, Ljava/io/File;->isDirectory()Z
 
     move-result v1
 
     if-eqz v1, :cond_1
 
-    .line 50
+    .line 65
     :cond_0
     :goto_0
     return v0
 
-    .line 40
+    .line 55
     :cond_1
     invoke-virtual {p1}, Ljava/io/File;->isFile()Z
 
@@ -61,7 +61,7 @@
 
     if-eqz v1, :cond_0
 
-    .line 45
+    .line 60
     invoke-virtual {p1}, Ljava/io/File;->getName()Ljava/lang/String;
 
     move-result-object v1
@@ -92,7 +92,7 @@
 
     if-eqz v1, :cond_0
 
-    .line 46
+    .line 61
     const/4 v0, 0x1
 
     goto :goto_0

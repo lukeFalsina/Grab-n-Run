@@ -1,6 +1,6 @@
     sput-boolean v2, Lit/necst/grabnrun/RepackHandler;->hasStaticAssociativeMap:Z
 
-    .line 159
+    .line 160
     :try_start_0
     const-string v2, "SHA-1"
 
@@ -12,20 +12,20 @@
     :try_end_0
     .catch Ljava/security/NoSuchAlgorithmException; {:try_start_0 .. :try_end_0} :catch_0
 
-    .line 166
+    .line 167
     :goto_0
     const/4 v2, 0x1
 
     sput-boolean v2, Lit/necst/grabnrun/RepackHandler;->gotUserInput:Z
 
-    .line 168
+    .line 169
     return-void
 
-    .line 160
+    .line 161
     :catch_0
     move-exception v0
 
-    .line 162
+    .line 163
     .local v0, "e":Ljava/security/NoSuchAlgorithmException;
     invoke-virtual {v0}, Ljava/security/NoSuchAlgorithmException;->printStackTrace()V
 
@@ -50,7 +50,7 @@
     .end annotation
 
     .prologue
-    .line 285
+    .line 290
     .local p0, "associativeMap":Ljava/util/Map;, "Ljava/util/Map<Ljava/lang/String;Ljava/net/URL;>;"
     .local p1, "packageNamesIterator":Ljava/util/Iterator;, "Ljava/util/Iterator<Ljava/lang/String;>;"
     :cond_0
@@ -61,10 +61,10 @@
 
     if-nez v2, :cond_1
 
-    .line 300
+    .line 305
     return-void
 
-    .line 287
+    .line 292
     :cond_1
     invoke-interface {p1}, Ljava/util/Iterator;->next()Ljava/lang/Object;
 
@@ -72,7 +72,7 @@
 
     check-cast v1, Ljava/lang/String;
 
-    .line 289
+    .line 294
     .local v1, "packageNameToInsert":Ljava/lang/String;
     sget-object v2, Lit/necst/grabnrun/RepackHandler;->packageNameToCertificateURLMap:Ljava/util/Map;
 
@@ -82,7 +82,7 @@
 
     if-eqz v2, :cond_0
 
-    .line 293
+    .line 298
     :try_start_0
     new-instance v3, Ljava/net/URL;
 
@@ -102,11 +102,11 @@
 
     goto :goto_0
 
-    .line 294
+    .line 299
     :catch_0
     move-exception v0
 
-    .line 296
+    .line 301
     .local v0, "e":Ljava/net/MalformedURLException;
     invoke-virtual {v0}, Ljava/net/MalformedURLException;->printStackTrace()V
 
@@ -122,7 +122,7 @@
     .end annotation
 
     .prologue
-    .line 358
+    .line 363
     new-instance v0, Ljava/lang/ClassNotFoundException;
 
     const-string v1, "A security constraint was violated and so SecureDexClassLoader prevents target class from being loaded."

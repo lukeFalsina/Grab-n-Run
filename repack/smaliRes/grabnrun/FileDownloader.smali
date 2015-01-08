@@ -20,7 +20,7 @@
     .locals 1
 
     .prologue
-    .line 29
+    .line 44
     const-class v0, Lit/necst/grabnrun/FileDownloader;
 
     invoke-virtual {v0}, Ljava/lang/Class;->getSimpleName()Ljava/lang/String;
@@ -37,10 +37,10 @@
     .param p1, "parentContextWrapper"    # Landroid/content/ContextWrapper;
 
     .prologue
-    .line 44
+    .line 59
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 46
+    .line 61
     const-string v0, "connectivity"
 
     invoke-virtual {p1, v0}, Landroid/content/ContextWrapper;->getSystemService(Ljava/lang/String;)Ljava/lang/Object;
@@ -51,12 +51,12 @@
 
     iput-object v0, p0, Lit/necst/grabnrun/FileDownloader;->mConnectivityManager:Landroid/net/ConnectivityManager;
 
-    .line 47
+    .line 62
     const/4 v0, 0x0
 
     iput-object v0, p0, Lit/necst/grabnrun/FileDownloader;->fileMimeType:Ljava/lang/String;
 
-    .line 48
+    .line 63
     return-void
 .end method
 
@@ -64,7 +64,7 @@
     .locals 1
 
     .prologue
-    .line 29
+    .line 44
     sget-object v0, Lit/necst/grabnrun/FileDownloader;->TAG_FILE_DOWNLOADER:Ljava/lang/String;
 
     return-object v0
@@ -74,7 +74,7 @@
     .locals 0
 
     .prologue
-    .line 34
+    .line 49
     iput-object p1, p0, Lit/necst/grabnrun/FileDownloader;->fileMimeType:Ljava/lang/String;
 
     return-void
@@ -91,7 +91,7 @@
     .prologue
     const/4 v3, 0x0
 
-    .line 70
+    .line 85
     iget-object v4, p0, Lit/necst/grabnrun/FileDownloader;->mConnectivityManager:Landroid/net/ConnectivityManager;
 
     invoke-virtual {v4}, Landroid/net/ConnectivityManager;->getActiveNetworkInfo()Landroid/net/NetworkInfo;
@@ -100,7 +100,7 @@
 
     iput-object v4, p0, Lit/necst/grabnrun/FileDownloader;->activeNetworkInfo:Landroid/net/NetworkInfo;
 
-    .line 71
+    .line 86
     iget-object v4, p0, Lit/necst/grabnrun/FileDownloader;->activeNetworkInfo:Landroid/net/NetworkInfo;
 
     if-eqz v4, :cond_0
@@ -113,7 +113,7 @@
 
     if-nez v4, :cond_2
 
-    .line 73
+    .line 88
     :cond_0
     sget-object v4, Lit/necst/grabnrun/FileDownloader;->TAG_FILE_DOWNLOADER:Ljava/lang/String;
 
@@ -121,33 +121,33 @@
 
     invoke-static {v4, v5}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 208
+    .line 223
     :cond_1
     :goto_0
     return v3
 
-    .line 78
+    .line 93
     :cond_2
     new-instance v0, Lit/necst/grabnrun/FileDownloader$1;
 
     invoke-direct {v0, p0, p1, p3, p2}, Lit/necst/grabnrun/FileDownloader$1;-><init>(Lit/necst/grabnrun/FileDownloader;Ljava/net/URL;ZLjava/lang/String;)V
 
-    .line 192
+    .line 207
     .local v0, "dataThread":Ljava/lang/Thread;
     invoke-virtual {v0}, Ljava/lang/Thread;->start()V
 
-    .line 196
+    .line 211
     :try_start_0
     invoke-virtual {v0}, Ljava/lang/Thread;->join()V
     :try_end_0
     .catch Ljava/lang/InterruptedException; {:try_start_0 .. :try_end_0} :catch_0
 
-    .line 202
+    .line 217
     new-instance v2, Ljava/io/File;
 
     invoke-direct {v2, p2}, Ljava/io/File;-><init>(Ljava/lang/String;)V
 
-    .line 205
+    .line 220
     .local v2, "fileAtLocalURI":Ljava/io/File;
     invoke-virtual {v2}, Ljava/io/File;->exists()Z
 
@@ -165,17 +165,17 @@
 
     if-lez v4, :cond_1
 
-    .line 206
+    .line 221
     const/4 v3, 0x1
 
     goto :goto_0
 
-    .line 197
+    .line 212
     .end local v2    # "fileAtLocalURI":Ljava/io/File;
     :catch_0
     move-exception v1
 
-    .line 198
+    .line 213
     .local v1, "e":Ljava/lang/InterruptedException;
     invoke-virtual {v1}, Ljava/lang/InterruptedException;->printStackTrace()V
 
@@ -188,17 +188,17 @@
     .prologue
     const/4 v0, 0x0
 
-    .line 220
+    .line 235
     iget-object v1, p0, Lit/necst/grabnrun/FileDownloader;->fileMimeType:Ljava/lang/String;
 
     if-nez v1, :cond_1
 
-    .line 239
+    .line 254
     :cond_0
     :goto_0
     return-object v0
 
-    .line 223
+    .line 238
     :cond_1
     iget-object v1, p0, Lit/necst/grabnrun/FileDownloader;->fileMimeType:Ljava/lang/String;
 
@@ -219,12 +219,12 @@
 
     if-eqz v1, :cond_0
 
-    .line 227
+    .line 242
     const-string v0, ".apk"
 
     goto :goto_0
 
-    .line 223
+    .line 238
     :sswitch_1
     const-string v2, "application/octet-stream"
 
@@ -234,12 +234,12 @@
 
     if-eqz v1, :cond_0
 
-    .line 235
+    .line 250
     const-string v0, ".pem"
 
     goto :goto_0
 
-    .line 223
+    .line 238
     :sswitch_2
     const-string v2, "application/java-archive"
 
@@ -249,12 +249,12 @@
 
     if-eqz v1, :cond_0
 
-    .line 231
+    .line 246
     const-string v0, ".jar"
 
     goto :goto_0
 
-    .line 223
+    .line 238
     nop
 
     :sswitch_data_0

@@ -38,7 +38,7 @@
 
     iput-object p4, p0, Lit/necst/grabnrun/FileDownloader$1;->val$localURI:Ljava/lang/String;
 
-    .line 78
+    .line 93
     invoke-direct {p0}, Ljava/lang/Thread;-><init>()V
 
     return-void
@@ -50,18 +50,18 @@
     .locals 16
 
     .prologue
-    .line 83
+    .line 98
     const/4 v12, 0x0
 
-    .line 84
+    .line 99
     .local v12, "urlConnection":Ljava/net/HttpURLConnection;
     const/4 v5, 0x0
 
-    .line 85
+    .line 100
     .local v5, "inputStream":Ljava/io/InputStream;
     const/4 v7, 0x0
 
-    .line 89
+    .line 104
     .local v7, "outputStream":Ljava/io/OutputStream;
     :try_start_0
     move-object/from16 v0, p0
@@ -80,7 +80,7 @@
 
     if-eqz v13, :cond_6
 
-    .line 91
+    .line 106
     move-object/from16 v0, p0
 
     iget-object v13, v0, Lit/necst/grabnrun/FileDownloader$1;->val$remoteURL:Ljava/net/URL;
@@ -95,13 +95,13 @@
 
     move-object v12, v0
 
-    .line 98
+    .line 113
     :goto_0
     const/16 v13, 0x3e8
 
     invoke-virtual {v12, v13}, Ljava/net/HttpURLConnection;->setConnectTimeout(I)V
 
-    .line 102
+    .line 117
     # getter for: Lit/necst/grabnrun/FileDownloader;->TAG_FILE_DOWNLOADER:Ljava/lang/String;
     invoke-static {}, Lit/necst/grabnrun/FileDownloader;->access$0()Ljava/lang/String;
 
@@ -131,52 +131,52 @@
 
     invoke-static {v13, v14}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 105
+    .line 120
     move-object/from16 v0, p0
 
     iget-boolean v13, v0, Lit/necst/grabnrun/FileDownloader$1;->val$isRedirectAllowed:Z
 
     if-eqz v13, :cond_2
 
-    .line 107
+    .line 122
     const/4 v10, 0x0
 
-    .line 110
+    .line 125
     .local v10, "redirect":Z
     invoke-virtual {v12}, Ljava/net/HttpURLConnection;->getResponseCode()I
 
     move-result v2
 
-    .line 111
+    .line 126
     .local v2, "connection_status":I
     const/16 v13, 0xc8
 
     if-eq v2, v13, :cond_1
 
-    .line 112
+    .line 127
     const/16 v13, 0x12e
 
     if-eq v2, v13, :cond_0
 
-    .line 113
+    .line 128
     const/16 v13, 0x12d
 
     if-eq v2, v13, :cond_0
 
-    .line 114
+    .line 129
     const/16 v13, 0x12f
 
     if-ne v2, v13, :cond_1
 
-    .line 116
+    .line 131
     :cond_0
     const/4 v10, 0x1
 
-    .line 119
+    .line 134
     :cond_1
     if-eqz v10, :cond_2
 
-    .line 122
+    .line 137
     new-instance v11, Ljava/net/URL;
 
     const-string v13, "Location"
@@ -187,7 +187,7 @@
 
     invoke-direct {v11, v13}, Ljava/net/URL;-><init>(Ljava/lang/String;)V
 
-    .line 125
+    .line 140
     .local v11, "redirectedURL":Ljava/net/URL;
     const-string v13, "Set-Cookie"
 
@@ -195,7 +195,7 @@
 
     move-result-object v3
 
-    .line 128
+    .line 143
     .local v3, "cookies":Ljava/lang/String;
     invoke-virtual {v11}, Ljava/net/URL;->getProtocol()Ljava/lang/String;
 
@@ -209,7 +209,7 @@
 
     if-eqz v13, :cond_7
 
-    .line 130
+    .line 145
     invoke-virtual {v11}, Ljava/net/URL;->openConnection()Ljava/net/URLConnection;
 
     move-result-object v13
@@ -220,18 +220,18 @@
 
     move-object v12, v0
 
-    .line 137
+    .line 152
     :goto_1
     const/16 v13, 0x3e8
 
     invoke-virtual {v12, v13}, Ljava/net/HttpURLConnection;->setConnectTimeout(I)V
 
-    .line 139
+    .line 154
     const-string v13, "Cookie"
 
     invoke-virtual {v12, v13, v3}, Ljava/net/HttpURLConnection;->setRequestProperty(Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 141
+    .line 156
     # getter for: Lit/necst/grabnrun/FileDownloader;->TAG_FILE_DOWNLOADER:Ljava/lang/String;
     invoke-static {}, Lit/necst/grabnrun/FileDownloader;->access$0()Ljava/lang/String;
 
@@ -257,7 +257,7 @@
 
     invoke-static {v13, v14}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 146
+    .line 161
     .end local v2    # "connection_status":I
     .end local v3    # "cookies":Ljava/lang/String;
     .end local v10    # "redirect":Z
@@ -273,7 +273,7 @@
 
     invoke-static {v13, v14}, Lit/necst/grabnrun/FileDownloader;->access$1(Lit/necst/grabnrun/FileDownloader;Ljava/lang/String;)V
 
-    .line 150
+    .line 165
     new-instance v6, Ljava/io/BufferedInputStream;
 
     invoke-virtual {v12}, Ljava/net/HttpURLConnection;->getInputStream()Ljava/io/InputStream;
@@ -285,7 +285,7 @@
     .catch Ljava/io/IOException; {:try_start_0 .. :try_end_0} :catch_7
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 151
+    .line 166
     .end local v5    # "inputStream":Ljava/io/InputStream;
     .local v6, "inputStream":Ljava/io/InputStream;
     :try_start_1
@@ -300,19 +300,19 @@
     .catch Ljava/io/IOException; {:try_start_1 .. :try_end_1} :catch_8
     .catchall {:try_start_1 .. :try_end_1} :catchall_1
 
-    .line 153
+    .line 168
     .end local v7    # "outputStream":Ljava/io/OutputStream;
     .local v8, "outputStream":Ljava/io/OutputStream;
     const/4 v9, 0x0
 
-    .line 154
+    .line 169
     .local v9, "read":I
     const/16 v13, 0x400
 
     :try_start_2
     new-array v1, v13, [B
 
-    .line 156
+    .line 171
     .local v1, "bytes":[B
     :goto_2
     invoke-virtual {v6, v1}, Ljava/io/InputStream;->read([B)I
@@ -321,7 +321,7 @@
 
     if-gtz v9, :cond_8
 
-    .line 160
+    .line 175
     # getter for: Lit/necst/grabnrun/FileDownloader;->TAG_FILE_DOWNLOADER:Ljava/lang/String;
     invoke-static {}, Lit/necst/grabnrun/FileDownloader;->access$0()Ljava/lang/String;
 
@@ -350,7 +350,7 @@
     .catch Ljava/io/IOException; {:try_start_2 .. :try_end_2} :catch_0
     .catchall {:try_start_2 .. :try_end_2} :catchall_2
 
-    .line 168
+    .line 183
     # getter for: Lit/necst/grabnrun/FileDownloader;->TAG_FILE_DOWNLOADER:Ljava/lang/String;
     invoke-static {}, Lit/necst/grabnrun/FileDownloader;->access$0()Ljava/lang/String;
 
@@ -360,28 +360,28 @@
 
     invoke-static {v13, v14}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 169
+    .line 184
     if-eqz v12, :cond_3
 
-    .line 170
+    .line 185
     invoke-virtual {v12}, Ljava/net/HttpURLConnection;->disconnect()V
 
-    .line 172
+    .line 187
     :cond_3
     if-eqz v6, :cond_4
 
-    .line 174
+    .line 189
     :try_start_3
     invoke-virtual {v6}, Ljava/io/InputStream;->close()V
     :try_end_3
     .catch Ljava/io/IOException; {:try_start_3 .. :try_end_3} :catch_5
 
-    .line 179
+    .line 194
     :cond_4
     :goto_3
     if-eqz v8, :cond_e
 
-    .line 182
+    .line 197
     :try_start_4
     invoke-virtual {v8}, Ljava/io/OutputStream;->close()V
     :try_end_4
@@ -393,7 +393,7 @@
     .restart local v7    # "outputStream":Ljava/io/OutputStream;
     move-object v5, v6
 
-    .line 189
+    .line 204
     .end local v1    # "bytes":[B
     .end local v6    # "inputStream":Ljava/io/InputStream;
     .end local v9    # "read":I
@@ -402,7 +402,7 @@
     :goto_4
     return-void
 
-    .line 94
+    .line 109
     :cond_6
     :try_start_5
     move-object/from16 v0, p0
@@ -421,7 +421,7 @@
 
     goto/16 :goto_0
 
-    .line 133
+    .line 148
     .restart local v2    # "connection_status":I
     .restart local v3    # "cookies":Ljava/lang/String;
     .restart local v10    # "redirect":Z
@@ -442,7 +442,7 @@
 
     goto/16 :goto_1
 
-    .line 157
+    .line 172
     .end local v2    # "connection_status":I
     .end local v3    # "cookies":Ljava/lang/String;
     .end local v5    # "inputStream":Ljava/io/InputStream;
@@ -464,7 +464,7 @@
 
     goto :goto_2
 
-    .line 162
+    .line 177
     .end local v1    # "bytes":[B
     :catch_0
     move-exception v13
@@ -475,7 +475,7 @@
     .restart local v7    # "outputStream":Ljava/io/OutputStream;
     move-object v5, v6
 
-    .line 168
+    .line 183
     .end local v6    # "inputStream":Ljava/io/InputStream;
     .end local v9    # "read":I
     .restart local v5    # "inputStream":Ljava/io/InputStream;
@@ -489,28 +489,28 @@
 
     invoke-static {v13, v14}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 169
+    .line 184
     if-eqz v12, :cond_9
 
-    .line 170
+    .line 185
     invoke-virtual {v12}, Ljava/net/HttpURLConnection;->disconnect()V
 
-    .line 172
+    .line 187
     :cond_9
     if-eqz v5, :cond_a
 
-    .line 174
+    .line 189
     :try_start_7
     invoke-virtual {v5}, Ljava/io/InputStream;->close()V
     :try_end_7
     .catch Ljava/io/IOException; {:try_start_7 .. :try_end_7} :catch_2
 
-    .line 179
+    .line 194
     :cond_a
     :goto_6
     if-eqz v7, :cond_5
 
-    .line 182
+    .line 197
     :try_start_8
     invoke-virtual {v7}, Ljava/io/OutputStream;->close()V
     :try_end_8
@@ -518,33 +518,33 @@
 
     goto :goto_4
 
-    .line 183
+    .line 198
     :catch_1
     move-exception v4
 
-    .line 184
+    .line 199
     .local v4, "e":Ljava/io/IOException;
     invoke-virtual {v4}, Ljava/io/IOException;->printStackTrace()V
 
     goto :goto_4
 
-    .line 175
+    .line 190
     .end local v4    # "e":Ljava/io/IOException;
     :catch_2
     move-exception v4
 
-    .line 176
+    .line 191
     .restart local v4    # "e":Ljava/io/IOException;
     invoke-virtual {v4}, Ljava/io/IOException;->printStackTrace()V
 
     goto :goto_6
 
-    .line 167
+    .line 182
     .end local v4    # "e":Ljava/io/IOException;
     :catchall_0
     move-exception v13
 
-    .line 168
+    .line 183
     :goto_7
     # getter for: Lit/necst/grabnrun/FileDownloader;->TAG_FILE_DOWNLOADER:Ljava/lang/String;
     invoke-static {}, Lit/necst/grabnrun/FileDownloader;->access$0()Ljava/lang/String;
@@ -555,60 +555,60 @@
 
     invoke-static {v14, v15}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 169
+    .line 184
     if-eqz v12, :cond_b
 
-    .line 170
+    .line 185
     invoke-virtual {v12}, Ljava/net/HttpURLConnection;->disconnect()V
 
-    .line 172
+    .line 187
     :cond_b
     if-eqz v5, :cond_c
 
-    .line 174
+    .line 189
     :try_start_9
     invoke-virtual {v5}, Ljava/io/InputStream;->close()V
     :try_end_9
     .catch Ljava/io/IOException; {:try_start_9 .. :try_end_9} :catch_3
 
-    .line 179
+    .line 194
     :cond_c
     :goto_8
     if-eqz v7, :cond_d
 
-    .line 182
+    .line 197
     :try_start_a
     invoke-virtual {v7}, Ljava/io/OutputStream;->close()V
     :try_end_a
     .catch Ljava/io/IOException; {:try_start_a .. :try_end_a} :catch_4
 
-    .line 187
+    .line 202
     :cond_d
     :goto_9
     throw v13
 
-    .line 175
+    .line 190
     :catch_3
     move-exception v4
 
-    .line 176
+    .line 191
     .restart local v4    # "e":Ljava/io/IOException;
     invoke-virtual {v4}, Ljava/io/IOException;->printStackTrace()V
 
     goto :goto_8
 
-    .line 183
+    .line 198
     .end local v4    # "e":Ljava/io/IOException;
     :catch_4
     move-exception v4
 
-    .line 184
+    .line 199
     .restart local v4    # "e":Ljava/io/IOException;
     invoke-virtual {v4}, Ljava/io/IOException;->printStackTrace()V
 
     goto :goto_9
 
-    .line 175
+    .line 190
     .end local v4    # "e":Ljava/io/IOException;
     .end local v5    # "inputStream":Ljava/io/InputStream;
     .end local v7    # "outputStream":Ljava/io/OutputStream;
@@ -619,18 +619,18 @@
     :catch_5
     move-exception v4
 
-    .line 176
+    .line 191
     .restart local v4    # "e":Ljava/io/IOException;
     invoke-virtual {v4}, Ljava/io/IOException;->printStackTrace()V
 
     goto :goto_3
 
-    .line 183
+    .line 198
     .end local v4    # "e":Ljava/io/IOException;
     :catch_6
     move-exception v4
 
-    .line 184
+    .line 199
     .restart local v4    # "e":Ljava/io/IOException;
     invoke-virtual {v4}, Ljava/io/IOException;->printStackTrace()V
 
@@ -646,7 +646,7 @@
     .restart local v5    # "inputStream":Ljava/io/InputStream;
     goto :goto_4
 
-    .line 167
+    .line 182
     .end local v1    # "bytes":[B
     .end local v5    # "inputStream":Ljava/io/InputStream;
     .end local v9    # "read":I
@@ -678,7 +678,7 @@
     .restart local v5    # "inputStream":Ljava/io/InputStream;
     goto :goto_7
 
-    .line 162
+    .line 177
     .end local v9    # "read":I
     :catch_7
     move-exception v13
