@@ -33,7 +33,7 @@ import androlyze
 # Grammar elements for smali code (Used for smali parsing)
 INTEGER = Word( nums, max = 1 )
 ALPHABET = alphanums + '_-'
-CLASS_PATH = Combine( Word( alphas ) + ZeroOrMore( "/" + Word( ALPHABET )) + ZeroOrMore( "$" + Word( ALPHABET ) ) )
+CLASS_PATH = Combine( Word( alphas ) + ZeroOrMore( "/" + Word( ALPHABET )) + ZeroOrMore( OneOrMore("$") + Word( ALPHABET ) ) )
 CLASS_STRING = Group("L" + CLASS_PATH + ";")
 RETURN_TYPE = Word( alphas, max = 1 )
 OPERAND = Or( RETURN_TYPE + CLASS_STRING )
@@ -523,8 +523,8 @@ def patchSmaliClasses(decodeDirName, classesWithDynCodeLoad):
 										print "Added sanity check"
 										continue
 									except ParseException:
-										print "[Exit] Unexpected line while patching smali file!"
-										sys.exit(FAILURE)
+										print "[Warning] A dynamically loaded instance was not assigned to any variable!"
+										#sys.exit(FAILURE)
 
 								else:
 									patched.write(line)
