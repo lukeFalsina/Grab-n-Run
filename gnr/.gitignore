@@ -1,4 +1,7 @@
-/bin/
-/gen/
-/libs/
-/.settings/
+/build/
+/import-summary.txt
+.gradle
+/local.properties
+.idea/workspace.xml
+.idea/libraries
+.DS_Store
