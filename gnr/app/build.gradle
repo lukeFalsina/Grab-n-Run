@@ -1,4 +1,11 @@
 apply plugin: 'com.android.library'
+apply plugin: 'maven'
+
+ext {
+    PUBLISH_GROUP_ID = 'it.necst.grabnrun'
+    PUBLISH_ARTIFACT_ID = 'grabnrun'
+    PUBLISH_VERSION = '1.0.1'
+}
 
 android {
     compileSdkVersion 21
@@ -22,4 +29,76 @@ android {
 
 dependencies {
     compile 'com.android.support:appcompat-v7:21.0.3'
+}
+
+def groupId = project.PUBLISH_GROUP_ID
+def artifactId = project.PUBLISH_ARTIFACT_ID
+def version = project.PUBLISH_VERSION
+
+def localReleaseDest = "${buildDir}/release/${version}"
+
+task androidJavadocs(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+
+task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
+    classifier = 'javadoc'
+    from androidJavadocs.destinationDir
+}
+
+task androidSourcesJar(type: Jar) {
+    classifier = 'sources'
+    from android.sourceSets.main.java.srcDirs
+}
+
+uploadArchives {
+    repositories.mavenDeployer {
+        pom.groupId = groupId
+        pom.artifactId = artifactId
+        pom.version = version
+        pom.project {
+
+            name "Grab'n Run Library"
+            packaging 'aar'
+            description 'A simple and effective Java Library for Android projects to secure dynamic code loading.'
+            url 'https://github.com/lukeFalsina/Grab-n-Run'
+
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+
+            developers {
+                developer {
+                    name 'Luca Falsina'
+                    email 'lfalsina@gmail.com'
+                }
+            }
+        }
+
+        repository(url: "file://${localReleaseDest}")
+    }
+}
+
+task zipRelease(type: Zip) {
+    from localReleaseDest
+    destinationDir buildDir
+    archiveName "release-${version}.zip"
+}
+
+task generateRelease << {
+    println "Release ${version} can be found at ${localReleaseDest}/"
+    println "Release ${version} zipped can be found ${buildDir}/release-${version}.zip"
+}
+
+generateRelease.dependsOn(uploadArchives)
+generateRelease.dependsOn(zipRelease)
+
+artifacts {
+    archives androidSourcesJar
+    archives androidJavadocsJar
 }
