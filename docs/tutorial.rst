@@ -2,7 +2,7 @@
 Quick start and tutorial
 ========================
 
-In this section you will see how to *retrieve and include Grab'n Run library* into your project (either by using Android Development Tool or Android Studio). After this setup step a **brief tutorial** will explain how to use classes in the library to **secure** the *dynamic code loading operations*.
+In this section you will see how to *retrieve and include Grab'n Run library* into your project (either by using Android Studio ot the Android Development Tool). After this setup step a **brief tutorial** will explain how to use classes in the library to **secure** the *dynamic code loading operations*.
 
 Since this section is **introductory** and more descriptive, it should be read by those who are not familiar with this library or more in general with *class loading* in Android. On the other hand the :doc:`complementary` section provides a more complete and detailed view on *Grab'n Run* library and its insights, while :doc:`example` shows a simple use case of the concepts introduced here.
 
@@ -11,11 +11,31 @@ Quick Setup
 
 Setting up GNR as an **additional library** for your *Android application* is very easy:
 
-1. Download the latest `version <https://github.com/lukeFalsina/Grab-n-Run/raw/master/downloads/gnr-1.0.jar>`_ of the *JAR* container of Grab'n Run.
+Android Studio (AS)
+~~~~~~~~~~~~~~~~~~~
+..	highlight:: groovy
+
+1. Modify the *build.gradle* file in the *app* module of your Android project by adding the following *compile* line in the *dependencies* body::
+
+	dependencies {
+		// Grab'n Run will be imported from JCenter.
+		// Verify that the string "jcenter()" is included in your repositories block!
+		compile 'it.necst.grabnrun:grabnrun:1.0.1'
+	}
+
+2. Resync your project to apply changes.
+
+Android Development Tool (ADT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1. Download the latest `version <https://github.com/lukeFalsina/Grab-n-Run/raw/master/downloads/gnr-1.0.1.jar>`_ of the *JAR* container of Grab'n Run.
 
 2. Include the *JAR* in the **libs** subfolder of your Android project.
 
-3. Modify the *Android Manifest* of your application by adding a couple of required permissions::
+Adding missing permissions (Both AS and ADT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+..	highlight:: xml
+
+Finally it is required to modify the *Android Manifest* of your application by adding a couple of required permissions if they are not already in place::
 
 	<manifest>
 		<!-- 	Include following permission to be able to download remote resources 
@@ -29,6 +49,8 @@ Setting up GNR as an **additional library** for your *Android application* is ve
 		<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 		...
 	</manifest>
+
+..	highlight:: java
 
 Tutorial
 --------

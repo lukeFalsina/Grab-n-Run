@@ -16,6 +16,8 @@ Moreover, if you happened to spend a bit of time using *Grab'n Run*, we would be
 
 ## News
 
+- *01/17/2015* - **Grab'n Run** is now **available** on [JCenter](https://bintray.com/bintray/jcenter?filterByPkgName=grab-n-run)
+- *01/16/2015* - **Grab'n Run** project migrates to [Android Studio](http://developer.android.com/tools/studio/index.html), the new official *IDE* for **Android application development**. Anyway **Grab'n Run** library can still be used also with your *ADT* projects! (*see below the "Quick Setup" section for further details*)
 - *11/26/2014* - **Grab'n Run is on line!**
 
 ## Main features
@@ -35,6 +37,19 @@ Securely load code dynamically into your Android application from **APK** contai
 This setup explains how to simply add *Grab'n Run* as a library for your Android applications.
 
 #### 1. Include library
+
+###### a. Android Studio (AS)
+
+* Modify the *build.gradle* file in the *app* module of your Android project by adding the following *compile* line in the *dependencies* body:
+``` gradle
+dependencies {
+    // Grab'n Run will be imported from JCenter. Verify that the string "jcenter()" is included in your repositories block!
+    compile 'it.necst.grabnrun:grabnrun:1.0.1'
+}
+``` 
+* Resync your project to apply changes.
+
+###### b. Android Development Tool (ADT)
 
 * [Download JAR](https://github.com/lukeFalsina/Grab-n-Run/raw/master/downloads/gnr-1.0.1.jar)
 * Put the JAR in the **libs** subfolder of your Android project
@@ -97,6 +112,9 @@ $	jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1
 $	<path_to_your_sdk>/sdk/build-tools/<sdk_version_number>/zipalign -v 4 
 	LoaderApp.apk LoaderAppAligned.apk
 ```
+
+**P.S.** *Step 3* can also be directly performed by means of your favorite *IDE*. In **ADT** you would have to select the option *"Android Tools -> Export Signed Application Package..."* and, when it is required, navigate to the location of your keystore and inserting its password, the key id and the key password. On the other hand in **Android Studio** the signature process can be automatized by setting up a proper **signing configuration** as described [here](http://developer.android.com/tools/publishing/app-signing.html#release-mode).
+
 #### 4. Publish the signed and aligned version of the source container
 
 Once you have obtained *LoaderAppAligned.apk*, you need to make also this resource **available on line**. Notice that, in this case, both remote locations that use **HTTP** or **HTTPS** protocols are fine as long as they are accessible from the web. Again, as an example, you can store the container in your "Public" *Dropbox* folder and get back a **public URL** like "https://dl.dropboxusercontent.com/u/00000000/LoaderAppAligned.apk".
