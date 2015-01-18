@@ -32,28 +32,43 @@ At the end of the process you will have all the GNR code locally including a cop
 Include Grab'n Run example code in your IDE 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The next step is *importing the example sources* into an **IDE** (here it is assumed from now on the use of **Android Development Tool (ADT)**).
+The next step is *importing the example sources* into an **IDE**. The process will be now described for both **Android Studio (AS)** and **Android Development Tool (ADT)**.
 
-If you desire to add also the project containing the sources of Grab'n Run, named ``GNR``, you will have to import the support Android library ``appcompact_v7`` as well into your workspace. To do so, follow this `guide <https://developer.android.com/tools/support-library/setup.html#libs-with-res>`_ from the **Official Android Documentation**.  
-Once that you have a local copy of the ``appcompact_v7`` project into your workspace, you can import both the ``GNR`` and ``ExampleAppGNR`` project. On the other hand if you are not interested in the ``GNR`` project simply do not care about ``appcompact_v7`` and later on import only ``ExampleAppGNR``, which contains an example application which makes use of *Grab'n Run* library.
+a. **Android Studio (AS)**
 
-So at first right click in the *Package Explorer* and select "Import.."
+In the welcome window of Android Studio select from the *Quick Start* menu the option "Open an existing Android Studio project".
 
-.. image:: images/ImportGNR.png
+.. image:: images/ASImportGNR1.png
+
+Next navigate to the ``grab-n-run`` folder in which you previously cloned the repository and then pick the project ``AS`` from the ``example`` subfolder as shown in the image below.
+
+.. image:: images/ASImportGNR2.png
+
+The example project should have been now successfully imported! It may be necessary to rebulit it again by picking the option "Make Project".
+
+.. image:: images/ASImportGNR3.png
+
+**P.S.** Notice that you can open in *Android Studio* also the **original GNR library project** by using the very same procedure but by picking the ``gnr`` Studio project from the main ``grab-n-run`` folder in stead of the ``example/AS`` one.
+
+.. image:: images/ASImportGNR4.png
+
+b. **Android Development Tool (ADT)**
+
+At first right click in the *Package Explorer* and select "Import.."
+
+.. image:: images/ADTImportGNR1.png
 
 Next select under the *Android* folder "Existing Android Code Into Workspace" and then "Next >"
 
-.. image:: images/ImportGNR2.png
+.. image:: images/ADTImportGNR2.png
 
-Point the *Root Directory* to the ``grab-n-run`` folder in which you previously cloned the repository by pressing the "Browse..." button. Then select the candidate projects that you want to import among ``GNR`` (*source code of the library*) and ``ExampleAppGNR`` (*an example application which makes use of GNR*). In the end press "Finish" to import the selected projects. Below you can see a screenshot which summarizes all the settings before the "Finish" button is clicked in case that you decide to import both the projects.
+By pressing the "Browse..." button point the *Root Directory* to the ``grab-n-run`` folder in which you previously cloned the repository and then to the subfolder ``grab-n-run/example/ADT``. You should be now able to the see and select the candidate project ``ExampleAppGNR`` (*an example application which makes use of GNR*). In the end press "Finish" to import the example project. Below you can see a screenshot which summarizes all the settings before the "Finish" button is clicked.
 
-.. image:: images/ImportGNR3.png
+.. image:: images/ADTImportGNR3.png
 
-At the end of this process you should have been able to **correctly import** at least the example project!
+At the end of this process you should have been able to **correctly import** the example application!
 
-.. image:: images/ImportGNR4.png
-
-.. TODO Explain how to import the project in Eclipse/Android Studio.. if necessary
+.. image:: images/ADTImportGNR4.png
 
 Retrieve and set up the emulator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -63,7 +78,7 @@ Retrieve and set up the emulator
 Then it is time to retrieve the **emulator** used to run the example application. You can easily find it in the ``assets`` folder of the ``example`` repository.
 So once that you have located the compressed file ``ExampleAppGNREmu.tar.gz`` containing the emulator, open a terminal and at first copy this file into your *home* folder::
 
-	$ cd <absolute_path_to_gnr_repo>/example/assets
+	$ cd <absolute_path_to_gnr_repo>/example/
 	$ cp ExampleAppGNREmu.tar.gz ~
 
 Next decompress this container:: 

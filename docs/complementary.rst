@@ -296,7 +296,18 @@ So let us assume that you, as a library developer, want to export your project c
 1. Export the project "MyLibrary" into a jar archive.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In the ADT (Android Development Tool) right-click on the project *"MyLibrary"* and select "Export...".
+.. highlight:: bash
+
+If your project was developed using **Android Studio**, you can easily obtain a copy of your *jar* library by opening a terminal and pointing it to the main folder of your project and then by invoking a series of tasks through the ``./gradlew`` script as shown here::
+
+	$ cd <absolute_path_to_your_jar_lib_project>
+	$ ./gradlew clean build assembleRelease
+
+If the build process goes smoothly, you should now be able to find a file presumably called *"MyLibrary-release.jar"* located under one of your project ``build/outputs`` folder. 
+
+.. highlight:: java
+
+On the other hand if you are relying on the **ADT (Android Development Tool)**, right-click on the project *"MyLibrary"* and select "Export...".
 
 .. image:: images/ExportJarOption.png
 
@@ -308,7 +319,7 @@ Finally choose the location of the exported *jar* archive by clicking on the "Br
 
 .. image:: images/ExportJarFinish.png
 
-You have now successfully exported your project into a *jar* container.
+Independently from which of the two methods you implied, you should have now successfully exported your project into a *jar* container!
 
 2. Translate Java Byte Code (.class) into Dalvik Byte Code (classes.dex).
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
