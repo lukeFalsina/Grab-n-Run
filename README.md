@@ -1,4 +1,4 @@
-# ![Logo](https://github.com/lukeFalsina/Grab-n-Run/raw/master/gnr/res/drawable-mdpi/logo_with_name.png)
+# ![Logo](https://github.com/lukeFalsina/Grab-n-Run/raw/master/gnr/app/src/main/res/drawable-mdpi/logo_with_name.png)
 
 *Grab’n Run* (aka **GNR**) is a **simple** and **effective** Java Library that you can easily add to your Android projects to perform *secure dynamic class loading* operations over standard [DexClassLoader](http://developer.android.com/reference/dalvik/system/DexClassLoader.html).
 
