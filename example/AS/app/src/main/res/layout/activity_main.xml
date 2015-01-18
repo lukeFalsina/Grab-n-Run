@@ -1,0 +1,25 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+	android:layout_weight="0"
+    tools:context=".MainActivity" >
+
+        <TextView 
+	   	android:id="@+id/application_aim"
+   	    android:layout_width="match_parent"
+    	android:layout_height="wrap_content"
+    	android:gravity="center"
+    	android:text="@string/app_aim"
+    	android:textSize="16sp"
+		/>
+    	
+		<ListView
+    	android:id="@+id/listview"
+    	android:layout_width="fill_parent" 
+    	android:layout_height="wrap_content"
+		/>
+
+</LinearLayout>

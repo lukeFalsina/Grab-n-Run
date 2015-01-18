@@ -43,7 +43,8 @@ This setup explains how to simply add *Grab'n Run* as a library for your Android
 * Modify the *build.gradle* file in the *app* module of your Android project by adding the following *compile* line in the *dependencies* body:
 ``` gradle
 dependencies {
-    // Grab'n Run will be imported from JCenter. Verify that the string "jcenter()" is included in your repositories block!
+    // Grab'n Run will be imported from JCenter.
+    // Verify that the string "jcenter()" is included in your repositories block!
     compile 'it.necst.grabnrun:grabnrun:1.0.1'
 }
 ``` 
