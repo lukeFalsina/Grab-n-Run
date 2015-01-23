@@ -137,8 +137,8 @@ try {
 	SecureLoaderFactory mSecureLoaderFactory = new SecureLoaderFactory(this);
 	SecureDexClassLoader mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(	jarContainerPath, 
 												null, 
-												packageNamesToCertMap, 
-												getClass().getClassLoader());
+												getClass().getClassLoader(),
+												packageNamesToCertMap);
 		
 	Class<?> loadedClass = mSecureDexClassLoader.loadClass("com.example.MyClass");
 
