@@ -4,7 +4,7 @@
 ## Hey Android developers, we need your help for an experiment, which involves DCL and Grab'n Run. ##
 For more details, check out this [post](https://t.co/6NRIbMeXeq).
 
-If you are curious or want to join the experiment, please get in touch with an email at [lfalsina@gmail.com](lfalsina@gmail.com)
+If you are curious or want to join the experiment, please get in touch with an email at lfalsina@gmail.com
 
 ---
 
