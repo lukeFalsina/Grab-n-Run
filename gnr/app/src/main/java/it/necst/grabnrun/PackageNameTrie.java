@@ -80,7 +80,7 @@ final class PackageNameTrie {
 			} else {
 				
 				// Need to insert this entry by populating the map accordingly
-				packageNameToHasCertificateMap.put(currentPackageName, Boolean.valueOf(false));
+				packageNameToHasCertificateMap.put(currentPackageName, false);
 				
 				Log.d(TAG_PACKAGE_NAME_TRIE, "Inserted a new entry for " + currentPackageName);
 				
@@ -93,7 +93,7 @@ final class PackageNameTrie {
 	
 	// Remove the last part of the package name.
 	// If nothing more is left after this removal, return an empty string.
-	private final String getUpALevel(String packageName) {
+	private String getUpALevel(String packageName) {
 		
 		int lastPointIndex = packageName.lastIndexOf('.');
 		
@@ -114,7 +114,7 @@ final class PackageNameTrie {
 		
 		if (packageNameToHasCertificateMap.containsKey(packageName)) {
 			
-			packageNameToHasCertificateMap.put(packageName, Boolean.valueOf(true));
+			packageNameToHasCertificateMap.put(packageName, true);
 			Log.d(TAG_PACKAGE_NAME_TRIE, packageName + " has a certificate associated now.");
 		}
 	}

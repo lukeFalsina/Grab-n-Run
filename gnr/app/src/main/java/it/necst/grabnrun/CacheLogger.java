@@ -155,7 +155,7 @@ final class CacheLogger {
 	 * is associated to one local file stored in the private application folder.
 	 * 
 	 * @param remoteURL
-	 *  a {@link URL} pointing to a remote resource.
+	 *  a {@link java.net.URL} pointing to a remote resource.
 	 * @return
 	 *  either the name of the local file associated to the remote URL or {@code null}.
 	 */
@@ -177,10 +177,10 @@ final class CacheLogger {
 	/**
 	 * Every time that a remote resource is successfully imported into the local
 	 * cache folder, this method should be invoked to link the initial remote 
-	 * {@link URL} and the corresponding local file stored on the mobile.
+	 * {@link java.net.URL} and the corresponding local file stored on the mobile.
 	 * 
 	 * @param remoteURL
-	 *  the remote {@link URL} from which the resource was retrieved.
+	 *  the remote {@link java.net.URL} from which the resource was retrieved.
 	 * @param localFileName
 	 *  the final location on the mobile where the resource has been stored.
 	 */
@@ -199,7 +199,7 @@ final class CacheLogger {
 	 * This method must be called before dismissing the {@link CacheLogger} object.
 	 * <p>
 	 * It writes back to the helper file all the saved linkages between remote 
-	 * {@link URL} and local resources imported into the application private
+	 * {@link java.net.URL} and local resources imported into the application private
 	 * directory.
 	 * 
 	 */

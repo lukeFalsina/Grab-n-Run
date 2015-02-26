@@ -4,7 +4,7 @@ apply plugin: 'maven'
 ext {
     PUBLISH_GROUP_ID = 'it.necst.grabnrun'
     PUBLISH_ARTIFACT_ID = 'grabnrun'
-    PUBLISH_VERSION = '1.0.1'
+    PUBLISH_VERSION = '1.0.2'
 }
 
 android {
@@ -14,8 +14,8 @@ android {
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion 21
-        versionCode 2
-        versionName "1.0.1"
+        versionCode 3
+        versionName "1.0.2"
 
     }
 

@@ -297,7 +297,7 @@ public class SecureLoaderFactory {
 					// A valid and fresh enough cached copy of the remote container is present
 					// on the device storage, so this copy can be used in stead of downloading 
 					// the remote container again.
-					finalDexPath.append(importedContainerDir.getAbsolutePath() + File.separator + cachedContainerFileName + File.pathSeparator);
+					finalDexPath.append(importedContainerDir.getAbsolutePath()).append(File.separator).append(cachedContainerFileName).append(File.pathSeparator);
 					Log.d(TAG_SECURE_FACTORY, "Dex Path has been modified into: " + finalDexPath);
 				} else {
 					
@@ -342,7 +342,7 @@ public class SecureLoaderFactory {
 								
 								// Successful renaming..
 								// It is necessary to replace the current web-like path to access the resource with the new local version.
-								finalDexPath.append(downloadedContainerFinalPath + File.pathSeparator);
+								finalDexPath.append(downloadedContainerFinalPath).append(File.pathSeparator);
 								Log.d(TAG_SECURE_FACTORY, "Dex Path has been modified into: " + finalDexPath);
 								
 								// It is also relevant to add this resource to the Log file of the cached remote containers.
@@ -396,7 +396,7 @@ public class SecureLoaderFactory {
 						
 						// A cached version of the container already exists.
 						// So simply use that cached version
-						finalDexPath.append(matchingContainerArray[0].getAbsolutePath() + File.pathSeparator);
+						finalDexPath.append(matchingContainerArray[0].getAbsolutePath()).append(File.pathSeparator);
 					}
 					else {
 						
@@ -422,7 +422,7 @@ public class SecureLoaderFactory {
 						    }
 							
 						    // In the end add the internal path of the container
-						    finalDexPath.append(cachedContainerPath + File.pathSeparator);
+						    finalDexPath.append(cachedContainerPath).append(File.pathSeparator);
 						    
 						} catch (FileNotFoundException e) {
 							Log.w(TAG_SECURE_FACTORY, "Problem in locating container to import in the application private folder!");
@@ -481,7 +481,7 @@ public class SecureLoaderFactory {
 																				performLazyEvaluation);
 		
 		// Provide packageNameToCertificateMap to mSecureDexClassLoader..
-		if (mSecureDexClassLoader != null) mSecureDexClassLoader.setCertificateLocationMap(santiziedPackageNameToCertificateMap);
+        mSecureDexClassLoader.setCertificateLocationMap(santiziedPackageNameToCertificateMap);
 		
 		return mSecureDexClassLoader;
 	}
@@ -534,10 +534,10 @@ public class SecureLoaderFactory {
 		if (packageNameToCertificateMap == null || packageNameToCertificateMap.isEmpty()) return null;
 		
 		// Copy the initial map and start validating it..
-		Map<String, URL> santiziedPackageNameToCertificateMap = new LinkedHashMap<String, URL>(packageNameToCertificateMap);
+		Map<String, URL> sanitizedPackageNameToCertificateMap = new LinkedHashMap<String, URL>(packageNameToCertificateMap);
 		
 		// Retrieves all the package names (keys of the map)
-		Iterator<String> packageNamesIterator = santiziedPackageNameToCertificateMap.keySet().iterator();
+		Iterator<String> packageNamesIterator = sanitizedPackageNameToCertificateMap.keySet().iterator();
 		
 		while(packageNamesIterator.hasNext()) {
 			
@@ -565,17 +565,17 @@ public class SecureLoaderFactory {
 				// and its protocol is HTTPS
 				URL certificateURL;
 				try {
-					//String certificateURLString = santiziedPackageNameToCertificateMap.get(currentPackageName);
+					//String certificateURLString = sanitizedPackageNameToCertificateMap.get(currentPackageName);
 					//certificateURL = new URL(certificateURLString);
-					certificateURL = santiziedPackageNameToCertificateMap.get(currentPackageName);
+					certificateURL = sanitizedPackageNameToCertificateMap.get(currentPackageName);
 					
 					// Check that the certificate URL is not null..
 					if (certificateURL != null) {
 						
 						if (certificateURL.getProtocol().equals("http")) {
 							// In this case enforce HTTPS protocol
-							// santiziedPackageNameToCertificateMap.put(currentPackageName, new URL(certificateURL.toString().replace("http", "https")));
-							santiziedPackageNameToCertificateMap.put(currentPackageName, new URL("https", certificateURL.getHost(), certificateURL.getPort(), certificateURL.getFile()));
+							// sanitizedPackageNameToCertificateMap.put(currentPackageName, new URL(certificateURL.toString().replace("http", "https")));
+							sanitizedPackageNameToCertificateMap.put(currentPackageName, new URL("https", certificateURL.getHost(), certificateURL.getPort(), certificateURL.getFile()));
 						}
 						else {
 							if (!certificateURL.getProtocol().equals("https")) {
@@ -599,11 +599,11 @@ public class SecureLoaderFactory {
 
 				// Remove invalid entry from the map (removing from the iterator is enough..)
 				packageNamesIterator.remove();
-				// santiziedPackageNameToCertificateMap.remove(currentPackageName);
+				// sanitizedPackageNameToCertificateMap.remove(currentPackageName);
 			}
 		}
 		
-		return santiziedPackageNameToCertificateMap;
+		return sanitizedPackageNameToCertificateMap;
 	}
 
 	private String downloadContainerIntoFolder(String urlPath, File resOutputDir) {
@@ -660,11 +660,9 @@ public class SecureLoaderFactory {
 		else {
 			finalContainerName = containerName;
 		} */
-		
-		String finalContainerName = containerName;
-		
-		// Check that no file is present at this location.
-		File checkFile = new File(resOutputDir.getAbsolutePath() + finalContainerName);
+
+        // Check that no file is present at this location.
+		File checkFile = new File(resOutputDir.getAbsolutePath() + containerName);
 		
 		// In case, just delete the old file..
 		if (checkFile.exists())
@@ -672,7 +670,7 @@ public class SecureLoaderFactory {
 		
 		// Finally the container file can be downloaded from the URL
 		// and stored in the local folder
-		String localContainerPath = resOutputDir.getAbsolutePath() + finalContainerName;
+		String localContainerPath = resOutputDir.getAbsolutePath() + containerName;
 		
 		// Redirect may be allowed here while downloading a remote container..
 		boolean isDownloadSuccessful = mFileDownloader.downloadRemoteUrl(url, localContainerPath, true);

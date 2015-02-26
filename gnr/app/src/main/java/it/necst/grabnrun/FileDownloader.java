@@ -45,7 +45,7 @@ final class FileDownloader {
 	
 	// Objects used to check availability of Internet connection
 	private ConnectivityManager mConnectivityManager;
-	private NetworkInfo activeNetworkInfo;
+	// private NetworkInfo activeNetworkInfo;
 	private String fileMimeType;
 
 	/**
@@ -53,7 +53,7 @@ final class FileDownloader {
 	 * resources.
 	 * 
 	 * @param parentContextWrapper
-	 *  a {@link ContextWrapper} coming from the parent {@link Activity} and used to
+	 *  a {@link ContextWrapper} coming from the parent {@link android.app.Activity} and used to
 	 *  retrieve the state of the connectivity service of the mobile.
 	 */
 	FileDownloader(ContextWrapper parentContextWrapper) {
@@ -82,7 +82,7 @@ final class FileDownloader {
 	final boolean downloadRemoteUrl(final URL remoteURL, final String localURI, final boolean isRedirectAllowed) {
 	
 		// Check whether Internet access is granted..
-		activeNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
+		NetworkInfo activeNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
 		if (activeNetworkInfo == null || !activeNetworkInfo.isConnected()) {
 			
 			Log.w(TAG_FILE_DOWNLOADER, "No connectivity is available. Download failed!");
@@ -165,7 +165,7 @@ final class FileDownloader {
     				inputStream = new BufferedInputStream(urlConnection.getInputStream());
 					outputStream = new FileOutputStream(localURI);
 					
-					int read = 0;
+					int read;
 					byte[] bytes = new byte[1024];
 					
 					while ((read = inputStream.read(bytes)) > 0) {
@@ -182,7 +182,7 @@ final class FileDownloader {
     			} finally {
     				Log.d(TAG_FILE_DOWNLOADER, "Clean up all pending streams..");
     				if (urlConnection != null)
-    					((HttpURLConnection) urlConnection).disconnect();
+    					urlConnection.disconnect();
 
     				if (inputStream != null) {
     					try {
@@ -217,10 +217,7 @@ final class FileDownloader {
     	File fileAtLocalURI = new File(localURI);
     	
     	// Check whether the download was successful..
-    	if (fileAtLocalURI.exists() && fileAtLocalURI.length() > 0)
-    		return true;
-    	else
-    		return false;
+        return fileAtLocalURI.exists() && fileAtLocalURI.length() > 0;
 	}
 	
 	/**

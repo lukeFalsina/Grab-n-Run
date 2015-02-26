@@ -30,6 +30,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -55,6 +56,7 @@ import javax.security.auth.x500.X500Principal;
 import android.content.ContextWrapper;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
+import android.content.pm.PackageInfo;
 import android.util.Log;
 import dalvik.system.DexClassLoader;
 import dalvik.system.DexFile;
@@ -115,7 +117,7 @@ public class SecureDexClassLoader {
 	// The Certificate Factory instance
 	private CertificateFactory certificateFactory;
 	
-	private Map<String, String> packageNameToContainerPathMap;
+	private final Map<String, String> packageNameToContainerPathMap;
 	private Map<String, URL> packageNameToCertificateMap;
 	
 	// Final name of the folder user to store certificates for the verification
@@ -139,7 +141,7 @@ public class SecureDexClassLoader {
 	// Helper cache set used in lazy mode in order to check only once that the container
 	// associated to a package name is valid (This works fine since each used container is
 	// previously imported in an application-private folder).
-	private Set<String> lazyAlreadyVerifiedPackageNameSet;
+	private final Set<String> lazyAlreadyVerifiedPackageNameSet;
 	
 	// An helper data structure used to connect each package name of a possible target class
 	// to the certificate of the closest package name. The closeness relation here is considered
@@ -276,7 +278,7 @@ public class SecureDexClassLoader {
 			if (isAValidJar) {
 
 				// Use a DexFile object to parse the classes inside of the jar container and retrieve package names..
-				DexFile dexFile = null;
+				DexFile dexFile;
 				
 				// Since in a jar there may be different package names for each class
 				// but at the same time I want to keep just one record for each package
@@ -392,7 +394,7 @@ public class SecureDexClassLoader {
 			// and remove the invalid ones.
 			
 			// Get the distinct set of containers path..
-			Set<String> containersToVerifySet = new HashSet<String>(packageNameToContainerPathMap.values());;
+			Set<String> containersToVerifySet = new HashSet<String>(packageNameToContainerPathMap.values());
 			
 			// Check how many containers need to be verified..
 			if (containersToVerifySet.size() < MINIMUM_NUMBER_OF_CONTAINERS_FOR_CONCURRENT_VERIFICATION) {
@@ -503,7 +505,7 @@ public class SecureDexClassLoader {
 						
 						// This container is valid so all of those package names which load
 						// classes from it should be successful when loadClass() is called.
-						alreadyCheckedContainerMap.put(containerPath, Boolean.valueOf(true));
+						alreadyCheckedContainerMap.put(containerPath, true);
 					}
 				}
 				
@@ -511,7 +513,7 @@ public class SecureDexClassLoader {
 					
 					// In this case the map must be updated stating that this container has been
 					// already checked and it fails the signature verification.
-					alreadyCheckedContainerMap.put(containerPath, Boolean.valueOf(false));
+					alreadyCheckedContainerMap.put(containerPath, false);
 					
 					// Then the container should be erased.
 					File containerToRemove = new File(containerPath);
@@ -652,7 +654,7 @@ public class SecureDexClassLoader {
 		// Package name associated with a certificate.
 		private String rootPackageNameWithCertificate;
 		// Concurrent set of containers that has been successfully verified.
-		private Set<String> successVerifiedContainerSet;
+		private final Set<String> successVerifiedContainerSet;
 		
 		public SignatureVerificationTask(String containerPath, String rootPackageNameWithCertificate, Set<String> successVerifiedContainerSet) {
 			
@@ -927,53 +929,62 @@ public class SecureDexClassLoader {
 			// APK container case:
 			// At first look for the certificates used to sign the apk
 			// and check whether at least one of them is the verified one..
-			
-			// Use PackageManager field to retrieve the certificates used to sign the apk
-			Signature[] signatures = mPackageManager.getPackageArchiveInfo(containerPath, PackageManager.GET_SIGNATURES).signatures;
-			
-			if (signatures != null) {
-				for (Signature sign : signatures) {
-					if (sign != null) {
-						
-						X509Certificate certFromSign = null;
-						InputStream inStream = null;
-						
-						try {
-							
-							// Recreate the certificate starting from this signature
-							inStream = new ByteArrayInputStream(sign.toByteArray());
-							certFromSign = (X509Certificate) certificateFactory.generateCertificate(inStream);
-							
-							// Check that the reconstructed certificate is not expired..
-							certFromSign.checkValidity();
-							
-							// Check whether the reconstructed certificate and the trusted one match
-							// Please note that certificates may be self-signed but it's not an issue..
-							if (certFromSign.equals(verifiedCertificate))
-								// This a necessary but not sufficient condition to
-								// prove that the apk container has not been repackaged..
-								signatureCheckIsSuccessful = true;
 
-						} catch (CertificateException e) {
-							// If this branch is reached certificateFromSign is not valid..
-						} finally {
-						     if (inStream != null) {
-						         try {
-									inStream.close();
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-						     }
-						}
-						
-					}
-				}
-			}	
+            PackageInfo mPackageInfo = mPackageManager.getPackageArchiveInfo(containerPath, PackageManager.GET_SIGNATURES);
+
+            if (mPackageInfo != null) {
+
+                // Use PackageManager field to retrieve the certificates used to sign the apk
+                Signature[] signatures = mPackageInfo.signatures;
+
+                if (signatures != null) {
+                    for (Signature sign : signatures) {
+                        if (sign != null) {
+
+                            X509Certificate certFromSign;
+                            InputStream inStream = null;
+
+                            try {
+
+                                // Recreate the certificate starting from this signature
+                                inStream = new ByteArrayInputStream(sign.toByteArray());
+                                certFromSign = (X509Certificate) certificateFactory.generateCertificate(inStream);
+
+                                // Check that the reconstructed certificate is not expired..
+                                certFromSign.checkValidity();
+
+                                // Check whether the reconstructed certificate and the trusted one match
+                                // Please note that certificates may be self-signed but it's not an issue..
+                                if (certFromSign.equals(verifiedCertificate))
+                                    // This a necessary but not sufficient condition to
+                                    // prove that the apk container has not been repackaged..
+                                    signatureCheckIsSuccessful = true;
+
+                            } catch (CertificateException e) {
+                                // If this branch is reached certificateFromSign is not valid..
+                            } finally {
+                                if (inStream != null) {
+                                    try {
+                                        inStream.close();
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                } else {
+                    Log.i(TAG_SECURE_DEX_CLASS_LOADER, "An invalid/corrupted signature is associated with the source archive.");
+                }
+            } else {
+                Log.i(TAG_SECURE_DEX_CLASS_LOADER, "An invalid/corrupted container was found.");
+            }
 		}
 		
 		// This branch must be taken by all jar containers and by those apk containers
 		// whose certificates list contains also the trusted verified certificate.
-		if (extension.equals(".jar") || (extension.equals(".apk") && signatureCheckIsSuccessful == true)) {
+		if (extension.equals(".jar") || (extension.equals(".apk") && signatureCheckIsSuccessful)) {
 			
 			// Verify that each entry of the container has been signed properly
 			JarFile containerToVerify = null;
@@ -1058,7 +1069,7 @@ public class SecureDexClassLoader {
 
 		while (signedEntries.hasMoreElements()) {
 			
-			JarEntry signedEntry = (JarEntry) signedEntries.nextElement();
+			JarEntry signedEntry = signedEntries.nextElement();
 
 			// Every file must be signed except files in META-INF.
 			Certificate[] certificates = signedEntry.getCertificates();
@@ -1125,9 +1136,7 @@ public class SecureDexClassLoader {
 			    //CertificateFactory cf = CertificateFactory.getInstance("X.509");
 			    verifiedCertificate = (X509Certificate) certificateFactory.generateCertificate(inStream);
 					    
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (CertificateException e) {
+			} catch (FileNotFoundException | CertificateException e) {
 				e.printStackTrace();
 			} finally {
 			     if (inStream != null) {
@@ -1154,7 +1163,7 @@ public class SecureDexClassLoader {
 						if(verifiedCertificate.getKeyUsage()[keyCertSignIndex])
 							throw new CertificateExpiredException("This certificate should not be used for code verification!");
 						
-						Log.d(TAG_SECURE_DEX_CLASS_LOADER, verifiedCertificate.getKeyUsage().toString());
+						Log.d(TAG_SECURE_DEX_CLASS_LOADER, Arrays.toString(verifiedCertificate.getKeyUsage()));
 					}
 					
 					// Check whether the certificate used to verify is the one 
@@ -1232,11 +1241,8 @@ public class SecureDexClassLoader {
 			// It is required to erase all the files in the application
 			// private container folder..
 			File[] containerFiles = resDownloadFolder.listFiles();
-			
-			for (File file : containerFiles) {
-				
-				fileToEraseList.add(file);
-			}
+
+            Collections.addAll(fileToEraseList, containerFiles);
 		}
 		
 		if (certificatePrivateFolder) {
@@ -1244,33 +1250,26 @@ public class SecureDexClassLoader {
 			// It is required to erase all the files in the application
 			// private certificate folder..
 			File[] certificateFiles = certificateFolder.listFiles();
-			
-			for (File file : certificateFiles) {
-				
-				fileToEraseList.add(file);
-			}
+
+            Collections.addAll(fileToEraseList, certificateFiles);
 		}
-		
-		Iterator<File> fileToEraseIterator = fileToEraseList.iterator();
-		
-		while (fileToEraseIterator.hasNext()) {
-			
-			File file = fileToEraseIterator.next();
-			
-			// Check whether the selected resource is a container (jar or apk)
-			// or a certificate (pem)
-			String filePath = file.getAbsolutePath();
-			int extensionIndex = filePath.lastIndexOf(".");
-			String extension = filePath.substring(extensionIndex);
-			
-			if (extension.equals(".apk") || extension.equals(".jar") || extension.equals(".pem")) {
-				
-				if (file.delete())
-					Log.i(TAG_SECURE_DEX_CLASS_LOADER, filePath + " has been erased.");
-				else
-					Log.i(TAG_SECURE_DEX_CLASS_LOADER, filePath + " was NOT erased.");
-			}
-		}
+
+        for (File file : fileToEraseList) {
+
+            // Check whether the selected resource is a container (jar or apk)
+            // or a certificate (pem)
+            String filePath = file.getAbsolutePath();
+            int extensionIndex = filePath.lastIndexOf(".");
+            String extension = filePath.substring(extensionIndex);
+
+            if (extension.equals(".apk") || extension.equals(".jar") || extension.equals(".pem")) {
+
+                if (file.delete())
+                    Log.i(TAG_SECURE_DEX_CLASS_LOADER, filePath + " has been erased.");
+                else
+                    Log.i(TAG_SECURE_DEX_CLASS_LOADER, filePath + " was NOT erased.");
+            }
+        }
 		
 		hasBeenWipedOut = true;
 

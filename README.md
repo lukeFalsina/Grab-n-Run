@@ -53,14 +53,14 @@ This setup explains how to simply add *Grab'n Run* as a library for your Android
 dependencies {
     // Grab'n Run will be imported from JCenter.
     // Verify that the string "jcenter()" is included in your repositories block!
-    compile 'it.necst.grabnrun:grabnrun:1.0.1'
+    compile 'it.necst.grabnrun:grabnrun:1.0.2'
 }
 ``` 
 * Resync your project to apply changes.
 
 ###### b. Android Development Tool (ADT)
 
-* [Download JAR](https://github.com/lukeFalsina/Grab-n-Run/raw/master/downloads/gnr-1.0.1.jar)
+* [Download JAR](https://github.com/lukeFalsina/Grab-n-Run/raw/master/downloads/gnr-1.0.2.jar)
 * Put the JAR in the **libs** subfolder of your Android project
 
 #### 2. Android Manifest
