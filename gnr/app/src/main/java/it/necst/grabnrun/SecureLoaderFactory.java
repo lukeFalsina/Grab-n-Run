@@ -37,6 +37,8 @@ import android.util.Base64;
 //import android.net.NetworkInfo;
 import android.util.Log;
 
+import com.google.common.base.Optional;
+
 /**
  * A Factory class that generates instances of classes used to 
  * retrieve dynamic code in a secure way at run time.
@@ -290,14 +292,14 @@ public class SecureLoaderFactory {
 				else
 					fixedRemotePath = "https:" + path.substring(5);
 				
-				String cachedContainerFileName = mCacheLogger.checkForCachedEntry(fixedRemotePath);
+				Optional<String> cachedContainerFileName = mCacheLogger.checkForCachedEntry(fixedRemotePath);
 				
-				if (cachedContainerFileName != null) {
+				if (cachedContainerFileName.isPresent()) {
 					
 					// A valid and fresh enough cached copy of the remote container is present
 					// on the device storage, so this copy can be used in stead of downloading 
 					// the remote container again.
-					finalDexPath.append(importedContainerDir.getAbsolutePath()).append(File.separator).append(cachedContainerFileName).append(File.pathSeparator);
+					finalDexPath.append(importedContainerDir.getAbsolutePath()).append(File.separator).append(cachedContainerFileName.get()).append(File.pathSeparator);
 					Log.d(TAG_SECURE_FACTORY, "Dex Path has been modified into: " + finalDexPath);
 				} else {
 					

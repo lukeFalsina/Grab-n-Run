@@ -29,6 +29,7 @@ android {
 
 dependencies {
     compile 'com.android.support:appcompat-v7:21.0.3'
+    compile group: 'com.google.guava', name: 'guava', version: '18.0'
 }
 
 def groupId = project.PUBLISH_GROUP_ID
