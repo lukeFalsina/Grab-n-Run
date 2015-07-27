@@ -15,6 +15,10 @@
  *******************************************************************************/
 package it.necst.grabnrun;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import android.support.annotation.NonNull;
+
 import java.io.File;
 import java.io.FileFilter;
 
@@ -29,9 +33,9 @@ import java.io.FileFilter;
  */
 final class CertFileFilter implements FileFilter {
 
-	private final String[] okCertsExtensions = new String[] {".pem"};
-	
-	private String certificateName;
+    private final static String PEM_EXT = ".pem";
+	private final static String[] okCertsExtensions = new String[]{PEM_EXT};
+    private final String certificateName;
 	
 	/**
 	 * A constructor for the filter which receives the 
@@ -43,25 +47,21 @@ final class CertFileFilter implements FileFilter {
 	 * @param certificateName
 	 *  the name of the certificate file.
 	 */
-	CertFileFilter(String certificateName) {
-		
-		this.certificateName = certificateName;
+	CertFileFilter(@NonNull String certificateName) {
+		this.certificateName = checkNotNull(
+                certificateName, "The input name for the certificate was null.");
 	}
 	
 	@Override
-	public final boolean accept(File file) {
-		
-		// If the file is a directory is not a
-		// certificate for sure..
+	public final boolean accept(@NonNull File file) {
+        checkNotNull(file, "The input file descriptor was null.");
 		if (file.isDirectory())
 			return false;
 		else if (file.isFile()) {
-			
 			// On the contrary if this is a normal file and its name is
 			// the desired one and it ends with one of the 
 			// approved extensions then it's fine.
 			for (String extension : okCertsExtensions) {
-				
 				if (file.getName().equals(certificateName + extension))
 		    	  return true;
 		    }
@@ -70,5 +70,4 @@ final class CertFileFilter implements FileFilter {
 		// Used for any other kind of weird stuff reaching the filter..
 		return false;
 	}
-
 }

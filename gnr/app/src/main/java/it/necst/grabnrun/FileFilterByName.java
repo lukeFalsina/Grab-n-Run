@@ -15,6 +15,10 @@
  *******************************************************************************/
 package it.necst.grabnrun;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import android.support.annotation.NonNull;
+
 import java.io.File;
 import java.io.FileFilter;
 
@@ -26,9 +30,8 @@ import java.io.FileFilter;
  * @author Luca Falsina
  */
 final class FileFilterByName implements FileFilter {
-
-	private String name;
-	private String extension;
+	private final String name;
+	private final String extension;
 
 	/**
 	 * Instantiate a {@link FileFilterByName} which will look
@@ -37,23 +40,19 @@ final class FileFilterByName implements FileFilter {
 	 * @param name
 	 *  the file name.
 	 * @param extension
-	 *  the file extension.
+	 *  the file extension in the format ".???" (e.g., ".txt").
 	 */
-	FileFilterByName(String name, String extension) {
-		
-		this.name = name;
-		this.extension = extension;
+	FileFilterByName(@NonNull String name, @NonNull String extension) {
+		this.name = checkNotNull(name, "The name of the target file was null.");
+		this.extension = checkNotNull(extension, "The extension of the target file was null.");
 	}
 	
 	@Override
-	public final boolean accept(File file) {
-		
-		// If the file is a directory is not a
-		// certificate for sure..
+	public final boolean accept(@NonNull File file) {
+		checkNotNull(file, "The input file descriptor was null.");
 		if (file.isDirectory())
 			return false;
 		else if (file.isFile()) {
-					
 			// On the contrary if this is a normal file and its name is
 			// the desired one and it ends with one of the 
 			// approved extensions then it's fine.
@@ -64,5 +63,4 @@ final class FileFilterByName implements FileFilter {
 		// Used for any other kind of weird stuff reaching the filter..
 		return false;
 	}
-
 }
