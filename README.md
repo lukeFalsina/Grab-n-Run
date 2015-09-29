@@ -17,7 +17,7 @@ Moreover, if you happened to spend a bit of time using *Grab'n Run*, we would be
 ## News
 
 - *01/17/2015* - **Grab'n Run** is now **available** on [JCenter](https://bintray.com/bintray/jcenter?filterByPkgName=grab-n-run)
-- *01/16/2015* - **Grab'n Run** project migrates to [Android Studio](http://developer.android.com/tools/studio/index.html), the new official *IDE* for **Android application development**. Anyway **Grab'n Run** library can still be used also with your *ADT* projects! (*see below the "Quick Setup" section for further details*)
+- *01/16/2015* - **Grab'n Run** project migrates to [Android Studio](http://developer.android.com/tools/studio/index.html), the official *IDE* for **Android application development**. However, you can still use the library also with your *ADT* projects! (*see below the "Quick Setup" section for further details*)
 - *11/26/2014* - **Grab'n Run is on line!**
 
 ## Main features
