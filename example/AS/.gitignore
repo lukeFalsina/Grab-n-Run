@@ -1,0 +1,6 @@
+/.gradle/
+/.idea/
+/app/build/
+/build/
+import-summary.txt
+local.properties
