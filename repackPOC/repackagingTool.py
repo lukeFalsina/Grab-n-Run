@@ -1,8 +1,8 @@
 import sys, argparse, shutil, os
 
-# Customize this variable to match the local folder 
-# where a running copy of Androguard is stored on your machine 
-androguard_location = '/<path-to-local-androguard-folder>/androguard/' 
+# This variable matches the local folder in the repo 
+# where the submodule of Androguard is located
+androguard_location = 'androguard/' 
 sys.path.insert(1, androguard_location)
 
 # Modules imported from Androguard.

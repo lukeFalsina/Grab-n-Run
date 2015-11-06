@@ -1,0 +1,3 @@
+[submodule "repackPOC/androguard"]
+	path = repackPOC/androguard
+	url = https://github.com/androguard/androguard.git
