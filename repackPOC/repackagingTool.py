@@ -790,8 +790,8 @@ def main(argv):
 
 	# An argument parser is set up to handle user command line input.
 	parser = argparse.ArgumentParser(description='Process an APK to automatically port it to use GNR secure API for dynamic code loading.')
-	parser.add_argument('-p', '--preference-file', metavar = 'local file path', help='local path pointing to the preference file used to choose how the repackaging operation will be handled. If missing, a GUI will be shown to setup necessary options')
-	parser.add_argument('-k', '--keep-resources', action='store_true', help='avoid temprary files being erased at the end of the process')
+	parser.add_argument('-p', '--preference-file', metavar = 'local file path', help='local path pointing to the preference file used to choose how the repackaging operation will be handled. If missing, a GUI will be shown to configure the required parameters')
+	parser.add_argument('-k', '--keep-resources', action='store_true', help='avoid temporary files being erased at the end of the process')
 
 	args = parser.parse_args()
 

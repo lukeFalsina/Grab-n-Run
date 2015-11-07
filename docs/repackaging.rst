@@ -8,29 +8,25 @@ The repackaging tool allows you to:
 * Rewrite your application to use Grab'n Run secure API instead of the standard Android ones. This process is automatic and requires only a couple of settings from your side. 
 * Granular control on the security policy that you want your application to follow at run time when performing dynamic code loading (e.g., validate all the dynamically loaded code against one certificate, validate each container against a different certificate, decide whether to provide a default trusted certificate for all the not specified entries).
 
-A prerequisite for using the tool is that you have cloned the source code of `Androguard <https://github.com/androguard/androguard>`_ on your machine.
+This tool relies on `Androguard <https://github.com/androguard/androguard>`_ to decoded, decompile, and rebuild the application provided as input.
 
-Another prerequisite is that your local machine must be able to have Internet connectivity since it will be necessary for the tool to download the source containers declared as potential sources for dynamic code loading unless they result directly accessible on the file-system of your machine. 
+A prerequisite for using the tool is that your local machine must be able to have Internet connectivity since it will be necessary for the tool to download the source containers declared as potential sources for dynamic code loading unless they result directly accessible on the file-system of your machine. 
 
-Setup
------
+Use
+---
 
-1. Go to the folder containing the repackaging tool script *repackPOC*
-
-2. Open the file *repackagingTool.py*
-
-3. Edit the variable ``androguard_location`` so to point to the local folder where you have a cloned copy of Androguard (e.g., "/home/luca/androguard/")
-
-.. highlight:: bash
-
-4. Save the file. Open a terminal and move to the repackaging tool script *repackPOC* directory and then install the required dependencies::
+1. Open a terminal and move to the repackaging tool script *repackPOC* directory and then install the required dependencies::
 
 	$ cd <absolute_path_to_GNR_folder>/repackPOC
 	$ pip install -r requirements.txt
 
-5. Run the script::
+2. Run the script::
 
 	$ python repackagingTool.py
+
+3. For a list of the optional arguments::
+
+	$ python repackagingTool.py -h
 
 Configuration
 -------------
