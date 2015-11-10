@@ -16,6 +16,7 @@ Moreover, if you happened to spend a bit of time using *Grab'n Run*, we would be
 
 ## News
 
+- *10/10/2015* - The **repackaging tool** is now **[online](http://grab-n-run.readthedocs.org/en/latest/repackaging.html)**. Use it to patch automatically your applications to use Grab'n Run APIs. 
 - *01/17/2015* - **Grab'n Run** is now **available** on [JCenter](https://bintray.com/bintray/jcenter?filterByPkgName=grab-n-run)
 - *01/16/2015* - **Grab'n Run** project migrates to [Android Studio](http://developer.android.com/tools/studio/index.html), the official *IDE* for **Android application development**. However, you can still use the library also with your *ADT* projects! (*see below the "Quick Setup" section for further details*)
 - *11/26/2014* - **Grab'n Run is on line!**
@@ -174,7 +175,8 @@ try {
 * If you want to learn how to use *Grab'n Run* I suggest to start from the [tutorial](http://grab-n-run.readthedocs.org/en/latest/tutorial.html) and then moving on by analyzing the [example application](http://grab-n-run.readthedocs.org/en/latest/example.html).
 * If you are interested in understanding what are the **security threats** of *improper dynamic code loading* fixed by GNR check out the [security resume](http://grab-n-run.readthedocs.org/en/latest/security.html).
 * If you would like to implement cool features of GNR like **silent updates**, **handling more containers**, **concurrent code loading** or **dynamically loading JAR libraries in your applications** you should give a look at the [complementary topics](http://grab-n-run.readthedocs.org/en/latest/complementary.html).
-* Finally you may also need to **consult** the *JavaDoc-like* [API documentation](https://rawgit.com/lukeFalsina/Grab-n-Run/master/docs/javaDoc/index.html). 
+* You may also need to **consult** the *JavaDoc-like* [API documentation](https://rawgit.com/lukeFalsina/Grab-n-Run/master/docs/javaDoc/index.html).
+* Finally, you may want to convert automatically your applications to use Grab'n Run APIs for secure dynamic code loading. Give a try at the [repackaging tool](http://grab-n-run.readthedocs.org/en/latest/repackaging.html).
 
 ## License
 

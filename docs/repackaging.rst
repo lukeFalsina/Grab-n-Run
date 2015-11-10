@@ -10,7 +10,9 @@ The repackaging tool allows you to:
 
 This tool relies on `Androguard <https://github.com/androguard/androguard>`_ to decoded, decompile, and rebuild the application provided as input.
 
-A prerequisite for using the tool is that your local machine must be able to have Internet connectivity since it will be necessary for the tool to download the source containers declared as potential sources for dynamic code loading unless they result directly accessible on the file-system of your machine. 
+A prerequisite for using the tool is that your local machine must be able to have Internet connectivity since it will be necessary for the tool to download the source containers declared as potential sources for dynamic code loading unless they result directly accessible on the file-system of your machine.
+
+Another prerequisite is that you have already successfully installed `apktool <http://ibotpeaches.github.io/Apktool/install/>`_ on your local machine.
 
 Use
 ---
