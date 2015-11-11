@@ -17,6 +17,8 @@ Another prerequisite is that you have already successfully installed `apktool <h
 Use
 ---
 
+.. highlight:: bash
+
 1. Open a terminal and move to the repackaging tool script *repackPOC* directory and then install the required dependencies::
 
 	$ cd <absolute_path_to_GNR_folder>/repackPOC
