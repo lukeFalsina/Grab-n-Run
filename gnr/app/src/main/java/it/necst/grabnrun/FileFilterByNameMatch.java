@@ -29,12 +29,12 @@ import java.io.FileFilter;
  * 
  * @author Luca Falsina
  */
-final class FileFilterByName implements FileFilter {
+class FileFilterByNameMatch implements FileFilter {
 	private final String name;
 	private final String extension;
 
 	/**
-	 * Instantiate a {@link FileFilterByName} which will look
+	 * Instantiate a {@link FileFilterByNameMatch} which will look
 	 * for files with the provided name and extension.
 	 * 
 	 * @param name
@@ -42,7 +42,7 @@ final class FileFilterByName implements FileFilter {
 	 * @param extension
 	 *  the file extension in the format ".???" (e.g., ".txt").
 	 */
-	FileFilterByName(@NonNull String name, @NonNull String extension) {
+	FileFilterByNameMatch(@NonNull String name, @NonNull String extension) {
 		this.name = checkNotNull(name, "The name of the target file was null.");
 		this.extension = checkNotNull(extension, "The extension of the target file was null.");
 	}
@@ -53,9 +53,6 @@ final class FileFilterByName implements FileFilter {
 		if (file.isDirectory())
 			return false;
 		else if (file.isFile()) {
-			// On the contrary if this is a normal file and its name is
-			// the desired one and it ends with one of the 
-			// approved extensions then it's fine.
 			if (file.getName().equals(name + extension))
 		    	  return true;
 		}

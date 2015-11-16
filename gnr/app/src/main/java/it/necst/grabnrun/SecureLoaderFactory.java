@@ -392,7 +392,7 @@ public class SecureLoaderFactory {
 					
 					// Check if a file whose name is "encodedContainerDigest.(jar/apk)" is already present in
 					// the cached certificate folder.					
-					File[] matchingContainerArray = importedContainerDir.listFiles(new FileFilterByName(encodedContainerDigest, extension));
+					File[] matchingContainerArray = importedContainerDir.listFiles(new FileFilterByNameMatch(encodedContainerDigest, extension));
 					
 					if (matchingContainerArray != null && matchingContainerArray.length > 0) {
 						

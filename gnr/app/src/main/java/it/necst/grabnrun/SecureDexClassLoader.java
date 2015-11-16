@@ -1118,7 +1118,7 @@ public class SecureDexClassLoader {
 		
 		// The procedure looks for the correct certificate and 
 		// if a match is found, it will import it and return it.
-		File[] certMatchingFiles = certificateFolder.listFiles(new CertFileFilter(packageName));
+		File[] certMatchingFiles = certificateFolder.listFiles(new CertificateFileFilterByNameMatch(packageName));
 		
 		X509Certificate verifiedCertificate = null;
 				

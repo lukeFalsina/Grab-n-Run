@@ -1,6 +1,6 @@
 package it.necst.grabnrun;
 
-import static it.necst.grabnrun.CertFileFilter.PEM_EXTENSION;
+import static it.necst.grabnrun.CertificateFileFilterByNameMatch.PEM_EXTENSION;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -14,7 +14,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.io.File;
 
 @RunWith(MockitoJUnitRunner.class)
-public class CertFileFilterTest {
+public class CertificateFileFilterByNameMatchTest {
 
     private static final String TEST_CERTIFICATE_NAME = "testCertificate";
     private static final String CERTIFICATE_WITH_MATCHING_NAME_BUT_UNSUPPORTED_EXTENSION =
@@ -25,11 +25,11 @@ public class CertFileFilterTest {
             TEST_CERTIFICATE_NAME + PEM_EXTENSION;
 
     @Mock File fileMock;
-    CertFileFilter testCertFileFilter;
+    CertificateFileFilterByNameMatch testCertFileFilter;
 
     @Before
     public void initializeCertificateFileFilterWithTestCertificateName() {
-        testCertFileFilter = new CertFileFilter(TEST_CERTIFICATE_NAME);
+        testCertFileFilter = new CertificateFileFilterByNameMatch(TEST_CERTIFICATE_NAME);
     }
 
     @Test
