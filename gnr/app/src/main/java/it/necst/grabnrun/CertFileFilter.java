@@ -19,6 +19,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import android.support.annotation.NonNull;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import java.io.File;
 import java.io.FileFilter;
 
@@ -33,8 +35,8 @@ import java.io.FileFilter;
  */
 final class CertFileFilter implements FileFilter {
 
-    private final static String PEM_EXT = ".pem";
-	private final static String[] okCertsExtensions = new String[]{PEM_EXT};
+    @VisibleForTesting final static String PEM_EXTENSION = ".pem";
+	private final static String[] okCertsExtensions = new String[]{PEM_EXTENSION};
     private final String certificateName;
 	
 	/**
