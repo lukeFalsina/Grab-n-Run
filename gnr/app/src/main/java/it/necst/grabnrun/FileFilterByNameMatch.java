@@ -15,6 +15,7 @@
  *******************************************************************************/
 package it.necst.grabnrun;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import android.support.annotation.NonNull;
@@ -23,7 +24,7 @@ import java.io.File;
 import java.io.FileFilter;
 
 /**
- * A simple implementation of the {@link FileFilter} interface which will accept
+ * A simple implementation of the {@link FileFilter} interface that will accept
  * only those files whose name and extension match the required one
  * stated during object creation.
  * 
@@ -34,8 +35,8 @@ class FileFilterByNameMatch implements FileFilter {
 	private final String extension;
 
 	/**
-	 * Instantiate a {@link FileFilterByNameMatch} which will look
-	 * for files with the provided name and extension.
+	 * Instantiate a {@link FileFilterByNameMatch} that will accept
+	 * files matching the provided name and extension.
 	 * 
 	 * @param name
 	 *  the file name.
@@ -43,13 +44,17 @@ class FileFilterByNameMatch implements FileFilter {
 	 *  the file extension in the format ".???" (e.g., ".txt").
 	 */
 	FileFilterByNameMatch(@NonNull String name, @NonNull String extension) {
-		this.name = checkNotNull(name, "The name of the target file was null.");
-		this.extension = checkNotNull(extension, "The extension of the target file was null.");
+		this.name = checkNotNull(name, "The name of the target file was null");
+		checkArgument(!name.isEmpty(), "The file name must not be empty");
+		this.extension = checkNotNull(extension, "The extension of the target file was null");
+        checkArgument(
+                extension.matches(".[a-z]{3}"),
+                "The extension must be one dot, followed by three alphabetical characters");
 	}
 	
 	@Override
 	public final boolean accept(@NonNull File file) {
-		checkNotNull(file, "The input file descriptor was null.");
+		checkNotNull(file, "The input file descriptor was null");
 		if (file.isDirectory())
 			return false;
 		else if (file.isFile()) {

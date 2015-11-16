@@ -16,6 +16,7 @@ import java.io.File;
 @RunWith(MockitoJUnitRunner.class)
 public class CertificateFileFilterByNameMatchTest {
 
+    public static final String EMPTY_CERTIFICATE_NAME = "";
     private static final String TEST_CERTIFICATE_NAME = "testCertificate";
     private static final String CERTIFICATE_WITH_MATCHING_NAME_BUT_UNSUPPORTED_EXTENSION =
             TEST_CERTIFICATE_NAME + ".cert";
@@ -30,6 +31,11 @@ public class CertificateFileFilterByNameMatchTest {
     @Before
     public void initializeCertificateFileFilterWithTestCertificateName() {
         testCertFileFilter = new CertificateFileFilterByNameMatch(TEST_CERTIFICATE_NAME);
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void givenAnEmptyFileName_whenCreateCertificateFileFilter_thenThrows() {
+        new CertificateFileFilterByNameMatch(EMPTY_CERTIFICATE_NAME);
     }
 
     @Test

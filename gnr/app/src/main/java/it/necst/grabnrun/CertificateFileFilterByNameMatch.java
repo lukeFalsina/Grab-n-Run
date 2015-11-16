@@ -44,7 +44,7 @@ final class CertificateFileFilterByNameMatch extends FileFilterByNameMatch {
 	 */
 	CertificateFileFilterByNameMatch(@NonNull String certificateName) {
 		super(
-                checkNotNull(certificateName, "The input name for the certificate was null."),
+                checkNotNull(certificateName, "The input name for the certificate was null"),
                 PEM_EXTENSION);
 	}
 }
