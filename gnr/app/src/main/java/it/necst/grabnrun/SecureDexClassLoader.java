@@ -15,6 +15,14 @@
  *******************************************************************************/
 package it.necst.grabnrun;
 
+import android.content.ContextWrapper;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.Signature;
+import android.util.Log;
+
+import com.google.common.base.Optional;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -53,11 +61,6 @@ import java.util.regex.Pattern;
 
 import javax.security.auth.x500.X500Principal;
 
-import android.content.ContextWrapper;
-import android.content.pm.PackageManager;
-import android.content.pm.Signature;
-import android.content.pm.PackageInfo;
-import android.util.Log;
 import dalvik.system.DexClassLoader;
 import dalvik.system.DexFile;
 
@@ -384,7 +387,7 @@ public class SecureDexClassLoader {
 				// Either by reverting the package name or from provided URL this
 				// package name has now a certificate URL associated to it.
 				// So update the Trie-like data structure accordingly
-				mPackageNameTrie.setEntryHasAssociatedCertificate(currentPackageName);
+				mPackageNameTrie.setPackageNameHasAssociatedCertificate(currentPackageName);
 			}
 		}
 		
@@ -478,15 +481,17 @@ public class SecureDexClassLoader {
 				
 				// At first find the package name which is closest in hierarchy to the target one
 				// and has an associated URL for a certificate.
-				String rootPackageNameWithCertificate = mPackageNameTrie.getPackageNameWithAssociatedCertificate(currentPackageName);
+				Optional<String> optionalRootPackageNameWithCertificate =
+						mPackageNameTrie.getPackageNameWithAssociatedCertificate(currentPackageName);
 				
 				X509Certificate verifiedCertificate = null;
 				
 				// Check that such a package name exists and, in this case, try to import the certificate.
-				if (!rootPackageNameWithCertificate.isEmpty()) {
+				if (optionalRootPackageNameWithCertificate.isPresent()) {
 					
 					// Try to find and import the certificate used to check the signature of .apk or .jar container
-					verifiedCertificate = importCertificateFromPackageName(rootPackageNameWithCertificate);
+					verifiedCertificate = importCertificateFromPackageName(
+                            optionalRootPackageNameWithCertificate.get());
 				}
 				
 				// Relevant only if a verified certificate object is found.
@@ -550,12 +555,14 @@ public class SecureDexClassLoader {
 			
 			// At first find the package name which is closest in hierarchy to the target one
 			// and has an associated URL for a certificate.
-			String rootPackageNameWithCertificate = mPackageNameTrie.getPackageNameWithAssociatedCertificate(currentPackageName);
+			Optional<String> optionalRootPackageNameWithCertificate =
+                    mPackageNameTrie.getPackageNameWithAssociatedCertificate(currentPackageName);
 			
-			if (!rootPackageNameWithCertificate.isEmpty()) {
+			if (optionalRootPackageNameWithCertificate.isPresent()) {
 				
 				// Insert a valid entry into the container to certificate Map
-				containerPathToRootPackageNameMap.put(packageNameToContainerPathMap.get(currentPackageName), rootPackageNameWithCertificate);
+				containerPathToRootPackageNameMap.put(packageNameToContainerPathMap.get(
+                        currentPackageName), optionalRootPackageNameWithCertificate.get());
 			}
 		}
 		
@@ -619,9 +626,11 @@ public class SecureDexClassLoader {
 			
 			// Verify that at least one of the prefix of the current package name was designated 
 			// for loading its classes.
-			String rootPackageNameAllowedForLoading = mPackageNameTrie.getPackageNameWithAssociatedCertificate(currentPackageName); 
+			Optional<String> optionalRootPackageNameAllowedForLoading =
+                    mPackageNameTrie.getPackageNameWithAssociatedCertificate(currentPackageName);
 			
-			if (rootPackageNameAllowedForLoading.isEmpty() || !successVerifiedContainerPathSet.contains(packageNameToContainerPathMap.get(currentPackageName))) {
+			if (!optionalRootPackageNameAllowedForLoading.isPresent() ||
+                    !successVerifiedContainerPathSet.contains(packageNameToContainerPathMap.get(currentPackageName))) {
 				
 				// The container linked to this package name did not succeed in the verification process.
 				// No class with this package name can be loaded..
@@ -760,9 +769,10 @@ public class SecureDexClassLoader {
 
 				// Even if the container associated to this package name may have been verified correctly,
 				// it is necessary to verify that the user also wants to dynamically load classes from this package name.
-				String rootPackageNameWithCertificate = mPackageNameTrie.getPackageNameWithAssociatedCertificate(packageName);
+				Optional<String> optionalRootPackageNameWithCertificate =
+                        mPackageNameTrie.getPackageNameWithAssociatedCertificate(packageName);
 				
-				if (!rootPackageNameWithCertificate.isEmpty()) {
+				if (optionalRootPackageNameWithCertificate.isPresent()) {
 					
 					// The container associated to this package name has been already verified once so classes
 					// belonging to this package name can be immediately loaded.
@@ -775,15 +785,17 @@ public class SecureDexClassLoader {
 				
 				// At first find the package name which is closest in hierarchy to the target one
 				// and has an associated URL for a certificate.
-				String rootPackageNameWithCertificate = mPackageNameTrie.getPackageNameWithAssociatedCertificate(packageName);
+				Optional<String> optionalRootPackageNameWithCertificate =
+                        mPackageNameTrie.getPackageNameWithAssociatedCertificate(packageName);
 				
 				X509Certificate verifiedCertificate = null;
 				
 				// Check that such a package name exists and, in this case, try to import the certificate.
-				if (!rootPackageNameWithCertificate.isEmpty()) {
+				if (optionalRootPackageNameWithCertificate.isPresent()) {
 					
 					// Try to find and import the certificate used to check the signature of .apk or .jar container
-					verifiedCertificate = importCertificateFromPackageName(rootPackageNameWithCertificate);
+					verifiedCertificate = importCertificateFromPackageName(
+                            optionalRootPackageNameWithCertificate.get());
 				}
 				
 				if (verifiedCertificate != null) {

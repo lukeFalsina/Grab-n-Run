@@ -15,10 +15,12 @@
  *******************************************************************************/
 package it.necst.grabnrun;
 
+import android.util.Log;
+
+import com.google.common.base.Optional;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import android.util.Log;
 
 /**
  * {@link PackageNameTrie} is an helper class used to keep a hierarchy among package names and certificates.
@@ -46,7 +48,7 @@ final class PackageNameTrie {
 	 */
 	PackageNameTrie() {
 		
-		packageNameToHasCertificateMap = new HashMap<String, Boolean>();
+		packageNameToHasCertificateMap = new HashMap<>();
 		// Add also the root entry and suppose that it has 
 		// always an associated certificate.
 		packageNameToHasCertificateMap.put("", true);
@@ -97,20 +99,23 @@ final class PackageNameTrie {
 		
 		int lastPointIndex = packageName.lastIndexOf('.');
 		
-		if (lastPointIndex != -1)
+		if (lastPointIndex > 0)
 			return packageName.substring(0, lastPointIndex);
 		else
 			return "";
 	}
 	
 	/**
-	 * This method simply marks the input package name as one of those which has
-	 * an associated certificate that may be used for container signature verification. 
+	 * This method simply marks the input package name as one having an
+	 * associated certificate that may be used for verifying a container signature.
+     * <p>
+     * If the input package name has not been generated yet using
+     * {@link #generateEntriesForPackageName}, this method has no effect.
 	 * 
 	 * @param packageName
-	 *  the package name entry which has a certificate associated to it for its verification.
+	 *  the package name to mark as having a certificate associated to it.
 	 */
-	final void setEntryHasAssociatedCertificate(String packageName) {
+	final void setPackageNameHasAssociatedCertificate(String packageName) {
 		
 		if (packageNameToHasCertificateMap.containsKey(packageName)) {
 			
@@ -120,29 +125,38 @@ final class PackageNameTrie {
 	}
 	
 	/**
-	 * This method is used to query {@link PackageNameTrie} in order to obtain the name of the 
+	 * This method is used to query {@link PackageNameTrie} to obtain the name of the
 	 * closest prefix of the input package name, which has been linked to a certificate.
 	 * 
 	 * @param packageName
 	 *  the package name for which a certificate for signature verification must be found
 	 * @return
-	 *  either the closest prefix of the input package name (it can be even the same input package name), which
-	 *  has an associated certificate for signature verification or an empty {@link String} if no certificate
-	 *  is associated to any of the package names in the hierarchy.
+	 *  an optional containing either the longest prefix of the input package name
+     *  (possibly the one provided as input), which has an associated certificate
+     *  for signature verification, or an absent value if no certificate
+	 *  is associated to any of the package names in its hierarchy.
 	 */
-	final String getPackageNameWithAssociatedCertificate(String packageName) {
+	final Optional<String> getPackageNameWithAssociatedCertificate(String packageName) {
 		
 		String currentPackageName = packageName;
 		
 		if (!packageNameToHasCertificateMap.containsKey(currentPackageName))
-			return "";
+			return Optional.absent();
 		
-		while (!packageNameToHasCertificateMap.get(currentPackageName))
-			currentPackageName = getUpALevel(currentPackageName);
-		
+		while (!packageNameToHasCertificateMap.get(currentPackageName)) {
+            currentPackageName = getUpALevel(currentPackageName);
+
+            if (currentPackageName.equals("")) {
+                Log.d(TAG_PACKAGE_NAME_TRIE, "There is no prefix associated with a certificate "
+                        + "for package name " + packageName);
+
+                return Optional.absent();
+            }
+        }
+
 		Log.d(TAG_PACKAGE_NAME_TRIE, currentPackageName + " is the closest package name to the target "
 		+ packageName + " with an associated certificate for verification.");
 		
-		return currentPackageName;
+		return Optional.of(currentPackageName);
 	}
 }
