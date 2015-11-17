@@ -32,6 +32,13 @@ android {
             java.srcDirs = ['test/java']
         }
     }
+
+    // Used to avoid unit tests to fail when encountering a static
+    // Android method not mocked.
+    // See: http://g.co/androidstudio/not-mocked
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
 }
 
 dependencies {
