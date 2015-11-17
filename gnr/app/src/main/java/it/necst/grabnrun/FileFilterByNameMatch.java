@@ -22,6 +22,7 @@ import android.support.annotation.NonNull;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.util.Locale;
 
 /**
  * A simple implementation of the {@link FileFilter} interface that will accept
@@ -31,7 +32,8 @@ import java.io.FileFilter;
  * @author Luca Falsina
  */
 class FileFilterByNameMatch implements FileFilter {
-	private final String name;
+    private static final String DOT_FOLLOWED_BY_THREE_OR_FOUR_CHARACTERS = ".[a-z]{3,4}";
+    private final String name;
 	private final String extension;
 
 	/**
@@ -41,15 +43,16 @@ class FileFilterByNameMatch implements FileFilter {
 	 * @param name
 	 *  the file name.
 	 * @param extension
-	 *  the file extension in the format ".???" (e.g., ".txt").
+	 *  the file extension in the format ".????" (e.g., ".txt", or ".DOCX").
 	 */
 	FileFilterByNameMatch(@NonNull String name, @NonNull String extension) {
 		this.name = checkNotNull(name, "The name of the target file was null");
 		checkArgument(!name.isEmpty(), "The file name must not be empty");
 		this.extension = checkNotNull(extension, "The extension of the target file was null");
         checkArgument(
-                extension.matches(".[a-z]{3}"),
-                "The extension must be one dot, followed by three alphabetical characters");
+                extension.toLowerCase(Locale.US).matches(DOT_FOLLOWED_BY_THREE_OR_FOUR_CHARACTERS),
+                "The extension must be one dot, followed by three, " +
+                        "or fours alphabetical characters");
 	}
 	
 	@Override

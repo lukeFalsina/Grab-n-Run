@@ -16,9 +16,10 @@ public class FileFilterByNameMatchTest {
 
     public static final String EMPTY_FILE_NAME = "";
     private static final String TEST_FILE_NAME = "testCertificate";
-    private static final String INVALID_FILE_EXTENSION = ".tooLong";
+    private static final String INVALID_FILE_EXTENSION = ".tooLongSinceUpToFourCharsAreSupported";
 
     private static final String VALID_FILE_EXTENSION = ".txt";
+    private static final String ANOTHER_VALID_FILE_EXTENSION_WITH_UPPERCASE = ".DOCX";
     private static final String CERTIFICATE_WITH_MATCHING_NAME_BUT_NOT_EXTENSION =
             TEST_FILE_NAME + ".doc";
     private static final String CERTIFICATE_WITH_MATCHING_EXTENSION_BUT_NOT_NAME =
@@ -37,6 +38,11 @@ public class FileFilterByNameMatchTest {
     @Test (expected = IllegalArgumentException.class)
     public void givenAFileExtensionNotMatchingDotAndThreeCharacters_whenCreateFileFilter_thenThrows() {
         new FileFilterByNameMatch(TEST_FILE_NAME, INVALID_FILE_EXTENSION);
+    }
+
+    @Test
+    public void givenAFileExtensionWithFourUppercaseCharacters_whenCreateFileFilter_thenTheTestSucceeds() {
+        new FileFilterByNameMatch(TEST_FILE_NAME, ANOTHER_VALID_FILE_EXTENSION_WITH_UPPERCASE);
     }
 
     @Test
