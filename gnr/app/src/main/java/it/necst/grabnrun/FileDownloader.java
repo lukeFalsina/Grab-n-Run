@@ -150,20 +150,7 @@ final class FileDownloader {
     						if (connection_status == HttpURLConnection.HTTP_MOVED_TEMP
     							|| connection_status == HttpURLConnection.HTTP_MOVED_PERM
     								|| connection_status == HttpURLConnection.HTTP_SEE_OTHER) {
-
-                                // Get redirect URL from "location" header field
-                                URL redirectedURL = new URL(urlConnection.getHeaderField("Location"));
-
-                                // Get the cookie for login if provided
-                                String cookies = urlConnection.getHeaderField("Set-Cookie");
-
-                                // Open the new redirected connection again..
-                                urlConnection = openAndReturnConnectionAssociatedToURL(redirectedURL);
-
-                                urlConnection.setConnectTimeout(1000);
-                                urlConnection.setRequestProperty("Cookie", cookies);
-
-                                Log.d(TAG_FILE_DOWNLOADER, "The connection was redirected to: " + redirectedURL.toString());
+                                urlConnection = followURLRedirection(urlConnection);
                             }
                         }
     				}
@@ -175,14 +162,7 @@ final class FileDownloader {
                         inputStream = new BufferedInputStream(urlConnection.getInputStream());
                         outputStream = new FileOutputStream(localURI);
 
-                        int read;
-                        byte[] bytes = new byte[1024];
-
-                        while ((read = inputStream.read(bytes)) > 0) {
-                            outputStream.write(bytes, 0, read);
-                        }
-
-                        Log.i(TAG_FILE_DOWNLOADER, "Download complete. Container Path: " + localURI);
+                        copyReadContentFromInputStreamToOutputStream(inputStream, outputStream);
                     }
 
     			} catch (IOException e) {
@@ -190,28 +170,27 @@ final class FileDownloader {
     				// Nothing should have been written at the local path 
     				// and so false should be returned.
     			} finally {
-    				Log.d(TAG_FILE_DOWNLOADER, "Clean up all pending streams..");
-    				if (urlConnection != null)
-    					urlConnection.disconnect();
-
-    				if (inputStream != null) {
-    					try {
-    						inputStream.close();
-    					} catch (IOException e) {
-    						e.printStackTrace();
-    					}
-    				}
-
-    				if (outputStream != null) {
-    					try {
-    						// outputStream.flush();
-    						outputStream.close();
-    					} catch (IOException e) {
-    						e.printStackTrace();
-    					}			 
-    				}    			
+                    closeConnectionAndStreams(urlConnection, inputStream, outputStream);
     			}
     		}
+
+            private HttpURLConnection followURLRedirection(HttpURLConnection urlConnection)
+                    throws IOException {
+                // Get redirect URL from "location" header field
+                URL redirectedURL = new URL(urlConnection.getHeaderField("Location"));
+
+                // Get the cookie for login if provided
+                String cookies = urlConnection.getHeaderField("Set-Cookie");
+
+                // Open the new redirected connection again..
+                urlConnection = openAndReturnConnectionAssociatedToURL(redirectedURL);
+
+                urlConnection.setConnectTimeout(1000);
+                urlConnection.setRequestProperty("Cookie", cookies);
+
+                Log.d(TAG_FILE_DOWNLOADER, "The connection was redirected to: " + redirectedURL.toString());
+                return urlConnection;
+            }
 
             private HttpURLConnection openAndReturnConnectionAssociatedToURL(URL remoteURL)
                     throws IOException {
@@ -221,7 +200,46 @@ final class FileDownloader {
                     return (HttpURLConnection) remoteURL.openConnection();
                 }
             }
-    	};
+
+            private void copyReadContentFromInputStreamToOutputStream(
+                    InputStream inputStream,
+                    OutputStream outputStream) throws IOException {
+                int read;
+                byte[] bytes = new byte[1024];
+
+                while ((read = inputStream.read(bytes)) > 0) {
+                    outputStream.write(bytes, 0, read);
+                }
+
+                Log.i(TAG_FILE_DOWNLOADER, "Download complete. Container Path: " + localURI);
+            }
+
+            private void closeConnectionAndStreams(
+                    HttpURLConnection urlConnection,
+                    InputStream inputStream,
+                    OutputStream outputStream) {
+                Log.d(TAG_FILE_DOWNLOADER, "Clean up all pending streams..");
+                if (urlConnection != null)
+                    urlConnection.disconnect();
+
+                if (inputStream != null) {
+                    try {
+                        inputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                if (outputStream != null) {
+                    try {
+                        // outputStream.flush();
+                        outputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
     	
     	dataThread.start();
     	
