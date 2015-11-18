@@ -1219,7 +1219,7 @@ public class SecureDexClassLoader {
 		String localCertPath = certificateFolder.getAbsolutePath() + "/" + packageName + ".pem";
 		
 		// Return the result of the download procedure (redirect here is not permitted).
-		return mFileDownloader.downloadRemoteUrl(certificateRemoteURL, localCertPath, false);
+		return mFileDownloader.downloadRemoteResource(certificateRemoteURL, localCertPath, false);
 	}
 	
 	/**

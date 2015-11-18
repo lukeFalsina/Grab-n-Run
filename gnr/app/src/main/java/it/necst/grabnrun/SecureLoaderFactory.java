@@ -645,13 +645,14 @@ public class SecureLoaderFactory {
 		if (containerName == null || containerName.isEmpty()) return null;
 		
 		// Check whether the selected resource is a container (jar or apk)
-		int extensionIndex = containerName.lastIndexOf(".");
-		String extension = null;
+		int containerExtensionIndex = containerName.lastIndexOf(".");
+		String containerExtension = null;
 		
-		if (extensionIndex != -1) {
-			
-			extension = containerName.substring(extensionIndex);
-			if (!extension.equals(".jar") && !extension.equals(".apk")) return null;			
+		if (containerExtensionIndex != -1) {
+
+            containerExtension = containerName.substring(containerExtensionIndex);
+			if (!containerExtension.equals(".jar") && !containerExtension.equals(".apk"))
+                return null;
 		}
 		
 		// The new file name is fixed after having checked that its file name
@@ -665,7 +666,7 @@ public class SecureLoaderFactory {
 		
 			do {
 				currentIndex ++;
-				finalContainerName = containerName.substring(0, extensionIndex) + currentIndex + extension;
+				finalContainerName = containerName.substring(0, containerExtensionIndex) + currentIndex + extension;
 				checkFile = new File(resOutputDir.getAbsolutePath() + finalContainerName);
 					
 			} while (checkFile.exists());
@@ -686,24 +687,25 @@ public class SecureLoaderFactory {
 		String localContainerPath = resOutputDir.getAbsolutePath() + containerName;
 		
 		// Redirect may be allowed here while downloading a remote container..
-		boolean isDownloadSuccessful = mFileDownloader.downloadRemoteUrl(url, localContainerPath, true);
+		boolean isDownloadSuccessful = mFileDownloader.downloadRemoteResource(url, localContainerPath, true);
 		
 		if (isDownloadSuccessful) {
 			
 			// If this branch is reached, the download 
 			// worked properly and the path of the output
 			// file container is returned.
-			if (extension == null) {
+			if (containerExtension == null) {
 
 				// In such a situation, try to identify the extension of the downloaded file
-				extension = mFileDownloader.getDownloadedFileExtension();
+				Optional<String> retrievedFileExtension = mFileDownloader.getDownloadedFileExtension();
 				
 				// Check that an extension was found and it is a suitable one..
-				if (extension != null && (extension.equals(".jar") || extension.equals(".apk"))) {
+				if (retrievedFileExtension.isPresent() &&
+                        (retrievedFileExtension.get().equals(".jar") || retrievedFileExtension.get().equals(".apk"))) {
 
 					// In such a case rename the previous file by adding the extension
 					File containerToRename = new File(localContainerPath);
-					File finalContainerWithExtension = new File(localContainerPath + extension); 
+					File finalContainerWithExtension = new File(localContainerPath + retrievedFileExtension);
 					
 					if (finalContainerWithExtension.exists())
 						if (!finalContainerWithExtension.delete())
@@ -720,7 +722,7 @@ public class SecureLoaderFactory {
 					}
 						
 					// Return the local path to the renamed container.
-					return localContainerPath + extension;
+					return localContainerPath + retrievedFileExtension;
 				}
 			} else {
 				
