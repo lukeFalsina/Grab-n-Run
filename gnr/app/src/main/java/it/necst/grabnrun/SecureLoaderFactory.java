@@ -15,10 +15,13 @@
  *******************************************************************************/
 package it.necst.grabnrun;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import android.content.ContextWrapper;
 import android.util.Base64;
 import android.util.Log;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 
 import java.io.File;
@@ -35,52 +38,45 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
-
-//import android.content.Context;
-//import android.net.ConnectivityManager;
-//import android.net.NetworkInfo;
 
 /**
- * A Factory class that generates instances of classes used to 
- * retrieve dynamic code in a secure way at run time.
+ * A factory class that generates instances of classes used to
+ * retrieve containers holding code to execute dynamically in a secure way.
  * 
  * @author Luca Falsina
  */
 public class SecureLoaderFactory {
-	
-	// Unique identifier used for Log entries
+
+    // Unique identifier used for Log entries
 	private static final String TAG_SECURE_FACTORY = SecureLoaderFactory.class.getSimpleName();
 
-	private ContextWrapper mContextWrapper;
-	
-	// Objects used to check availability of Internet connection
-	//private ConnectivityManager mConnectivityManager;
-	//private NetworkInfo activeNetworkInfo;
-	
-	// Object used for retrieving file from remote URL
-	private FileDownloader mFileDownloader;
-	
-	// Final name of the folder user to store imported containers (both coming from remote or local resources)
-	static final String CONT_IMPORT_DIR = "imported_cont";
-	
-	// Used to compute the finger print on different containers 
+    // Name of the folder user to store imported containers (both coming from remote or local resources)
+    @VisibleForTesting static final String CONT_IMPORT_DIR = "imported_cont";
+
+    /**
+     * When a URL for a remote container is found, this field specifies the default time interval,
+     * expressed in days, before a local copy of it, stored in an application-private directory,
+     * will be considered rotten, and so not acceptable to be cached.
+     * <p>
+     * Those local copies of remote containers, whose life time is greater than this
+     * field value, will be erased from the device storage in stead of being cached.
+     * <p>
+     * You can change this duration by generating the {@link SecureLoaderFactory} instance
+     * with {@link SecureLoaderFactory#SecureLoaderFactory(android.content.ContextWrapper, int)}.
+     */
+    public static final int DEFAULT_DAYS_BEFORE_CONTAINER_EXPIRATION = 5;
+
+    private static final String HTTP_PROTOCOL_STRING = "http://";
+    private static final String HTTPS_PROTOCOL_STRING = "https://";
+
+    private ContextWrapper contextWrapper;
+
+	private FileDownloader fileDownloader;
+
+	// Used to compute the digest of different containers
 	// in order to check which has been already cached.
 	private MessageDigest messageDigest;
-	
-	/**
-	 * When a remote container URL is encountered, this field specifies the default time interval, 
-	 * expressed in days, before which a local copy of a remote container, stored in an 
-	 * application-private directory, will be considered fresh and so acceptable to be cached.
-	 * <p>
-	 * On the other hand, all of those containers, whose life time is greater than this
-	 * field value, will be immediately erased from the device storage in stead of being cached.
-	 * <p>
-	 * You can change this duration by generating the {@link SecureLoaderFactory} instance
-	 * with {@link SecureLoaderFactory#SecureLoaderFactory(android.content.ContextWrapper, int)}.
-	 */
-	public static final int DEFAULT_DAYS_BEFORE_CONTAINER_EXPIRACY = 5;
-	
+
 	private int daysBeforeContainerCacheExpiration;
 	
 	/**
@@ -90,45 +86,48 @@ public class SecureLoaderFactory {
 	 * It requires a {@link android.content.ContextWrapper} (i.e. the launching activity) which 
 	 * should be used to manage and retrieve internal directories 
 	 * of the application.
+     * <p>
+     * The number of days for which a local copy of a remote resource is considered acceptable
+     * is set to the value of {@link SecureLoaderFactory#DEFAULT_DAYS_BEFORE_CONTAINER_EXPIRATION}.
 	 * 
 	 * @param parentContextWrapper
 	 *  The content wrapper coming from the launching Activity.
 	 */
 	public SecureLoaderFactory(ContextWrapper parentContextWrapper) {
 	
-		this(parentContextWrapper, DEFAULT_DAYS_BEFORE_CONTAINER_EXPIRACY);
+		this(parentContextWrapper, DEFAULT_DAYS_BEFORE_CONTAINER_EXPIRATION);
 	}
 	
 	/**
-	 * This constructor works exactly as the previous one but it also allows to 
-	 * decide the time interval in days before which a local copy of a remote container, stored in an 
-	 * application-private directory, will be considered fresh and so acceptable to be cached.
+     * Creates a {@link SecureLoaderFactory} used to check and generate instances
+     * from secure dynamic code loader classes.
+     * <p>
+     * It requires a {@link android.content.ContextWrapper} (i.e. the launching activity) which
+     * should be used to manage and retrieve internal directories
+     * of the application.
+     * <p>
+	 * It allows to decide the time interval in days before which a local copy of a remote
+     * container, will be considered fresh and so acceptable to be cached.
 	 * <p>
-	 * If a negative value is provided for the second parameter, {@link SecureLoaderFactory} will be 
-	 * instantiated with the time interval in days equal to {@link SecureLoaderFactory#DEFAULT_DAYS_BEFORE_CONTAINER_EXPIRACY}.
+	 * If a negative value is provided for the second parameter, {@link SecureLoaderFactory} will
+	 * throws an {@link IllegalArgumentException}.
 	 * 
 	 * @param parentContextWrapper
 	 *  The content wrapper coming from the launching Activity.
 	 * @param daysBeforeContainerCacheExpiration
-	 *  The non negative value of days for which a local copy of a remote container imported into
-	 *  an application private folder is considered fresh and so acceptable to be cached.
+	 *  The value in days for which a local copy of a remote container is considered fresh,
+     *  thus acceptable to be cached.
+     * @throws IllegalArgumentException if the number of days is not greater than zero
 	 */
 	public SecureLoaderFactory(ContextWrapper parentContextWrapper, int daysBeforeContainerCacheExpiration) {
-		
-		if (daysBeforeContainerCacheExpiration >= 0) {
-		
-			// Initialize this variable for caching freshness with the parameter value
-			this.daysBeforeContainerCacheExpiration = daysBeforeContainerCacheExpiration;
-		
-		} else {
-			
-			// Initialize this variable for caching freshness with the default value (5 days)
-			this.daysBeforeContainerCacheExpiration = DEFAULT_DAYS_BEFORE_CONTAINER_EXPIRACY;
-		}
-		
-		mContextWrapper = parentContextWrapper;
-		//mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);
-		mFileDownloader = new FileDownloader(mContextWrapper);
+
+        checkArgument(
+                daysBeforeContainerCacheExpiration > 0,
+                "The number of days before considering a container rotten must be greater than zero");
+        this.daysBeforeContainerCacheExpiration = daysBeforeContainerCacheExpiration;
+
+		contextWrapper = parentContextWrapper;
+		fileDownloader = new FileDownloader(contextWrapper);
 		
 		try {
 			messageDigest = MessageDigest.getInstance("SHA-1");
@@ -140,9 +139,9 @@ public class SecureLoaderFactory {
 	
 	/**
 	 * Creates a {@link SecureDexClassLoader} that finds interpreted and native code in a set of
-	 * provided locations (either local or remote via HTTP or HTTPS) in dexPath.
+	 * provided locations (either local, or remote via HTTP, or HTTPS protocol) in dexPath.
 	 * Interpreted classes are found in a set of DEX files contained in Jar or Apk files and 
-	 * stored into an application-private, writable directory.
+	 * stored into an application-private directory.
 	 * <p>
 	 * Before executing one of these classes the signature of the target class is 
 	 * verified against the certificate associated with its package name.
@@ -155,7 +154,7 @@ public class SecureLoaderFactory {
 	 * certificate location will be constructed by simply reverting package name and 
 	 * transforming it into a web-based URL using HTTPS.
 	 * <p>
-	 * Note that this method returns {@code null} if no matching Jar or Apk file is found at the
+	 * Note that this method returns {@code null} if no matching Jar, or Apk file is found at the
 	 * provided dexPath parameter; otherwise a {@link SecureDexClassLoader} instance is returned.
 	 * <p>
 	 * Dynamic class loading with the returned {@link SecureDexClassLoader} will fail whether
@@ -183,15 +182,15 @@ public class SecureLoaderFactory {
 	 *  a {@link SecureDexClassLoader} object which can be used to load dynamic code securely and 
 	 *  uses a Eager strategy for container signature verification.
 	 */
-	public SecureDexClassLoader createDexClassLoader(	String dexPath, 
-														String libraryPath, 
-														ClassLoader parent,
-														Map<String, URL> packageNameToCertificateMap) { 
+	public SecureDexClassLoader createDexClassLoader(
+            String dexPath,
+			String libraryPath,
+			ClassLoader parent,
+			Map<String, URL> packageNameToCertificateMap) {
 		
-		// The default behavior by now is using EAGER evaluation.
+		// The default behavior is EAGER evaluation.
 		// In order to change it, simply modify the last boolean parameter from "false" to "true".
 		return createDexClassLoader(dexPath, libraryPath, parent, packageNameToCertificateMap, false);
-		
 	}
 	
 	/**
@@ -242,79 +241,54 @@ public class SecureLoaderFactory {
 	 *  uses a either Lazy or an Eager strategy for container signature verification depending
 	 *  on the last parameter provided to this constructor.
 	 */
-	public SecureDexClassLoader createDexClassLoader(	String dexPath, 
-														String libraryPath, 
-														ClassLoader parent,
-														Map<String, URL> packageNameToCertificateMap, 
-														boolean performLazyEvaluation) {
-		
-		// Final dex path list will be constructed incrementally
-		// while scanning dexPath variable
-		StringBuilder finalDexPath = new StringBuilder();
-		
-		/*
-		 * After discussion it results useless to force https while 
-		 * downloading apk/jar files (MITM may even be allowed here).
-		 * What we really need to enforce is retrieving the matching 
-		 * certificate securely (so if it's downloaded, use https).
-		if (dexPath.contains("http://")) {
-			// This dexPath must be forced to use https (avoid MITM attacks)..
-			finalDexPath = finalDexPath.replace("http://", "https://");
-			
-			Log.d(TAG_SECURE_FACTORY, "Dex Path has been modified to: " + finalDexPath);
-		} */
-		
-		// Necessary workaround to avoid remote URL being split 
-		// in a wrong way..
-		String tempPath = dexPath.replaceAll("http://", "http//");
-		tempPath = tempPath.replaceAll("https://", "https//");
-		
-		// Evaluate incoming paths. If one of those starts with http or https
-		// retrieve the related resources through a download and import it 
-		// into an internal application private directory.
-		String[] strings = tempPath.split(Pattern.quote(File.pathSeparator));
-		
-		// New container resources should be imported or cached from an application private folder..
-		// Initialize directory for imported containers.
-		File importedContainerDir = mContextWrapper.getDir(CONT_IMPORT_DIR, ContextWrapper.MODE_PRIVATE);
+	public SecureDexClassLoader createDexClassLoader(
+            String dexPath,
+            String libraryPath,
+			ClassLoader parent,
+			Map<String, URL> packageNameToCertificateMap,
+			boolean performLazyEvaluation) {
+
+		StringBuilder finalDexPathStringBuilder = new StringBuilder();
+        DexPathStringProcessor dexPathStringProcessor = new DexPathStringProcessor(dexPath);
+
+        // New container resources will be imported, or cached into this application private folder.
+		File importedContainerDir = contextWrapper.getDir(CONT_IMPORT_DIR, ContextWrapper.MODE_PRIVATE);
 		Log.d(TAG_SECURE_FACTORY, "Download Resource Dir has been mounted at: " + importedContainerDir.getAbsolutePath());
 		
-		CacheLogger mCacheLogger = new CacheLogger(importedContainerDir.getAbsolutePath(), daysBeforeContainerCacheExpiration);
+		CacheLogger remoteContainersCacheLogger = new CacheLogger(
+                importedContainerDir.getAbsolutePath(), daysBeforeContainerCacheExpiration);
 		
-		for (String path : strings) {
-			
-			if (path.startsWith("http//") || path.startsWith("https//")) {
+		while (dexPathStringProcessor.hasNextDexPathString()) {
+
+            String singleDexPath = dexPathStringProcessor.nextDexPathString();
+
+			if (singleDexPath.startsWith(HTTP_PROTOCOL_STRING) ||
+                    singleDexPath.startsWith(HTTPS_PROTOCOL_STRING)) {
 				
-				// Used to fix previous workaround on remote URL..
-				//String fixedPath = path.replaceAll("http//", "http://");
-				//fixedPath = fixedPath.replaceAll("https//", "https://");
-				String fixedRemotePath;
-				if (path.startsWith("http//"))
-					fixedRemotePath = "http:" + path.substring(4);
-				else
-					fixedRemotePath = "https:" + path.substring(5);
-
                 try {
-                    URL currentFixedPathAsURL = new URL(fixedRemotePath);
-
+                    URL currentSingleDexPathAsURL = new URL(singleDexPath);
 
                     Optional<String> cachedContainerFileName =
-                            mCacheLogger.checkForCachedEntry(currentFixedPathAsURL);
+                            remoteContainersCacheLogger.checkForCachedEntry(currentSingleDexPathAsURL);
 
                     if (cachedContainerFileName.isPresent()) {
 
                         // A valid and fresh enough cached copy of the remote container is present
                         // on the device storage, so this copy can be used in stead of downloading
                         // the remote container again.
-                        finalDexPath.append(importedContainerDir.getAbsolutePath()).append(File.separator).append(cachedContainerFileName.get()).append(File.pathSeparator);
-                        Log.d(TAG_SECURE_FACTORY, "Dex Path has been modified into: " + finalDexPath);
+                        finalDexPathStringBuilder
+                                .append(importedContainerDir.getAbsolutePath())
+                                .append(File.separator)
+                                .append(cachedContainerFileName.get())
+                                .append(File.pathSeparator);
+                        Log.d(TAG_SECURE_FACTORY, "Dex Path has been modified into: " + finalDexPathStringBuilder);
                     } else {
 
                         // No cached copy so it is necessary to download the remote resource from the web.
 
                         //Trace.beginSection("Download Container");
                         // Log.i("Profile","[Start]	Download Container: " + System.currentTimeMillis() + " ms.");
-                        String downloadedContainerPath = downloadContainerIntoFolder(fixedRemotePath, importedContainerDir);
+                        String downloadedContainerPath = downloadContainerIntoFolder(singleDexPath, importedContainerDir);
                         // Log.i("Profile","[End]	Download Container: " + System.currentTimeMillis() + " ms.");
                         //Trace.endSection(); // end of "Download Container" section
 
@@ -329,7 +303,7 @@ public class SecureLoaderFactory {
                             if (containerDigest == null) {
 
                                 // Fingerprint computation fails. Delete the resource container and do not add
-                                // this file to the path
+                                // this file to the singleDexPath
                                 if (!downloadedContainer.delete())
                                     Log.w(TAG_SECURE_FACTORY, "Issue while deleting " + downloadedContainerPath);
                             } else {
@@ -350,12 +324,12 @@ public class SecureLoaderFactory {
                                 if (downloadedContainer.renameTo(downloadContainerFinalPosition)) {
 
                                     // Successful renaming..
-                                    // It is necessary to replace the current web-like path to access the resource with the new local version.
-                                    finalDexPath.append(downloadedContainerFinalPath).append(File.pathSeparator);
-                                    Log.d(TAG_SECURE_FACTORY, "Dex Path has been modified into: " + finalDexPath);
+                                    // It is necessary to replace the current web-like singleDexPath to access the resource with the new local version.
+                                    finalDexPathStringBuilder.append(downloadedContainerFinalPath).append(File.pathSeparator);
+                                    Log.d(TAG_SECURE_FACTORY, "Dex Path has been modified into: " + finalDexPathStringBuilder);
 
                                     // It is also relevant to add this resource to the Log file of the cached remote containers.
-                                    mCacheLogger.addCachedEntryToLog(currentFixedPathAsURL, containerDigest + extension);
+                                    remoteContainersCacheLogger.addCachedEntryToLog(currentSingleDexPathAsURL, containerDigest + extension);
                                 } else {
                                     // Renaming operation failed..
                                     // Erase downloaded container.
@@ -369,7 +343,7 @@ public class SecureLoaderFactory {
                 } catch (MalformedURLException e) {
                     Log.d(
                             TAG_SECURE_FACTORY,
-                            "The provided path " + fixedRemotePath + " is not a valid remote URL");
+                            "The provided singleDexPath " + singleDexPath + " is not a valid remote URL");
                 }
 			}
 			else {
@@ -378,8 +352,8 @@ public class SecureLoaderFactory {
 
 					// In lazy evaluation it is not required to import the container on external
 					// storage into the library private directory for containers.
-					// So simply copy current path into the final dex path list
-					//finalDexPath.append(path + File.pathSeparator);
+					// So simply copy current singleDexPath into the final dex singleDexPath list
+					//finalDexPathStringBuilder.append(singleDexPath + File.pathSeparator);
 				//}
 				//else {
 					
@@ -392,14 +366,14 @@ public class SecureLoaderFactory {
 				String encodedContainerDigest = null;
 				
 				// If a container exists on the device storage, compute its digest.
-				if (new File(path).exists()) encodedContainerDigest = computeDigestFromFilePath(path);
+				if (new File(singleDexPath).exists()) encodedContainerDigest = computeDigestFromFilePath(singleDexPath);
 				
 				// Take this branch if the digest was correctly computed on the container..
 				if (encodedContainerDigest != null) {
 					
 					// Compute the extension of the file.
-					int extensionIndex = path.lastIndexOf(".");
-					String extension = path.substring(extensionIndex);
+					int extensionIndex = singleDexPath.lastIndexOf(".");
+					String extension = singleDexPath.substring(extensionIndex);
 					
 					// Check if a file whose name is "encodedContainerDigest.(jar/apk)" is already present in
 					// the cached certificate folder.					
@@ -409,7 +383,7 @@ public class SecureLoaderFactory {
 						
 						// A cached version of the container already exists.
 						// So simply use that cached version
-						finalDexPath.append(matchingContainerArray[0].getAbsolutePath()).append(File.pathSeparator);
+						finalDexPathStringBuilder.append(matchingContainerArray[0].getAbsolutePath()).append(File.pathSeparator);
 					}
 					else {
 						
@@ -422,7 +396,7 @@ public class SecureLoaderFactory {
 						
 						try {
 							
-							inStream = new FileInputStream(path);
+							inStream = new FileInputStream(singleDexPath);
 							outStream = new FileOutputStream(cachedContainerPath);
 							
 							byte[] buf = new byte[8192];
@@ -434,8 +408,8 @@ public class SecureLoaderFactory {
 						    	outStream.write(buf, 0, length);
 						    }
 							
-						    // In the end add the internal path of the container
-						    finalDexPath.append(cachedContainerPath).append(File.pathSeparator);
+						    // In the end add the internal singleDexPath of the container
+						    finalDexPathStringBuilder.append(cachedContainerPath).append(File.pathSeparator);
 						    
 						} catch (FileNotFoundException e) {
 							Log.w(TAG_SECURE_FACTORY, "Problem in locating container to import in the application private folder!");
@@ -461,19 +435,19 @@ public class SecureLoaderFactory {
 			}
 		}
 		
-		// Finally remove the last unnecessary separator from finalDexPath (if finalDexPath has at least one path inside)
-		if (finalDexPath.lastIndexOf(File.pathSeparator) != -1)
-			finalDexPath.deleteCharAt(finalDexPath.lastIndexOf(File.pathSeparator));
+		// Finally remove the last unnecessary separator from finalDexPathStringBuilder (if finalDexPathStringBuilder has at least one path inside)
+		if (finalDexPathStringBuilder.lastIndexOf(File.pathSeparator) != -1)
+			finalDexPathStringBuilder.deleteCharAt(finalDexPathStringBuilder.lastIndexOf(File.pathSeparator));
 		
 		// Finalize the CacheLogger object and update the helper file on the device
-		mCacheLogger.finalizeLog();
+		remoteContainersCacheLogger.finalizeLog();
 		
 		// Now the location of the final loaded classes is created.
 		// Since it is assumed that the developer do not care where
 		// exactly the dex classes will be stored, an application-private, 
 		// writable directory is created ad hoc.
 		
-		File dexOutputDir = mContextWrapper.getDir("dex_classes", ContextWrapper.MODE_PRIVATE);
+		File dexOutputDir = contextWrapper.getDir("dex_classes", ContextWrapper.MODE_PRIVATE);
 		
 		Log.d(TAG_SECURE_FACTORY, "Dex Output Dir has been mounted at: " + dexOutputDir.getAbsolutePath());
 		
@@ -481,25 +455,27 @@ public class SecureLoaderFactory {
 		// This is not necessary a bad choice..
 		
 		// Sanitize fields in packageNameToCertificateMap:
-		// - Check the syntax of packages names (only not empty strings divided by single separator char)
+		// - Check the syntax of packages names (only not empty extractedDexPathStrings divided by single separator char)
 		// - Enforce that all the certificates URLs in the map can be parsed and use HTTPS as their protocol
-		Map<String, URL> santiziedPackageNameToCertificateMap = sanitizePackageNameToCertificateMap(packageNameToCertificateMap);
+		Map<String, URL> sanitizedPackageNameToCertificateMap =
+                sanitizePackageNameToCertificateMap(packageNameToCertificateMap);
 		
 		// Initialize SecureDexClassLoader instance
-		SecureDexClassLoader mSecureDexClassLoader = new SecureDexClassLoader(	finalDexPath.toString(),
-																				dexOutputDir.getAbsolutePath(),
-																				libraryPath,
-																				parent,
-																				mContextWrapper,
-																				performLazyEvaluation);
+		SecureDexClassLoader mSecureDexClassLoader = new SecureDexClassLoader(
+                finalDexPathStringBuilder.toString(),
+				dexOutputDir.getAbsolutePath(),
+				libraryPath,
+				parent,
+                contextWrapper,
+				performLazyEvaluation);
 		
 		// Provide packageNameToCertificateMap to mSecureDexClassLoader..
-        mSecureDexClassLoader.setCertificateLocationMap(santiziedPackageNameToCertificateMap);
+        mSecureDexClassLoader.setCertificateLocationMap(sanitizedPackageNameToCertificateMap);
 		
 		return mSecureDexClassLoader;
 	}
-	
-	// Given the path of a file this function returns the encoded base 64 of SHA-1 digest of the file.
+
+    // Given the path of a file this function returns the encoded base 64 of SHA-1 digest of the file.
 	private String computeDigestFromFilePath(String filePath) {
 		
 		FileInputStream inStream = null;
@@ -539,7 +515,6 @@ public class SecureLoaderFactory {
 		
 		// Finally return the digest string..
 		return digestString;
-		
 	}
 
 	private Map<String, URL> sanitizePackageNameToCertificateMap(Map<String, URL> packageNameToCertificateMap) {
@@ -687,7 +662,7 @@ public class SecureLoaderFactory {
 		String localContainerPath = resOutputDir.getAbsolutePath() + containerName;
 		
 		// Redirect may be allowed here while downloading a remote container..
-		boolean isDownloadSuccessful = mFileDownloader.downloadRemoteResource(url, localContainerPath, true);
+		boolean isDownloadSuccessful = fileDownloader.downloadRemoteResource(url, localContainerPath, true);
 		
 		if (isDownloadSuccessful) {
 			
@@ -697,7 +672,7 @@ public class SecureLoaderFactory {
 			if (containerExtension == null) {
 
 				// In such a situation, try to identify the extension of the downloaded file
-				Optional<String> retrievedFileExtension = mFileDownloader.getDownloadedFileExtension();
+				Optional<String> retrievedFileExtension = fileDownloader.getDownloadedFileExtension();
 				
 				// Check that an extension was found and it is a suitable one..
 				if (retrievedFileExtension.isPresent() &&

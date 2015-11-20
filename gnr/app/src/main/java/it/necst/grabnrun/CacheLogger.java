@@ -89,7 +89,8 @@ final class CacheLogger {
 	 *  resources and the Log helper file.
 	 * @param daysTillConsideredFresh
 	 *  the number of days till a resource will be considered fresh and so
-	 *  good to be cached. 
+	 *  good to be cached.
+     * @throws IllegalArgumentException if the number of days is not greater then zero
 	 */
 	CacheLogger(@NonNull String cacheDirectoryPath, int daysTillConsideredFresh) {
 		this.cacheDirectoryPath = checkNotNull(
