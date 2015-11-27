@@ -37,8 +37,7 @@ public class FileDownloaderTest {
 
     private static final String LOCAL_FILE_NAME = "localFile";
 
-    @Rule
-    public TemporaryFolder temporaryTestFolder = new TemporaryFolder();
+    @Rule public TemporaryFolder temporaryTestFolder = new TemporaryFolder();
 
     @Mock MockContext mockContext = new MockContext();
     @Mock ConnectivityManager mockConnectivityManager = mock(ConnectivityManager.class);

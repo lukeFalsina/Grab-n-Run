@@ -15,7 +15,10 @@
  *******************************************************************************/
 package it.necst.grabnrun;
 
-import android.content.ContextWrapper;
+import static android.content.Context.MODE_PRIVATE;
+import static it.necst.grabnrun.SecureLoaderFactory.IMPORTED_CONTAINERS_PRIVATE_DIRECTORY_NAME;
+
+import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
@@ -124,7 +127,7 @@ public class SecureDexClassLoader {
 	private Map<String, URL> packageNameToCertificateMap;
 	
 	// Final name of the folder user to store certificates for the verification
-	private static final String CERTIFICATE_DIR = "valid_certs";
+	private static final String IMPORTED_CERTIFICATE_PRIVATE_DIRECTORY_NAME = "valid_certs";
 
 	// Constant used to tune concurrent vs standard verification in Eager mode.
 	private static final int MINIMUM_NUMBER_OF_CONTAINERS_FOR_CONCURRENT_VERIFICATION = 2;
@@ -153,19 +156,20 @@ public class SecureDexClassLoader {
 	
 	SecureDexClassLoader(	String dexPath, String optimizedDirectory,
 							String libraryPath, ClassLoader parent,
-							ContextWrapper parentContextWrapper,
+							Context parentContext,
 							boolean performLazyEvaluation) {
 		
 		// Initialization of the linked internal DexClassLoader
 		mDexClassLoader = new DexClassLoader(dexPath, optimizedDirectory, libraryPath, parent);
 		
-		certificateFolder = parentContextWrapper.getDir(CERTIFICATE_DIR, ContextWrapper.MODE_PRIVATE);
-		resDownloadFolder = parentContextWrapper.getDir(SecureLoaderFactory.CONT_IMPORT_DIR, ContextWrapper.MODE_PRIVATE);
+		certificateFolder =
+				parentContext.getDir(IMPORTED_CERTIFICATE_PRIVATE_DIRECTORY_NAME, MODE_PRIVATE);
+		resDownloadFolder =
+				parentContext.getDir(IMPORTED_CONTAINERS_PRIVATE_DIRECTORY_NAME, MODE_PRIVATE);
 		
-		//mConnectivityManager = (ConnectivityManager) parentContextWrapper.getSystemService(Context.CONNECTIVITY_SERVICE);
-		mPackageManager = parentContextWrapper.getPackageManager();
+		mPackageManager = parentContext.getPackageManager();
 		
-		mFileDownloader = new FileDownloader(parentContextWrapper);
+		mFileDownloader = new FileDownloader(parentContext);
 		
 		hasBeenWipedOut = false;
 		
@@ -183,8 +187,7 @@ public class SecureDexClassLoader {
 		}
 		
 		// Map initialization
-		packageNameToCertificateMap = new LinkedHashMap<String, URL>();
-		// packageNameToContainerPathMap = new LinkedHashMap<String, String>();
+		packageNameToCertificateMap = new LinkedHashMap<>();
 		packageNameToContainerPathMap = Collections.synchronizedMap(new LinkedHashMap<String, String>());
 		
 		// Analyze each path in dexPath, find its package name and 
@@ -233,7 +236,7 @@ public class SecureDexClassLoader {
 		
 		String extension = containerPath.substring(extensionIndex);
 		
-		Set<String> packageNameSet = new HashSet<String>();
+		Set<String> packageNameSet = new HashSet<>();
 		
 		if (extension.equals(".apk")) {
 			
@@ -397,7 +400,7 @@ public class SecureDexClassLoader {
 			// and remove the invalid ones.
 			
 			// Get the distinct set of containers path..
-			Set<String> containersToVerifySet = new HashSet<String>(packageNameToContainerPathMap.values());
+			Set<String> containersToVerifySet = new HashSet<>(packageNameToContainerPathMap.values());
 			
 			// Check how many containers need to be verified..
 			if (containersToVerifySet.size() < MINIMUM_NUMBER_OF_CONTAINERS_FOR_CONCURRENT_VERIFICATION) {
@@ -456,7 +459,7 @@ public class SecureDexClassLoader {
 		
 		// This map is used to check whether one container has been already verified and the
 		// result of the signature verification process.
-		Map<String, Boolean> alreadyCheckedContainerMap = new HashMap<String, Boolean>();
+		Map<String, Boolean> alreadyCheckedContainerMap = new HashMap<>();
 		
 		// Analyze all the package names which are linked to a container.
 		Iterator<String> packageNamesIterator = packageNameToContainerPathMap.keySet().iterator();
@@ -542,7 +545,7 @@ public class SecureDexClassLoader {
 		
 		
 		// Initialize helper map which links a container to the certificate to validate it..
-		Map<String, String> containerPathToRootPackageNameMap = new LinkedHashMap<String, String>();
+		Map<String, String> containerPathToRootPackageNameMap = new LinkedHashMap<>();
 		
 		// Analyze all the package names which are linked to a container.
 		Iterator<String> packageNamesIterator = packageNameToContainerPathMap.keySet().iterator();
@@ -574,7 +577,7 @@ public class SecureDexClassLoader {
 			// Initialize the thread pool executor with number of thread equals to the
 			// number of containers to verify..
 			ExecutorService threadSignatureVerificationPool = Executors.newFixedThreadPool(containerPathToRootPackageNameMap.size());			
-			List<Future<?>> futureTaskList = new ArrayList<Future<?>>();
+			List<Future<?>> futureTaskList = new ArrayList<>();
 			
 			Iterator<String> containerPathIterator = containerPathToRootPackageNameMap.keySet().iterator();
 			
@@ -584,7 +587,11 @@ public class SecureDexClassLoader {
 				
 				// Submit a new signature verification thread on a container and store a 
 				// reference in the future objects list.
-				Future<?> futureTask = threadSignatureVerificationPool.submit(new SignatureVerificationTask(currentContainerPath, containerPathToRootPackageNameMap.get(currentContainerPath), successVerifiedContainerPathSet));
+				Future<?> futureTask = threadSignatureVerificationPool.submit(
+                        new SignatureVerificationTask(
+                                currentContainerPath,
+                                containerPathToRootPackageNameMap.get(currentContainerPath),
+                                successVerifiedContainerPathSet));
 				futureTaskList.add(futureTask);
 			}
 			
@@ -1042,7 +1049,7 @@ public class SecureDexClassLoader {
 		if (jarFile == null || trustedCert == null) 
 		   	throw new SecurityException("JarFile or certificate are missing");
 
-		Vector<JarEntry> entriesVec = new Vector<JarEntry>();
+		Vector<JarEntry> entriesVec = new Vector<>();
 
 	    // Ensure the jar file is at least signed.
 	    Manifest man = jarFile.getManifest();
@@ -1058,7 +1065,7 @@ public class SecureDexClassLoader {
 	    while (entries.hasMoreElements()) {
 			
 	    	// Current entry in the jar container
-		    JarEntry je = (JarEntry) entries.nextElement();
+		    JarEntry je = entries.nextElement();
 
 		    // Skip directories.
 		    if (je.isDirectory()) continue;
@@ -1246,7 +1253,7 @@ public class SecureDexClassLoader {
 		// This is a useless call.. Nothing will happen..
 		if (!containerPrivateFolder && !certificatePrivateFolder) return;
 		
-		List<File> fileToEraseList = new ArrayList<File>();
+		List<File> fileToEraseList = new ArrayList<>();
 		
 		if (containerPrivateFolder) {
 			
