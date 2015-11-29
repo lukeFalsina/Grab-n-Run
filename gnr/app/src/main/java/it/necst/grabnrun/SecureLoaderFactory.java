@@ -17,6 +17,8 @@ package it.necst.grabnrun;
 
 import static android.content.Context.MODE_PRIVATE;
 import static com.google.common.base.Preconditions.checkArgument;
+import static it.necst.grabnrun.FileHelper.endsWithJarOrApkExtension;
+import static it.necst.grabnrun.FileHelper.extractExtensionFromFilePath;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -380,8 +382,7 @@ public class SecureLoaderFactory {
                     } else {
 
                         // Compute the extension of the file.
-                        int extensionIndex = downloadedContainerPath.lastIndexOf(".");
-                        String extension = downloadedContainerPath.substring(extensionIndex);
+                        String extension = extractExtensionFromFilePath(downloadedContainerPath).get();
 
                         // Rename the previous container file according to the containerDigest and its extension.
                         String downloadedContainerFinalPath = importedContainerDir.getAbsolutePath() + File.separator + containerDigest + extension;
@@ -436,8 +437,7 @@ public class SecureLoaderFactory {
         if (encodedContainerDigest != null) {
 
             // Compute the extension of the file.
-            int extensionIndex = singleDexPath.lastIndexOf(".");
-            String extension = singleDexPath.substring(extensionIndex);
+            String extension = extractExtensionFromFilePath(singleDexPath).get();
 
             // Check if a file whose name is "encodedContainerDigest.(jar/apk)" is already present in
             // the cached certificate folder.
@@ -646,15 +646,12 @@ public class SecureLoaderFactory {
 		if (containerName == null || containerName.isEmpty()) return null;
 		
 		// Check whether the selected resource is a container (jar or apk)
-		int containerExtensionIndex = containerName.lastIndexOf(".");
-		String containerExtension = null;
-		
-		if (containerExtensionIndex != -1) {
+        Optional<String> optionalContainerExtension = extractExtensionFromFilePath(containerName);
 
-            containerExtension = containerName.substring(containerExtensionIndex);
-			if (!containerExtension.equals(".jar") && !containerExtension.equals(".apk"))
-                return null;
-		}
+        if (optionalContainerExtension.isPresent() &&
+                !endsWithJarOrApkExtension(optionalContainerExtension.get())) {
+            return null;
+        }
 
         // Check that no file is present at this location.
 		File checkFile = new File(resOutputDir.getAbsolutePath() + containerName);
@@ -676,14 +673,14 @@ public class SecureLoaderFactory {
 			
 			// If this branch is reached, the download worked properly and the path of the output
 			// file container is returned.
-			if (containerExtension == null) {
+			if (!optionalContainerExtension.isPresent()) {
 
 				// In such a situation, try to identify the extension of the downloaded file
 				Optional<String> retrievedFileExtension = fileDownloader.getDownloadedFileExtension();
 				
 				// Check that an extension was found and it is a suitable one..
 				if (retrievedFileExtension.isPresent() &&
-                        (retrievedFileExtension.get().equals(".jar") || retrievedFileExtension.get().equals(".apk"))) {
+                        endsWithJarOrApkExtension(retrievedFileExtension.get())) {
 
 					// In such a case rename the previous file by adding the extension
 					File containerToRename = new File(localContainerPath);

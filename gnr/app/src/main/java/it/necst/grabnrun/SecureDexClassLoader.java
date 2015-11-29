@@ -16,7 +16,14 @@
 package it.necst.grabnrun;
 
 import static android.content.Context.MODE_PRIVATE;
+import static dalvik.system.DexFile.loadDex;
+import static it.necst.grabnrun.FileHelper.APK_EXTENSION;
+import static it.necst.grabnrun.FileHelper.JAR_EXTENSION;
+import static it.necst.grabnrun.FileHelper.extractExtensionFromFilePath;
+import static it.necst.grabnrun.FileHelper.extractFileNameWithoutExtensionFromFilePath;
 import static it.necst.grabnrun.SecureLoaderFactory.IMPORTED_CONTAINERS_PRIVATE_DIRECTORY_NAME;
+import static java.util.Collections.synchronizedMap;
+import static java.util.Collections.synchronizedSet;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -106,37 +113,36 @@ import dalvik.system.DexFile;
  * @author Luca Falsina
  */
 public class SecureDexClassLoader {
-	
-	// Unique identifier used for Log entries
-	private static final String TAG_SECURE_DEX_CLASS_LOADER = SecureDexClassLoader.class.getSimpleName();
-	
-	private File certificateFolder, resDownloadFolder;
-	//private ConnectivityManager mConnectivityManager;
-	private PackageManager mPackageManager;
-	
-	private FileDownloader mFileDownloader;
-	
-	// The internal DexClassLoader used to load classes that
-	// passes all the checks..
-	private DexClassLoader mDexClassLoader;
-	
-	// The Certificate Factory instance
-	private CertificateFactory certificateFactory;
-	
-	private final Map<String, String> packageNameToContainerPathMap;
-	private Map<String, URL> packageNameToCertificateMap;
-	
-	// Final name of the folder user to store certificates for the verification
-	private static final String IMPORTED_CERTIFICATE_PRIVATE_DIRECTORY_NAME = "valid_certs";
 
-	// Constant used to tune concurrent vs standard verification in Eager mode.
-	private static final int MINIMUM_NUMBER_OF_CONTAINERS_FOR_CONCURRENT_VERIFICATION = 2;
-	
-	// Sets the Time Unit to milliseconds.
+    // Unique identifier used for Log entries
+	private static final String TAG_SECURE_DEX_CLASS_LOADER = SecureDexClassLoader.class.getSimpleName();
+
+    // Final name of the folder user to store certificates for the verification
+    private static final String IMPORTED_CERTIFICATE_PRIVATE_DIRECTORY_NAME = "valid_certs";
+
+    // Constant used to tune concurrent vs standard verification in Eager mode.
+    private static final int MINIMUM_NUMBER_OF_CONTAINERS_FOR_CONCURRENT_VERIFICATION = 2;
+
+    // Sets the Time Unit to milliseconds.
     private static final TimeUnit KEEP_ALIVE_TIME_UNIT = TimeUnit.MILLISECONDS;
-	
-	// Used to verify if a call to the wiped out method has
-	// been performed.
+
+    // Relevant file entries, and file extensions
+    private static final String CLASSES_DEX_ENTRY_NAME = "classes.dex";
+    private static final String ODEX_EXTENSION = ".odex";
+    private static final String PEM_EXTENSION = ".pem";
+
+    private File certificateFolder, downloadResourcesFolder;
+    private CertificateFactory certificateFactory;
+    private PackageManager packageManager;
+
+    private FileDownloader fileDownloader;
+
+	// The internal DexClassLoader used to load classes that passes all the checks..
+	private DexClassLoader dexClassLoader;
+    private final Map<String, String> packageNameToContainerPathMap;
+	private Map<String, URL> packageNameToCertificateMap;
+
+	// Used to verify if a call to the wiped out method has been performed.
 	private boolean hasBeenWipedOut;
 	
 	// Variable used to understand whether SecureDexClassLoader will immediately verify all
@@ -154,28 +160,31 @@ public class SecureDexClassLoader {
 	// in terms of hierarchy on the package name.
 	private PackageNameTrie mPackageNameTrie;
 	
-	SecureDexClassLoader(	String dexPath, String optimizedDirectory,
-							String libraryPath, ClassLoader parent,
-							Context parentContext,
-							boolean performLazyEvaluation) {
+	SecureDexClassLoader(
+			String dexPath,
+			String optimizedDirectory,
+			String libraryPath,
+			ClassLoader parent,
+			Context parentContext,
+			boolean performLazyEvaluation) {
 		
 		// Initialization of the linked internal DexClassLoader
-		mDexClassLoader = new DexClassLoader(dexPath, optimizedDirectory, libraryPath, parent);
+		dexClassLoader = new DexClassLoader(dexPath, optimizedDirectory, libraryPath, parent);
 		
 		certificateFolder =
 				parentContext.getDir(IMPORTED_CERTIFICATE_PRIVATE_DIRECTORY_NAME, MODE_PRIVATE);
-		resDownloadFolder =
+		downloadResourcesFolder =
 				parentContext.getDir(IMPORTED_CONTAINERS_PRIVATE_DIRECTORY_NAME, MODE_PRIVATE);
 		
-		mPackageManager = parentContext.getPackageManager();
+		packageManager = parentContext.getPackageManager();
 		
-		mFileDownloader = new FileDownloader(parentContext);
+		fileDownloader = new FileDownloader(parentContext);
 		
 		hasBeenWipedOut = false;
 		
 		this.performLazyEvaluation = performLazyEvaluation;
 		
-		lazyAlreadyVerifiedPackageNameSet = Collections.synchronizedSet(new HashSet<String>());
+		lazyAlreadyVerifiedPackageNameSet = synchronizedSet(new HashSet<String>());
 		
 		mPackageNameTrie = new PackageNameTrie();
 		
@@ -188,7 +197,7 @@ public class SecureDexClassLoader {
 		
 		// Map initialization
 		packageNameToCertificateMap = new LinkedHashMap<>();
-		packageNameToContainerPathMap = Collections.synchronizedMap(new LinkedHashMap<String, String>());
+		packageNameToContainerPathMap = synchronizedMap(new LinkedHashMap<String, String>());
 		
 		// Analyze each path in dexPath, find its package name and 
 		// populate packageNameToContainerPathMap accordingly
@@ -227,31 +236,29 @@ public class SecureDexClassLoader {
 	private Set<String> getPackageNamesFromContainerPath(String containerPath) {
 		
 		// Filter empty or missing path input
-		if (containerPath == null || containerPath.isEmpty() || !(new File(containerPath).exists())) return null;
-		
-		// Check whether the selected resource is a container (jar or apk)
-		int extensionIndex = containerPath.lastIndexOf(".");
-		
-		if (extensionIndex == -1) return null;
-		
-		String extension = containerPath.substring(extensionIndex);
+		if (containerPath == null || containerPath.isEmpty() ||
+                !(new File(containerPath).exists())) return null;
+
+		if (!extractExtensionFromFilePath(containerPath).isPresent()) return null;
+
+        String extension = extractExtensionFromFilePath(containerPath).get();
 		
 		Set<String> packageNameSet = new HashSet<>();
 		
-		if (extension.equals(".apk")) {
+		if (extension.equals(APK_EXTENSION)) {
 			
 			// APK container case:
 			// Use PackageManager to retrieve the package name of the APK container
-			if (mPackageManager.getPackageArchiveInfo(containerPath, 0) != null) {
+			if (packageManager.getPackageArchiveInfo(containerPath, 0) != null) {
 
-				packageNameSet.add(mPackageManager.getPackageArchiveInfo(containerPath, 0).packageName);
+				packageNameSet.add(packageManager.getPackageArchiveInfo(containerPath, 0).packageName);
 				return packageNameSet;
 			}
 			
 			return null;
 		}
 			
-		if (extension.equals(".jar")) {
+		if (extension.equals(JAR_EXTENSION)) {
 				
 			// JAR container case:
 			// 1. Open the jar file.
@@ -267,7 +274,7 @@ public class SecureDexClassLoader {
 				containerJar = new JarFile(containerPath);
 				
 				// Look for the "classes.dex" entry inside the container.
-				if (containerJar.getJarEntry("classes.dex") != null)
+				if (containerJar.getJarEntry(CLASSES_DEX_ENTRY_NAME) != null)
 					isAValidJar = true;
 				
 			} catch (IOException e) {
@@ -294,10 +301,11 @@ public class SecureDexClassLoader {
 				try {
 					
 					// Temporary file location for the loaded classes inside of the jar container
-					String outputDexTempPath = containerPath.substring(0, extensionIndex) + ".odex";
+					String outputDexTempPath =
+							extractFileNameWithoutExtensionFromFilePath(containerPath) + ODEX_EXTENSION;
 					
 					// Load the dex classes inside the temporary file.
-					dexFile = DexFile.loadDex(containerPath, outputDexTempPath, 0);
+					dexFile = loadDex(containerPath, outputDexTempPath, 0);
 					
 					Enumeration<String> dexEntries = dexFile.entries();
 					
@@ -570,7 +578,7 @@ public class SecureDexClassLoader {
 		}
 		
 		// Initialize the set of successfully verified containers
-		Set<String> successVerifiedContainerPathSet = Collections.synchronizedSet(new HashSet<String>());
+		Set<String> successVerifiedContainerPathSet = synchronizedSet(new HashSet<String>());
 		
 		if (!containerPathToRootPackageNameMap.isEmpty()) {
 			
@@ -783,7 +791,7 @@ public class SecureDexClassLoader {
 					
 					// The container associated to this package name has been already verified once so classes
 					// belonging to this package name can be immediately loaded.
-					return mDexClassLoader.loadClass(className);
+					return dexClassLoader.loadClass(className);
 				}
 			}
 			else {
@@ -845,7 +853,7 @@ public class SecureDexClassLoader {
 							}
 						}						
 						
-						return mDexClassLoader.loadClass(className);
+						return dexClassLoader.loadClass(className);
 					}
 					
 					// The signature of the .apk or .jar container was not valid when compared against the selected certificate.
@@ -885,7 +893,7 @@ public class SecureDexClassLoader {
 		// If SecureDexClassLoader is running in EAGER mode, all the required checks
 		// on the containers signatures have been already performed so we can simply 
 		// invoke the super method loadClass() of DexClassLoader.
-		return mDexClassLoader.loadClass(className);
+		return dexClassLoader.loadClass(className);
 	}
 
 	// Given a package name, at first try to locate the associated certificate from the cached
@@ -943,13 +951,13 @@ public class SecureDexClassLoader {
 			
 		// Depending on the container extension the process for
 		// signature verification changes
-		if (extension.equals(".apk")) {
+		if (extension.equals(APK_EXTENSION)) {
 				
 			// APK container case:
 			// At first look for the certificates used to sign the apk
 			// and check whether at least one of them is the verified one..
 
-            PackageInfo mPackageInfo = mPackageManager.getPackageArchiveInfo(containerPath, PackageManager.GET_SIGNATURES);
+            PackageInfo mPackageInfo = packageManager.getPackageArchiveInfo(containerPath, PackageManager.GET_SIGNATURES);
 
             if (mPackageInfo != null) {
 
@@ -1003,7 +1011,8 @@ public class SecureDexClassLoader {
 		
 		// This branch must be taken by all jar containers and by those apk containers
 		// whose certificates list contains also the trusted verified certificate.
-		if (extension.equals(".jar") || (extension.equals(".apk") && signatureCheckIsSuccessful)) {
+		if (extension.equals(JAR_EXTENSION) ||
+                (extension.equals(APK_EXTENSION) && signatureCheckIsSuccessful)) {
 			
 			// Verify that each entry of the container has been signed properly
 			JarFile containerToVerify = null;
@@ -1223,10 +1232,10 @@ public class SecureDexClassLoader {
 		
 		// The new certificate should be stored in the application private directory
 		// and its name should be the same as the package name.
-		String localCertPath = certificateFolder.getAbsolutePath() + "/" + packageName + ".pem";
+		String localCertPath = certificateFolder.getAbsolutePath() + "/" + packageName + PEM_EXTENSION;
 		
 		// Return the result of the download procedure (redirect here is not permitted).
-		return mFileDownloader.downloadRemoteResource(certificateRemoteURL, localCertPath, false);
+		return fileDownloader.downloadRemoteResource(certificateRemoteURL, localCertPath, false);
 	}
 	
 	/**
@@ -1259,7 +1268,7 @@ public class SecureDexClassLoader {
 			
 			// It is required to erase all the files in the application
 			// private container folder..
-			File[] containerFiles = resDownloadFolder.listFiles();
+			File[] containerFiles = downloadResourcesFolder.listFiles();
 
             Collections.addAll(fileToEraseList, containerFiles);
 		}
@@ -1281,7 +1290,9 @@ public class SecureDexClassLoader {
             int extensionIndex = filePath.lastIndexOf(".");
             String extension = filePath.substring(extensionIndex);
 
-            if (extension.equals(".apk") || extension.equals(".jar") || extension.equals(".pem")) {
+            if (extension.equals(APK_EXTENSION) ||
+                    extension.equals(JAR_EXTENSION) ||
+                    extension.equals(PEM_EXTENSION)) {
 
                 if (file.delete())
                     Log.i(TAG_SECURE_DEX_CLASS_LOADER, filePath + " has been erased.");
