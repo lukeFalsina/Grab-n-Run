@@ -1,6 +1,5 @@
 apply plugin: 'com.android.library'
 apply plugin: 'maven'
-apply plugin: 'de.mobilej.unmock'
 
 ext {
     PUBLISH_GROUP_ID = 'it.necst.grabnrun'
@@ -14,7 +13,7 @@ android {
 
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 23
+        targetSdkVersion 21
         versionCode 3
         versionName "1.0.2"
 
@@ -42,49 +41,15 @@ android {
     }
 }
 
-unMock {
-    // URI to download the android-all.jar from. e.g. https://oss.sonatype.org/content/groups/public/org/robolectric/android-all/
-    downloadFrom 'https://oss.sonatype.org/content/groups/public/org/robolectric/android-all/5.1.1_r9-robolectric-1/android-all-5.1.1_r9-robolectric-1.jar'
-
-    keepStartingWith "dalvik.system."
-    keep "android.system.ErrnoException"
-    keep "android.widget.BaseAdapter"
-    keep "android.widget.ArrayAdapter"
-    keep "android.os.Bundle"
-    keepStartingWith "android.database.MatrixCursor"
-    keep "android.database.AbstractCursor"
-    keep "android.database.CrossProcessCursor"
-    keepStartingWith "android.text.TextUtils"
-    keepStartingWith "android.util."
-    keepStartingWith "android.text."
-    keepStartingWith "android.content.ContentValues"
-    keepStartingWith "android.content.ComponentName"
-    keepStartingWith "android.content.ContentUris"
-    keepStartingWith "android.content.ContentProviderOperation"
-    keepStartingWith "android.content.ContentProviderResult"
-    keepStartingWith "android.content.UriMatcher"
-    keepStartingWith "android.content.Intent"
-    keep "android.location.Location"
-    keepStartingWith "android.content.res.Configuration"
-    keepStartingWith "org."
-    keepStartingWith "libcore."
-    keepStartingWith "com.android.internal.R"
-    keepStartingWith "com.android.internal.util."
-    keep "android.net.Uri"
-
-    keepAndRename "java.nio.charset.Charsets" to "xjava.nio.charset.Charsets"
-}
-
 dependencies {
     compile 'com.android.support:appcompat-v7:23.1.1'
     compile group: 'com.google.guava', name: 'guava', version: '18.0'
 
     // Unit testing dependencies
     testCompile 'junit:junit:4.12'
-    // Set this dependency if you want to use Mockito
     testCompile 'org.mockito:mockito-core:1.10.19'
-    // Set this dependency if you want to use Hamcrest matching
     testCompile 'org.hamcrest:hamcrest-library:1.1'
+    testCompile "org.robolectric:robolectric:3.0"
 }
 
 def groupId = project.PUBLISH_GROUP_ID
