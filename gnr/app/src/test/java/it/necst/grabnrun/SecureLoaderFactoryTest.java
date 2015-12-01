@@ -17,6 +17,7 @@ import android.net.NetworkInfo;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -30,6 +31,7 @@ import org.robolectric.annotation.Config;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.Map;
 
 import dalvik.system.DexClassLoader;
 import dalvik.system.DexFile;
@@ -106,8 +108,38 @@ public class SecureLoaderFactoryTest {
                 ImmutableMap.of(TEST_PACKAGE_NAME, new URL(TEST_REMOTE_CERTIFICATE_URL_AS_STRING)));
     }
 
+    @Test (expected = IllegalArgumentException.class)
+    public void givenADexPathPointingToARemoteResourceButThePackageNameToCertificateMapIsEmpty_whenCreateDexClassLoader_thenThrows() throws Exception {
+        // GIVEN
+        ImmutableMap<String, URL> emptyPackageNameToCertificateMap = ImmutableMap.of();
+
+        // WHEN
+        testSecureLoaderFactory.createDexClassLoader(
+                TEST_REMOTE_CONTAINER_URL_AS_STRING,
+                null,
+                mockClassLoader,
+                emptyPackageNameToCertificateMap);
+    }
+
     @Test
-    public void givenADexPathPointingToARemoteResource_whenCreateDexClassLoader_thenASecureDexClassLoaderObjectIsReturned() throws Exception {
+    public void givenADexPathPointingToARemoteResourceAndThePackageNameToCertificateMapContainsPackageNamesAssociatedToNullValues_whenCreateDexClassLoader_thenReturnsASecureDexClassLoaderObject() throws Exception {
+        // GIVEN
+        Map<String, URL> packageNamePointingToNullCertificateMap = Maps.newHashMap();
+        packageNamePointingToNullCertificateMap.put(TEST_PACKAGE_NAME, null);
+
+        // WHEN
+        SecureDexClassLoader secureDexClassLoader = testSecureLoaderFactory.createDexClassLoader(
+                TEST_REMOTE_CONTAINER_URL_AS_STRING,
+                null,
+                mockClassLoader,
+                packageNamePointingToNullCertificateMap);
+
+        // THEN
+        assertThat(secureDexClassLoader, is(notNullValue()));
+    }
+
+    @Test
+    public void givenADexPathPointingToARemoteResourceAndThePackageNameOfTheTargetClassHasACertificate_whenCreateDexClassLoader_thenReturnsASecureDexClassLoaderObject() throws Exception {
         // WHEN
         SecureDexClassLoader secureDexClassLoader = testSecureLoaderFactory.createDexClassLoader(
                 TEST_REMOTE_CONTAINER_URL_AS_STRING,

@@ -21,6 +21,7 @@ import static it.necst.grabnrun.FileHelper.APK_EXTENSION;
 import static it.necst.grabnrun.FileHelper.JAR_EXTENSION;
 import static it.necst.grabnrun.FileHelper.extractExtensionFromFilePath;
 import static it.necst.grabnrun.FileHelper.extractFileNameWithoutExtensionFromFilePath;
+import static it.necst.grabnrun.PackageNameHelper.revertPackageNameToURL;
 import static it.necst.grabnrun.SecureLoaderFactory.IMPORTED_CONTAINERS_PRIVATE_DIRECTORY_NAME;
 import static java.util.Collections.synchronizedMap;
 import static java.util.Collections.synchronizedSet;
@@ -350,7 +351,7 @@ public class SecureDexClassLoader {
 		return null;
 	}
 	
-	void setCertificateLocationMap(	Map<String, URL> extPackageNameToCertificateMap) {
+	void setCertificateLocationMap(Map<String, URL> extPackageNameToCertificateMap) {
 		
 		// Copy the external map only if it is not empty..
 		if (extPackageNameToCertificateMap != null && !extPackageNameToCertificateMap.isEmpty()) 
@@ -422,41 +423,6 @@ public class SecureDexClassLoader {
 			}
 			
 		}
-	}
-
-	private URL revertPackageNameToURL(String packageName) throws MalformedURLException {
-		
-		// Reconstruct URL of the certificate from the class package name.
-		String firstLevelDomain, secondLevelDomain;
-								
-		int firstPointChar = packageName.indexOf('.');
-		
-		if (firstPointChar == -1) {
-			// No point inside the package name.. NO SENSE
-			// Forced to .com domain
-			return new URL("https", packageName + ".com", "certificate.pem");
-			//return "https://" + packageName + ".com/certificate.pem";
-		}
-		
-		firstLevelDomain = packageName.substring(0, firstPointChar);
-		int secondPointChar = packageName.indexOf('.', firstPointChar + 1);
-		
-		if (secondPointChar == -1) {
-			// Just two substrings in the package name..
-			return new URL("https", packageName.substring(firstPointChar + 1) + "." + firstLevelDomain, "/certificate.pem");
-			//return "https://" + packageName.substring(firstPointChar + 1) + "." + firstLevelDomain + "/certificate.pem";
-		
-		} 
-		
-		// The rest of the package name is interpreted as a location
-		secondLevelDomain = packageName.substring(firstPointChar + 1, secondPointChar);
-		
-		return new URL("https", secondLevelDomain + "." + firstLevelDomain, packageName.substring(secondPointChar + 1).replace('.', File.separatorChar) + "/certificate.pem");
-		
-		//return	"https://" + secondLevelDomain + "." + firstLevelDomain 
-		//		+ packageName.substring(secondPointChar).replaceAll(".", "/")
-		//		+ "/certificate.pem";
-		
 	}
 	
 	// This method is invoked only in the case of an eager evaluation.

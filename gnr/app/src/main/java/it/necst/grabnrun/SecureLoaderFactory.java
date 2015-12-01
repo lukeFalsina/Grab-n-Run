@@ -17,8 +17,11 @@ package it.necst.grabnrun;
 
 import static android.content.Context.MODE_PRIVATE;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static it.necst.grabnrun.FileHelper.endsWithJarOrApkExtension;
 import static it.necst.grabnrun.FileHelper.extractExtensionFromFilePath;
+import static it.necst.grabnrun.FileHelper.extractFileNameFromFilePath;
+import static it.necst.grabnrun.PackageNameHelper.isAValidPackageName;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -40,6 +43,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -71,8 +75,9 @@ public class SecureLoaderFactory {
      * with {@link SecureLoaderFactory#SecureLoaderFactory(android.content.Context, int)}.
      */
     public static final int DEFAULT_DAYS_BEFORE_CONTAINER_EXPIRATION = 5;
-    private static final String HTTP_PROTOCOL_STRING = "http://";
-    private static final String HTTPS_PROTOCOL_STRING = "https://";
+    private static final String HTTP_PROTOCOL_STRING = "http";
+    private static final String HTTPS_PROTOCOL_STRING = "https";
+
 
     private Context context;
 
@@ -250,7 +255,8 @@ public class SecureLoaderFactory {
             @NonNull Map<String, URL> packageNameToCertificateMap,
 			boolean performLazyEvaluation) {
 
-        checkArgument(!dexPath.isEmpty(), "The dex path string must not be empty");
+        checkPreconditionsOnArgumentsForSecureDexClassLoaderCreation(
+                dexPath, parent, packageNameToCertificateMap);
 
         // New container resources will be imported, or cached into this application private folder.
         File importedContainerDirectory = context.getDir(
@@ -263,9 +269,11 @@ public class SecureLoaderFactory {
         // exactly the dex classes will be stored, an application-private,
         // writable directory is created ad hoc.
         File dexOutputDirectory = context.getDir(OUTPUT_DEX_CLASSES_DIRECTORY_NAME, MODE_PRIVATE);
-        Log.d(TAG_SECURE_FACTORY, "Dex Output Dir has been mounted at: " + dexOutputDirectory.getAbsolutePath());
+        Log.d(TAG_SECURE_FACTORY, "Dex Output Dir has been mounted at: " +
+                dexOutputDirectory.getAbsolutePath());
 
-        String finalDexPathString = processDexPathStringAndImportContainers(dexPath, importedContainerDirectory);
+        String finalDexPathString =
+                processDexPathStringAndImportContainers(dexPath, importedContainerDirectory);
 
 		// Til now libraryPath is left untouched..
 
@@ -290,6 +298,27 @@ public class SecureLoaderFactory {
 		return secureDexClassLoader;
 	}
 
+    private static void checkPreconditionsOnArgumentsForSecureDexClassLoaderCreation(
+            @NonNull String dexPath,
+            @NonNull ClassLoader parent,
+            @NonNull Map<String, URL> packageNameToCertificateMap) {
+        checkNotNull(dexPath, "The dex path string of the containers used as source must not be null");
+        checkArgument(
+                !dexPath.isEmpty(),
+                "The dex path string of the containers used as source must not be empty");
+
+        checkNotNull(parent, "The parent class loader must not be null");
+
+        checkNotNull(
+                packageNameToCertificateMap,
+                "The map associating package names with the URL of the certificate for " +
+                        "signature check must not be null");
+        checkArgument(
+                !packageNameToCertificateMap.isEmpty(),
+                "The map associating package names with the URL of the certificate for " +
+                        "signature check must have at least one package name as key");
+    }
+
     private String processDexPathStringAndImportContainers(String dexPath, File importedContainerDir) {
         StringBuilder finalDexPathStringBuilder = new StringBuilder();
 
@@ -303,7 +332,7 @@ public class SecureLoaderFactory {
             String singleDexPath = dexPathStringProcessor.nextDexPathString();
             Optional<String> optionalSuccessfullyProcessedSingleDexPath;
 
-			if (isARemoteHttpOrHttpsPath(singleDexPath)) {
+			if (isARemoteHttpOrHttpsResource(singleDexPath)) {
 
                 optionalSuccessfullyProcessedSingleDexPath = processPathPointingToARemoteContainer(
                         singleDexPath, importedContainerDir, remoteContainersCacheLogger);
@@ -334,8 +363,9 @@ public class SecureLoaderFactory {
         return finalDexPathStringBuilder.toString();
     }
 
-    private static boolean isARemoteHttpOrHttpsPath(String singleDexPath) {
-        return singleDexPath.startsWith(HTTP_PROTOCOL_STRING) || singleDexPath.startsWith(HTTPS_PROTOCOL_STRING);
+    private static boolean isARemoteHttpOrHttpsResource(String resourcePath) {
+        return resourcePath.startsWith(HTTP_PROTOCOL_STRING) ||
+                resourcePath.startsWith(HTTPS_PROTOCOL_STRING);
     }
 
     private Optional<String> processPathPointingToARemoteContainer(
@@ -544,59 +574,35 @@ public class SecureLoaderFactory {
 	}
 
 	private Map<String, URL> sanitizePackageNameToCertificateMap(Map<String, URL> packageNameToCertificateMap) {
-		
-		if (packageNameToCertificateMap == null || packageNameToCertificateMap.isEmpty()) return null;
-		
-		// Copy the initial map and start validating it..
-		Map<String, URL> sanitizedPackageNameToCertificateMap = new LinkedHashMap<>(packageNameToCertificateMap);
+        // Copy the initial map and start validating it..
+		Map<String, URL> sanitizedPackageNameToCertificateMap = new HashMap<>();
 		
 		// Retrieves all the package names (keys of the map)
-		Iterator<String> packageNamesIterator = sanitizedPackageNameToCertificateMap.keySet().iterator();
+		Iterator<String> packageNamesIterator = packageNameToCertificateMap.keySet().iterator();
 		
 		while(packageNamesIterator.hasNext()) {
 			
 			String currentPackageName = packageNamesIterator.next();
-			String[] packStrings = currentPackageName.split("\\.");
-			boolean isValidPackageName = true;
-			boolean removeThisPackageName = false;
 			
-			for (String packString : packStrings) {
+			if (isAValidPackageName(currentPackageName)) {
 				
-				// Heuristic: all the subfields should contain at least one char..
-				if (packString.isEmpty())
-					isValidPackageName = false;
-			}
-			
-			// Package names should not be too general..
-			// At least two subnames dot separated.
-			// Example: "com" is rejected, while "com.polimi" is not.
-			if (packStrings.length < 2)
-				removeThisPackageName = true;
-			
-			if (isValidPackageName) {
-				
-				// Check that the certificate location is a valid URL
-				// and its protocol is HTTPS
-				URL certificateURL;
+				// Check that the certificate location is a valid URL and enforce HTTPS protocol
 				try {
-					//String certificateURLString = sanitizedPackageNameToCertificateMap.get(currentPackageName);
-					//certificateURL = new URL(certificateURLString);
-					certificateURL = sanitizedPackageNameToCertificateMap.get(currentPackageName);
+                    URL certificateURL = packageNameToCertificateMap.get(currentPackageName);
 					
 					// Check that the certificate URL is not null..
 					if (certificateURL != null) {
 						
-						if (certificateURL.getProtocol().equals("http")) {
+						if (certificateURL.getProtocol().equals(HTTP_PROTOCOL_STRING) ||
+                                certificateURL.getProtocol().equals(HTTPS_PROTOCOL_STRING)) {
 							// In this case enforce HTTPS protocol
-							// sanitizedPackageNameToCertificateMap.put(currentPackageName, new URL(certificateURL.toString().replace("http", "https")));
-							sanitizedPackageNameToCertificateMap.put(currentPackageName, new URL("https", certificateURL.getHost(), certificateURL.getPort(), certificateURL.getFile()));
-						}
-						else {
-							if (!certificateURL.getProtocol().equals("https")) {
-								// If the certificate URL protocol is different from HTTPS
-								// or HTTP, this entry is not valid
-								removeThisPackageName = true;
-							}
+							sanitizedPackageNameToCertificateMap.put(
+                                    currentPackageName,
+                                    new URL(
+                                            HTTPS_PROTOCOL_STRING,
+                                            certificateURL.getHost(),
+                                            certificateURL.getPort(),
+                                            certificateURL.getFile()));
 						}
 					}
 					
@@ -604,16 +610,8 @@ public class SecureLoaderFactory {
 					// Reverting package name to obtain a valid URL will be performed in SecureDexClassLoader.
 					
 				} catch (MalformedURLException e) {
-					removeThisPackageName = true;
+					// Ignore this package name..
 				}
-			} else 
-				removeThisPackageName = true;
-			
-			if (removeThisPackageName) {
-
-				// Remove invalid entry from the map (removing from the iterator is enough..)
-				packageNamesIterator.remove();
-				// sanitizedPackageNameToCertificateMap.remove(currentPackageName);
 			}
 		}
 		
@@ -628,22 +626,24 @@ public class SecureLoaderFactory {
 		// Precondition check on the output local folder..
 		if (resOutputDir == null || !resOutputDir.exists()) return null;
 		if (!resOutputDir.isDirectory() || !resOutputDir.canRead() || !resOutputDir.canWrite()) return null;
-		
-		URL url;
-		try {
-			url = new URL(urlPath);
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-			return null;
-		}
-		
-		if (!url.getProtocol().equals("http") && !url.getProtocol().equals("https")) return null;
-		
-		// Check whether the selected resource is not empty
-		int finalSeparatorIndex = url.getPath().lastIndexOf("/");
-		String containerName = url.getFile().substring(finalSeparatorIndex);
-		
-		if (containerName == null || containerName.isEmpty()) return null;
+
+        if (!isARemoteHttpOrHttpsResource(urlPath)) return null;
+
+        URL url;
+        try {
+            url = new URL(urlPath);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        // Check whether the path of the file pointed by the URL is not empty
+        if (url.getFile().isEmpty()) return null;
+
+        String containerName = extractFileNameFromFilePath(url.getFile());
+
+        // Check whether the name of the file pointed by the URL is not empty
+        if (containerName.isEmpty()) return null;
 		
 		// Check whether the selected resource is a container (jar or apk)
         Optional<String> optionalContainerExtension = extractExtensionFromFilePath(containerName);
