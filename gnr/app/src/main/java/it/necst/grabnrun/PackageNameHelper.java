@@ -23,6 +23,7 @@ public class PackageNameHelper {
         checkNotNull(candidatePackageName, "The candidate package name must not be null");
 
         if (candidatePackageName.isEmpty()) return false;
+        if (candidatePackageName.endsWith(".")) return false;
 
         String[] packageNameFields = candidatePackageName.split(DOT_AS_REGULAR_EXPRESSION);
         if (packageNameFields.length < MINIMUM_NUMBER_OF_FIELDS_IN_A_PACKAGE_NAME) {
@@ -30,8 +31,9 @@ public class PackageNameHelper {
         }
 
         for (String packageNameField : packageNameFields) {
-            if (packageNameField.isEmpty())
+            if (packageNameField.isEmpty()) {
                 return false;
+            }
         }
 
         return true;

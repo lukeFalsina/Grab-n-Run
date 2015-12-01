@@ -14,8 +14,11 @@ import java.net.URL;
 
 public class PackageNameHelperTest {
 
-    private static final String TEST_PACKAGE_NAME_WITH_AN_EMPTY_FIELD_BETWEEN_TWO_DOTS = "com..example";
-    private static final String TEST_PACKAGE_NAME_WITH_ONLY_ONE_FIELD = "com";
+    private static final String TEST_INVALID_PACKAGE_NAME_STARTING_WITH_A_DOT = ".com.example";
+    private static final String TEST_INVALID_PACKAGE_NAME_WITH_AN_EMPTY_FIELD_BETWEEN_TWO_DOTS =
+            "com..example";
+    private static final String TEST_INVALID_PACKAGE_NAME_ENDING_WITH_A_DOT = "com.example.";
+    private static final String TEST_INVALID_PACKAGE_NAME_WITH_ONLY_ONE_FIELD = "com";
 
     private static final String TEST_VALID_PACKAGE_NAME_WITH_TWO_FIELDS = "com.example";
     private static final String TEST_VALID_PACKAGE_NAME_WITH_FOUR_FIELDS =
@@ -39,10 +42,28 @@ public class PackageNameHelperTest {
     }
 
     @Test
+    public void givenAPackageNameStartingWithADot_whenIsAValidPackageName_thenReturnFalse() {
+        // WHEN
+        boolean isAValidPackageName = isAValidPackageName(TEST_INVALID_PACKAGE_NAME_STARTING_WITH_A_DOT);
+
+        // THEN
+        assertFalse(isAValidPackageName);
+    }
+
+    @Test
     public void givenAPackageNameWithAnEmptyFieldBetweenTwoDots_whenIsAValidPackageName_thenReturnFalse() {
         // WHEN
         boolean isAValidPackageName = isAValidPackageName(
-                TEST_PACKAGE_NAME_WITH_AN_EMPTY_FIELD_BETWEEN_TWO_DOTS);
+                TEST_INVALID_PACKAGE_NAME_WITH_AN_EMPTY_FIELD_BETWEEN_TWO_DOTS);
+
+        // THEN
+        assertFalse(isAValidPackageName);
+    }
+
+    @Test
+    public void givenAPackageNameEndingWithADot_whenIsAValidPackageName_thenReturnFalse() {
+        // WHEN
+        boolean isAValidPackageName = isAValidPackageName(TEST_INVALID_PACKAGE_NAME_ENDING_WITH_A_DOT);
 
         // THEN
         assertFalse(isAValidPackageName);
@@ -51,7 +72,7 @@ public class PackageNameHelperTest {
     @Test
     public void givenAPackageNameWithOnlyOneField_whenIsAValidPackageName_thenReturnFalse() {
         // WHEN
-        boolean isAValidPackageName = isAValidPackageName(TEST_PACKAGE_NAME_WITH_ONLY_ONE_FIELD);
+        boolean isAValidPackageName = isAValidPackageName(TEST_INVALID_PACKAGE_NAME_WITH_ONLY_ONE_FIELD);
 
         // THEN
         assertFalse(isAValidPackageName);
@@ -69,7 +90,7 @@ public class PackageNameHelperTest {
     @Test (expected = IllegalArgumentException.class)
     public void givenANotValidPackageName_whenRevertPackageNameToURL_thenThrows() throws Exception {
         // WHEN
-        revertPackageNameToURL(TEST_PACKAGE_NAME_WITH_ONLY_ONE_FIELD);
+        revertPackageNameToURL(TEST_INVALID_PACKAGE_NAME_WITH_ONLY_ONE_FIELD);
     }
 
     @Test
