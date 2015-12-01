@@ -2,6 +2,7 @@ package it.necst.grabnrun;
 
 import static it.necst.grabnrun.FileHelper.endsWithJarOrApkExtension;
 import static it.necst.grabnrun.FileHelper.extractExtensionFromFilePath;
+import static it.necst.grabnrun.FileHelper.extractFileNameFromFilePath;
 import static it.necst.grabnrun.FileHelper.extractFileNameWithoutExtensionFromFilePath;
 import static junit.framework.Assert.assertFalse;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -42,6 +43,15 @@ public class FileHelperTest {
     }
 
     @Test
+    public void givenAFilePathWithoutAFileNameAndExtension_whenExtractFileNameWithoutExtensionFromFilePath_thenReturnsAnEmptyString() {
+        // WHEN
+        String extractedFileName = extractFileNameWithoutExtensionFromFilePath(TEST_FILE_PATH);
+
+        // THEN
+        assertTrue(extractedFileName.isEmpty());
+    }
+
+    @Test
     public void givenFileNameWithoutExtension_whenExtractFileNameWithoutExtensionFromFilePath_thenReturnsTheSameString() {
         // WHEN
         String extractedFileName =
@@ -79,6 +89,61 @@ public class FileHelperTest {
 
         // THEN
         assertThat(extractedFileName, is(equalTo(TEST_FILE_NAME_WITH_NO_EXTENSION)));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void givenAnEmptyFilePath_whenExtractFileNameFromFilePath_thenThrows() {
+        // GIVEN
+        String emptyFilePath = "";
+
+        // WHEN
+        extractFileNameFromFilePath(emptyFilePath);
+    }
+
+    @Test
+    public void givenAFilePathWithoutAFileNameAndExtension_whenExtractFileNameFromFilePath_thenReturnsAnEmptyString() {
+        // WHEN
+        String extractedFileName = extractFileNameFromFilePath(TEST_FILE_PATH);
+
+        // THEN
+        assertTrue(extractedFileName.isEmpty());
+    }
+
+    @Test
+    public void givenFileNameWithoutExtension_whenExtractFileNameFromFilePath_thenReturnsTheSameString() {
+        // WHEN
+        String extractedFileName = extractFileNameFromFilePath(TEST_FILE_NAME_WITH_NO_EXTENSION);
+
+        // THEN
+        assertThat(extractedFileName, is(equalTo(TEST_FILE_NAME_WITH_NO_EXTENSION)));
+    }
+
+    @Test
+    public void givenFileNameWithExtension_whenExtractFileNameFromFilePath_thenReturnsTheSameString() {
+        // WHEN
+        String extractedFileName = extractFileNameFromFilePath(TEST_FILE_NAME_WITH_CONTAINER_EXTENSION);
+
+        // THEN
+        assertThat(extractedFileName, is(equalTo(TEST_FILE_NAME_WITH_CONTAINER_EXTENSION)));
+    }
+
+    @Test
+    public void givenFilePathWithoutExtension_whenExtractFileNameFromFilePath_thenReturnsTheFileName() {
+        // WHEN
+        String extractedFileName = extractFileNameFromFilePath(TEST_FILE_PATH_WITH_NO_EXTENSION);
+
+        // THEN
+        assertThat(extractedFileName, is(equalTo(TEST_FILE_NAME_WITH_NO_EXTENSION)));
+    }
+
+    @Test
+    public void givenFilePathWithExtension_whenExtractFileNameFromFilePath_thenReturnsTheFileName() {
+        // WHEN
+        String extractedFileName =
+                extractFileNameFromFilePath(TEST_FILE_PATH_WITH_CONTAINER_EXTENSION);
+
+        // THEN
+        assertThat(extractedFileName, is(equalTo(TEST_FILE_NAME_WITH_CONTAINER_EXTENSION)));
     }
 
     @Test (expected = IllegalArgumentException.class)

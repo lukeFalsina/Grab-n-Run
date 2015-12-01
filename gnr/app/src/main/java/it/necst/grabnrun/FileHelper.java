@@ -15,8 +15,7 @@ public class FileHelper {
     public static final String JAR_EXTENSION = DOT_SEPARATOR + "jar";
 
     public static String extractFileNameWithoutExtensionFromFilePath(@NonNull String filePath) {
-        checkNotNull(filePath, "The path of the input file must not be null");
-        checkArgument(!filePath.isEmpty(), "The path of the input file must not be empty");
+        checkPreconditionsOnFilePath(filePath);
 
         String fileName = extractFileNameFromFilePath(filePath);
 
@@ -29,7 +28,9 @@ public class FileHelper {
         }
     }
 
-    private static String extractFileNameFromFilePath(@NonNull String filePath) {
+    public static String extractFileNameFromFilePath(@NonNull String filePath) {
+        checkPreconditionsOnFilePath(filePath);
+
         int lastOccurrenceOfFileSeparatorIndex = filePath.lastIndexOf(File.separator);
 
         if (lastOccurrenceOfFileSeparatorIndex == -1)
@@ -39,8 +40,7 @@ public class FileHelper {
     }
 
     public static Optional<String> extractExtensionFromFilePath(@NonNull String filePath) {
-        checkNotNull(filePath, "The path of the input file must not be null");
-        checkArgument(!filePath.isEmpty(), "The path of the input file must not be empty");
+        checkPreconditionsOnFilePath(filePath);
 
         int initialCharacterOfAnExtensionIndex = filePath.lastIndexOf(DOT_SEPARATOR);
 
@@ -51,8 +51,7 @@ public class FileHelper {
     }
 
     public static boolean endsWithJarOrApkExtension(@NonNull String filePath) {
-        checkNotNull(filePath, "The path of the input file must not be null");
-        checkArgument(!filePath.isEmpty(), "The path of the input file must not be empty");
+        checkPreconditionsOnFilePath(filePath);
 
         int initialCharacterOfAnExtensionIndex = filePath.lastIndexOf(DOT_SEPARATOR);
 
@@ -63,5 +62,10 @@ public class FileHelper {
 
         return fileExtension.equalsIgnoreCase(APK_EXTENSION) ||
                 fileExtension.equalsIgnoreCase(JAR_EXTENSION);
+    }
+
+    private static void checkPreconditionsOnFilePath(@NonNull String filePath) {
+        checkNotNull(filePath, "The path of the input file must not be null");
+        checkArgument(!filePath.isEmpty(), "The path of the input file must not be empty");
     }
 }
