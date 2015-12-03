@@ -22,6 +22,7 @@ import static it.necst.grabnrun.FileHelper.endsWithJarOrApkExtension;
 import static it.necst.grabnrun.FileHelper.extractExtensionFromFilePath;
 import static it.necst.grabnrun.FileHelper.extractFileNameFromFilePath;
 import static it.necst.grabnrun.PackageNameHelper.isAValidPackageName;
+import static it.necst.grabnrun.PackageNameHelper.revertPackageNameToURL;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -44,9 +45,9 @@ import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
+
+import dalvik.system.DexClassLoader;
 
 /**
  * A factory class that generates instances of classes used to
@@ -277,25 +278,16 @@ public class SecureLoaderFactory {
 
 		// Til now libraryPath is left untouched..
 
-		// Sanitize fields in packageNameToCertificateMap:
-		// - Check the syntax of packages names (only not empty extractedDexPathStrings divided by single separator char)
-		// - Enforce that all the certificates URLs in the map can be parsed, and use HTTPS as their protocol
-		Map<String, URL> sanitizedPackageNameToCertificateMap =
-                sanitizePackageNameToCertificateMap(packageNameToCertificateMap);
-		
-		// Initialize SecureDexClassLoader instance
-		SecureDexClassLoader secureDexClassLoader = new SecureDexClassLoader(
+		return new SecureDexClassLoader(
                 finalDexPathString,
-				dexOutputDirectory.getAbsolutePath(),
-				libraryPath,
-				parent,
+                new DexClassLoader(
+                        finalDexPathString,
+                        dexOutputDirectory.getAbsolutePath(),
+                        libraryPath,
+                        parent),
                 context,
+                processPackageNameToCertificateMap(packageNameToCertificateMap),
 				performLazyEvaluation);
-		
-		// Provide packageNameToCertificateMap to secureDexClassLoader..
-        secureDexClassLoader.setCertificateLocationMap(sanitizedPackageNameToCertificateMap);
-		
-		return secureDexClassLoader;
 	}
 
     private static void checkPreconditionsOnArgumentsForSecureDexClassLoaderCreation(
@@ -573,47 +565,41 @@ public class SecureLoaderFactory {
 		return digestString;
 	}
 
-	private Map<String, URL> sanitizePackageNameToCertificateMap(Map<String, URL> packageNameToCertificateMap) {
-        // Copy the initial map and start validating it..
+	private Map<String, URL> processPackageNameToCertificateMap(
+            Map<String, URL> packageNameToCertificateMap) {
 		Map<String, URL> sanitizedPackageNameToCertificateMap = new HashMap<>();
 		
-		// Retrieves all the package names (keys of the map)
-		Iterator<String> packageNamesIterator = packageNameToCertificateMap.keySet().iterator();
-		
-		while(packageNamesIterator.hasNext()) {
-			
-			String currentPackageName = packageNamesIterator.next();
-			
-			if (isAValidPackageName(currentPackageName)) {
-				
-				// Check that the certificate location is a valid URL and enforce HTTPS protocol
-				try {
+        for (String currentPackageName : packageNameToCertificateMap.keySet()) {
+            if (isAValidPackageName(currentPackageName)) {
+                try {
                     URL certificateURL = packageNameToCertificateMap.get(currentPackageName);
-					
-					// Check that the certificate URL is not null..
-					if (certificateURL != null) {
-						
-						if (certificateURL.getProtocol().equals(HTTP_PROTOCOL_STRING) ||
+
+                    if (certificateURL != null) {
+                        // If the URL for the certificate is present, check that it is valid one,
+                        // and enforce HTTPS protocol..
+                        if (certificateURL.getProtocol().equals(HTTP_PROTOCOL_STRING) ||
                                 certificateURL.getProtocol().equals(HTTPS_PROTOCOL_STRING)) {
-							// In this case enforce HTTPS protocol
-							sanitizedPackageNameToCertificateMap.put(
+                            sanitizedPackageNameToCertificateMap.put(
                                     currentPackageName,
                                     new URL(
                                             HTTPS_PROTOCOL_STRING,
                                             certificateURL.getHost(),
                                             certificateURL.getPort(),
                                             certificateURL.getFile()));
-						}
-					}
-					
-					// If the certificate URL is null no action is performed here.
-					// Reverting package name to obtain a valid URL will be performed in SecureDexClassLoader.
-					
-				} catch (MalformedURLException e) {
-					// Ignore this package name..
-				}
-			}
-		}
+                        }
+                    } else {
+                        // Otherwise, revert the package name, and use it as the certificate URL.
+                        sanitizedPackageNameToCertificateMap.put(
+                                currentPackageName, revertPackageNameToURL(currentPackageName));
+                    }
+                } catch (MalformedURLException e) {
+                    // Ignore this package name if an exception on the URL is raised.
+                    Log.w(TAG_SECURE_FACTORY, "Issue while enforcing certificate URL " +
+                            packageNameToCertificateMap.get(currentPackageName) +
+                            " to use HTTPS protocol");
+                }
+            }
+        }
 		
 		return sanitizedPackageNameToCertificateMap;
 	}

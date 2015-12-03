@@ -16,12 +16,13 @@
 package it.necst.grabnrun;
 
 import static android.content.Context.MODE_PRIVATE;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static dalvik.system.DexFile.loadDex;
 import static it.necst.grabnrun.FileHelper.APK_EXTENSION;
 import static it.necst.grabnrun.FileHelper.JAR_EXTENSION;
 import static it.necst.grabnrun.FileHelper.extractExtensionFromFilePath;
-import static it.necst.grabnrun.FileHelper.extractFileNameWithoutExtensionFromFilePath;
-import static it.necst.grabnrun.PackageNameHelper.revertPackageNameToURL;
+import static it.necst.grabnrun.FileHelper.extractFilePathWithoutExtensionFromFilePath;
 import static it.necst.grabnrun.SecureLoaderFactory.IMPORTED_CONTAINERS_PRIVATE_DIRECTORY_NAME;
 import static java.util.Collections.synchronizedMap;
 import static java.util.Collections.synchronizedSet;
@@ -30,9 +31,13 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -40,7 +45,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -68,7 +72,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import java.util.regex.Pattern;
 
 import javax.security.auth.x500.X500Principal;
 
@@ -119,7 +122,7 @@ public class SecureDexClassLoader {
 	private static final String TAG_SECURE_DEX_CLASS_LOADER = SecureDexClassLoader.class.getSimpleName();
 
     // Final name of the folder user to store certificates for the verification
-    private static final String IMPORTED_CERTIFICATE_PRIVATE_DIRECTORY_NAME = "valid_certs";
+    @VisibleForTesting static final String IMPORTED_CERTIFICATE_PRIVATE_DIRECTORY_NAME = "valid_certs";
 
     // Constant used to tune concurrent vs standard verification in Eager mode.
     private static final int MINIMUM_NUMBER_OF_CONTAINERS_FOR_CONCURRENT_VERIFICATION = 2;
@@ -132,16 +135,18 @@ public class SecureDexClassLoader {
     private static final String ODEX_EXTENSION = ".odex";
     private static final String PEM_EXTENSION = ".pem";
 
-    private File certificateFolder, downloadResourcesFolder;
+    private static final String X_509_CERTIFICATE = "X.509";
+
+    private File certificateFolder, containersFolder;
     private CertificateFactory certificateFactory;
     private PackageManager packageManager;
 
     private FileDownloader fileDownloader;
 
 	// The internal DexClassLoader used to load classes that passes all the checks..
-	private DexClassLoader dexClassLoader;
+	private final DexClassLoader dexClassLoader;
     private final Map<String, String> packageNameToContainerPathMap;
-	private Map<String, URL> packageNameToCertificateMap;
+	private final ImmutableMap<String, URL> packageNameToCertificateMap;
 
 	// Used to verify if a call to the wiped out method has been performed.
 	private boolean hasBeenWipedOut;
@@ -159,22 +164,20 @@ public class SecureDexClassLoader {
 	// An helper data structure used to connect each package name of a possible target class
 	// to the certificate of the closest package name. The closeness relation here is considered
 	// in terms of hierarchy on the package name.
-	private PackageNameTrie mPackageNameTrie;
+	private PackageNameTrie packageNameTrie;
 	
-	SecureDexClassLoader(
-			String dexPath,
-			String optimizedDirectory,
-			String libraryPath,
-			ClassLoader parent,
-			Context parentContext,
+	@VisibleForTesting SecureDexClassLoader(
+            @NonNull String dexPath,
+            @NonNull DexClassLoader dexClassLoader,
+            @NonNull Context parentContext,
+            @NonNull Map<String, URL> sanitizePackageNameToCertificateMap,
 			boolean performLazyEvaluation) {
 		
-		// Initialization of the linked internal DexClassLoader
-		dexClassLoader = new DexClassLoader(dexPath, optimizedDirectory, libraryPath, parent);
+		this.dexClassLoader = dexClassLoader;
 		
 		certificateFolder =
 				parentContext.getDir(IMPORTED_CERTIFICATE_PRIVATE_DIRECTORY_NAME, MODE_PRIVATE);
-		downloadResourcesFolder =
+		containersFolder =
 				parentContext.getDir(IMPORTED_CONTAINERS_PRIVATE_DIRECTORY_NAME, MODE_PRIVATE);
 		
 		packageManager = parentContext.getPackageManager();
@@ -186,100 +189,117 @@ public class SecureDexClassLoader {
 		this.performLazyEvaluation = performLazyEvaluation;
 		
 		lazyAlreadyVerifiedPackageNameSet = synchronizedSet(new HashSet<String>());
-		
-		mPackageNameTrie = new PackageNameTrie();
-		
-		// Initialize the certificate factory
-		try {
-			certificateFactory = CertificateFactory.getInstance("X.509");
-		} catch (CertificateException e) {
-			e.printStackTrace();
-		}
-		
-		// Map initialization
-		packageNameToCertificateMap = new LinkedHashMap<>();
-		packageNameToContainerPathMap = synchronizedMap(new LinkedHashMap<String, String>());
-		
-		// Analyze each path in dexPath, find its package name and 
-		// populate packageNameToContainerPathMap accordingly
-		String[] pathStrings = dexPath.split(Pattern.quote(File.pathSeparator));
-		
-		for (String currentPath : pathStrings) {
-			
-			// In jar containers you may have classes from different package names, while in apk
-			// there is usually only one of those.
-			Set<String> packageNameList = getPackageNamesFromContainerPath(currentPath);
-			
-			if (packageNameList != null && !packageNameList.isEmpty()) {
-				
-				for (String packageName : packageNameList) {
-					
-					// This is a valid entry so it must be added to packageNameToContainerPathMap
-					String previousPath = packageNameToContainerPathMap.put(packageName, currentPath);
-					
-					// Also fill auxiliary Trie-like data structure
-					mPackageNameTrie.generateEntriesForPackageName(packageName);
-					
-					// If previous path is not null, it means that one of the previous analyzed
-					// path had the same package name (this is a possibility for JAR containers..)
-					if (previousPath != null) {
-						
-						// TODO Up to now only a warning message is registered in the logs and the most
-						// fresh of the two references is stored.
-						Log.w(	TAG_SECURE_DEX_CLASS_LOADER, "Package Name " + packageName + " is not unique!\n Previous path: " 
-								+ previousPath + ";\n New path: " + currentPath + ";" );
-					}
-				}
-			}
-		}
+
+
+        // Initialize the certificate factory
+        try {
+            certificateFactory = CertificateFactory.getInstance(X_509_CERTIFICATE);
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        }
+
+        packageNameToContainerPathMap =
+                synchronizedMap(generatePackageNameToContainerPathMap(dexPath, packageManager));
+
+        packageNameToCertificateMap = ImmutableMap.copyOf(sanitizePackageNameToCertificateMap);
+
+        packageNameTrie = initializePackageNameTrieBasedOnContainerAndCertificateMaps(
+                packageNameToContainerPathMap, sanitizePackageNameToCertificateMap);
+
+        if (!performLazyEvaluation) {
+            // If an eager approach is chosen, all containers have to be verified now,
+            // and invalid ones must be removed.
+            performEagerEvaluationOnAllContainers();
+        }
 	}
 
-	private Set<String> getPackageNamesFromContainerPath(String containerPath) {
-		
-		// Filter empty or missing path input
-		if (containerPath == null || containerPath.isEmpty() ||
-                !(new File(containerPath).exists())) return null;
+    private static Map<String, String> generatePackageNameToContainerPathMap(
+            @NonNull String dexPath,
+            @NonNull PackageManager packageManagerForAPKContainers) {
+        Map<String, String> packageNameToContainerPathMap = new LinkedHashMap<>();
 
-		if (!extractExtensionFromFilePath(containerPath).isPresent()) return null;
+        // Analyze each path in dexPath, find its package name and
+        // populate packageNameToContainerPathMap accordingly
+        DexPathStringProcessor dexPathStringProcessor = new DexPathStringProcessor(dexPath);
+
+        while (dexPathStringProcessor.hasNextDexPathString()) {
+            String currentPath = dexPathStringProcessor.nextDexPathString();
+
+            // In jar containers you may have classes from different package names, while in apk
+            // there is usually only one of those.
+            Optional<ImmutableSet<String>> optionalPackageNameSet =
+                    getPackageNamesFromContainerPath(currentPath, packageManagerForAPKContainers);
+
+            if (optionalPackageNameSet.isPresent() && !optionalPackageNameSet.get().isEmpty()) {
+
+                for (String packageName : optionalPackageNameSet.get()) {
+
+                    // This is a valid entry so it must be added to packageNameToContainerPathMap
+                    String previousPath = packageNameToContainerPathMap.put(packageName, currentPath);
+
+                    // If previous path is not null, it means that one of the previous analyzed
+                    // path had the same package name (this is a possibility for JAR containers..)
+                    if (previousPath != null) {
+
+                        // TODO Up to now only a warning message is registered in the logs and the most
+                        // fresh of the two references is stored.
+                        Log.w(TAG_SECURE_DEX_CLASS_LOADER, "Package Name " + packageName + " is not unique!\n Previous path: "
+                                + previousPath + ";\n New path: " + currentPath + ";");
+                    }
+                }
+            }
+        }
+
+        return packageNameToContainerPathMap;
+    }
+
+    private static Optional<ImmutableSet<String>> getPackageNamesFromContainerPath(
+            @NonNull String containerPath, @NonNull PackageManager packageManagerForAPKContainers) {
+
+		// Filter empty or missing path input
+		if (containerPath.isEmpty() ||
+                !(new File(containerPath).exists()) ||
+                !extractExtensionFromFilePath(containerPath).isPresent()) {
+            return Optional.absent();
+        }
 
         String extension = extractExtensionFromFilePath(containerPath).get();
-		
-		Set<String> packageNameSet = new HashSet<>();
-		
+
 		if (extension.equals(APK_EXTENSION)) {
-			
+
 			// APK container case:
 			// Use PackageManager to retrieve the package name of the APK container
-			if (packageManager.getPackageArchiveInfo(containerPath, 0) != null) {
+			if (packageManagerForAPKContainers.getPackageArchiveInfo(containerPath, 0) != null) {
 
-				packageNameSet.add(packageManager.getPackageArchiveInfo(containerPath, 0).packageName);
-				return packageNameSet;
+                return Optional.of(ImmutableSet.of(
+                        packageManagerForAPKContainers
+                                .getPackageArchiveInfo(containerPath, 0).packageName));
 			}
-			
-			return null;
+
+			return Optional.absent();
 		}
-			
+
 		if (extension.equals(JAR_EXTENSION)) {
-				
+
 			// JAR container case:
 			// 1. Open the jar file.
 			// 2. Look for the "classes.dex" entry inside the container.
 			// 3. If it is present, retrieve package names by parsing it as a DexFile.
-			
+
 			boolean isAValidJar = false;
 			JarFile containerJar = null;
-			
+
 			try {
-				
+
 				// Open the jar container..
 				containerJar = new JarFile(containerPath);
-				
+
 				// Look for the "classes.dex" entry inside the container.
 				if (containerJar.getJarEntry(CLASSES_DEX_ENTRY_NAME) != null)
 					isAValidJar = true;
-				
+
 			} catch (IOException e) {
-				return null;
+				return Optional.absent();
 			} finally {
 				if (containerJar != null)
 					try {
@@ -288,143 +308,101 @@ public class SecureDexClassLoader {
 						e.printStackTrace();
 					}
 			}
-			
+
 			if (isAValidJar) {
 
 				// Use a DexFile object to parse the classes inside of the jar container and retrieve package names..
 				DexFile dexFile;
-				
+
 				// Since in a jar there may be different package names for each class
 				// but at the same time I want to keep just one record for each package
 				// name, a set data structure fits well while processing.
-				// Set<String> packageNameSet = new HashSet<String>();
-				
-				try {
-					
+                ImmutableSet.Builder<String> packageNameSetBuilder = ImmutableSet.builder();
+
+                try {
+
 					// Temporary file location for the loaded classes inside of the jar container
 					String outputDexTempPath =
-							extractFileNameWithoutExtensionFromFilePath(containerPath) + ODEX_EXTENSION;
-					
+							extractFilePathWithoutExtensionFromFilePath(containerPath) + ODEX_EXTENSION;
+
 					// Load the dex classes inside the temporary file.
 					dexFile = loadDex(containerPath, outputDexTempPath, 0);
-					
+
 					Enumeration<String> dexEntries = dexFile.entries();
-					
+
 					while (dexEntries.hasMoreElements()) {
-						
+
 						// Full class name, used to extract a valid package name.
 						String fullClassName = dexEntries.nextElement();
 						//Log.i(TAG_SECURE_DEX_CLASS_LOADER, fullClassName);
-						
+
 						// Cancel white spaces before processing the full class name..
 						// It may happen to find them while parsing class names..
 						while (fullClassName.startsWith(" "))
 							fullClassName = fullClassName.substring(1, fullClassName.length());
-						
+
 						int lastIndexPackageName = fullClassName.lastIndexOf(".");
-						
+
 						if (lastIndexPackageName != -1) {
-							
+
 							String packageName = fullClassName.substring(0, lastIndexPackageName);
-							packageNameSet.add(packageName);
+							packageNameSetBuilder.add(packageName);
 						}
-						
+
 					}
-					
+
 					// Finally erase the .odex file since it's not necessary anymore..
 					new File(outputDexTempPath).delete();
-					
+
 				} catch (IOException e) {
 					// Problem parsing the attached classes.dex so no valid package name
-					return null;
-				}
-				
-				return packageNameSet;
-			}
-			
-			// If classes.dex is not present in the jar, the jar container is not valid
-			return null;			
-		}
-		
-		// Any other file format is not supported so 
-		// no package name is returned..
-		return null;
-	}
-	
-	void setCertificateLocationMap(Map<String, URL> extPackageNameToCertificateMap) {
-		
-		// Copy the external map only if it is not empty..
-		if (extPackageNameToCertificateMap != null && !extPackageNameToCertificateMap.isEmpty()) 
-			packageNameToCertificateMap = extPackageNameToCertificateMap;
-		
-		// Now check all the package names inside packageNameToCertificateMap.
-		// For each one of those which has a null value add a new entry
-		// (package name, URL certificate = reverted package name) to packageNameToCertificateMap.
-		Iterator<String> packageNameIterator = packageNameToCertificateMap.keySet().iterator();
-		
-		while (packageNameIterator.hasNext()) {
-			
-			String currentPackageName = packageNameIterator.next();
-			
-			if (packageNameToCertificateMap.get(currentPackageName) == null) {
-				
-				URL certificateRemoteURL;
-				
-				try {
-				
-					// No certificate URL was defined for this package name
-					// so certificate URL must be constructed by reverting package name
-					// and a new entry is put in the map.
-					certificateRemoteURL = revertPackageNameToURL(currentPackageName);
-					
-					// A consistent remote URL was created..
-					packageNameToCertificateMap.put(currentPackageName, certificateRemoteURL);
-					
-					Log.d(	TAG_SECURE_DEX_CLASS_LOADER, "Package Name: " + currentPackageName + 
-							"; Certificate Remote Location: " + certificateRemoteURL + ";");
-					
-				} catch (MalformedURLException e) {
-					// It was impossible to create a valid URL for this package name.
-					// so just remove it from packageNameToCertificateMap.
-					packageNameIterator.remove();
-					
-					Log.d(TAG_SECURE_DEX_CLASS_LOADER, "It was impossible to revert package name " + 
-					currentPackageName + " into a valid URL!");
+					return Optional.absent();
 				}
 
+				return Optional.of(packageNameSetBuilder.build());
 			}
-			
-			if (packageNameToCertificateMap.containsKey(currentPackageName)) {
-				
-				// Either by reverting the package name or from provided URL this
-				// package name has now a certificate URL associated to it.
-				// So update the Trie-like data structure accordingly
-				mPackageNameTrie.setPackageNameHasAssociatedCertificate(currentPackageName);
-			}
+
+			// If classes.dex is not present in the jar, the jar container is not valid
+			return Optional.absent();
 		}
-		
-		if (!performLazyEvaluation) {
-			
-			// If an eager approach is chosen now it is time to verify all the containers
-			// and remove the invalid ones.
-			
-			// Get the distinct set of containers path..
-			Set<String> containersToVerifySet = new HashSet<>(packageNameToContainerPathMap.values());
-			
-			// Check how many containers need to be verified..
-			if (containersToVerifySet.size() < MINIMUM_NUMBER_OF_CONTAINERS_FOR_CONCURRENT_VERIFICATION) {
-				
-				// Choose standard single thread verification.
-				verifyAllContainersSignature();
-			} else {
-				
-				// Perform a concurrent container verification.
-				verifyAllContainersSignatureConcurrently(containersToVerifySet);
-			}
-			
-		}
+
+		// Any other file format is not supported so
+		// no package name is returned..
+		return Optional.absent();
 	}
-	
+
+    private static PackageNameTrie initializePackageNameTrieBasedOnContainerAndCertificateMaps(
+            @NonNull Map<String, String> packageNameToContainerPathMap,
+            @NonNull Map<String, URL> packageNameToCertificateMap) {
+        PackageNameTrie packageNameTrie = new PackageNameTrie();
+
+        for (String packageNameIdentifyingAContainer : packageNameToContainerPathMap.keySet()) {
+            packageNameTrie.generateEntriesForPackageName(packageNameIdentifyingAContainer);
+        }
+
+        for (String packageNameWithACertificate : packageNameToCertificateMap.keySet()) {
+            packageNameTrie.setPackageNameHasAssociatedCertificate(packageNameWithACertificate);
+        }
+
+        return packageNameTrie;
+    }
+
+    private void performEagerEvaluationOnAllContainers() {
+        // Get the distinct set of containers path..
+        Set<String> containersToVerifySet = new HashSet<>(packageNameToContainerPathMap.values());
+
+        // Check how many containers need to be verified..
+        if (containersToVerifySet.size() < MINIMUM_NUMBER_OF_CONTAINERS_FOR_CONCURRENT_VERIFICATION) {
+
+            // Choose standard single thread verification.
+            verifyAllContainersSignature();
+        } else {
+
+            // Perform a concurrent container verification.
+            verifyAllContainersSignatureConcurrently(containersToVerifySet);
+        }
+    }
+
 	// This method is invoked only in the case of an eager evaluation.
 	// It will check that all the provided containers successfully
 	// execute the signature verification step against the certificate associated
@@ -459,7 +437,7 @@ public class SecureDexClassLoader {
 				// At first find the package name which is closest in hierarchy to the target one
 				// and has an associated URL for a certificate.
 				Optional<String> optionalRootPackageNameWithCertificate =
-						mPackageNameTrie.getPackageNameWithAssociatedCertificate(currentPackageName);
+						packageNameTrie.getPackageNameWithAssociatedCertificate(currentPackageName);
 				
 				X509Certificate verifiedCertificate = null;
 				
@@ -533,7 +511,7 @@ public class SecureDexClassLoader {
 			// At first find the package name which is closest in hierarchy to the target one
 			// and has an associated URL for a certificate.
 			Optional<String> optionalRootPackageNameWithCertificate =
-                    mPackageNameTrie.getPackageNameWithAssociatedCertificate(currentPackageName);
+                    packageNameTrie.getPackageNameWithAssociatedCertificate(currentPackageName);
 			
 			if (optionalRootPackageNameWithCertificate.isPresent()) {
 				
@@ -608,7 +586,7 @@ public class SecureDexClassLoader {
 			// Verify that at least one of the prefix of the current package name was designated 
 			// for loading its classes.
 			Optional<String> optionalRootPackageNameAllowedForLoading =
-                    mPackageNameTrie.getPackageNameWithAssociatedCertificate(currentPackageName);
+                    packageNameTrie.getPackageNameWithAssociatedCertificate(currentPackageName);
 			
 			if (!optionalRootPackageNameAllowedForLoading.isPresent() ||
                     !successVerifiedContainerPathSet.contains(packageNameToContainerPathMap.get(currentPackageName))) {
@@ -707,12 +685,11 @@ public class SecureDexClassLoader {
 	 *  this exception is raised whenever no security constraint is violated but still the target class is
 	 *  not found in any of the available containers used to instantiate this {@link SecureDexClassLoader} object.
 	 */
-	public Class<?> loadClass(String className) throws ClassNotFoundException {
+	public Class<?> loadClass(@NonNull String className) throws ClassNotFoundException {
 		
-		// A meaningful map which links package names to certificate locations
-		// must have been provided before calling this method..
-		if (packageNameToCertificateMap.isEmpty()) return null;
-		
+        checkNotNull(className, "The name of the class to load must be not null");
+        checkArgument(!className.isEmpty(), "The name of the class to load must be not empty");
+
 		// Cached data have been wiped out so some of the required
 		// resources may have been erased..
 		if (hasBeenWipedOut) return null;
@@ -731,7 +708,7 @@ public class SecureDexClassLoader {
 			containerPath = packageNameToContainerPathMap.get(packageName);
 		}
 		
-		if(containerPath == null) return null;
+		if (containerPath == null) return null;
 		
 		if (performLazyEvaluation) {
 			
@@ -751,7 +728,7 @@ public class SecureDexClassLoader {
 				// Even if the container associated to this package name may have been verified correctly,
 				// it is necessary to verify that the user also wants to dynamically load classes from this package name.
 				Optional<String> optionalRootPackageNameWithCertificate =
-                        mPackageNameTrie.getPackageNameWithAssociatedCertificate(packageName);
+                        packageNameTrie.getPackageNameWithAssociatedCertificate(packageName);
 				
 				if (optionalRootPackageNameWithCertificate.isPresent()) {
 					
@@ -767,7 +744,7 @@ public class SecureDexClassLoader {
 				// At first find the package name which is closest in hierarchy to the target one
 				// and has an associated URL for a certificate.
 				Optional<String> optionalRootPackageNameWithCertificate =
-                        mPackageNameTrie.getPackageNameWithAssociatedCertificate(packageName);
+                        packageNameTrie.getPackageNameWithAssociatedCertificate(packageName);
 				
 				X509Certificate verifiedCertificate = null;
 				
@@ -964,7 +941,6 @@ public class SecureDexClassLoader {
                                     }
                                 }
                             }
-
                         }
                     }
                 } else {
@@ -1198,7 +1174,8 @@ public class SecureDexClassLoader {
 		
 		// The new certificate should be stored in the application private directory
 		// and its name should be the same as the package name.
-		String localCertPath = certificateFolder.getAbsolutePath() + "/" + packageName + PEM_EXTENSION;
+		String localCertPath =
+                certificateFolder.getAbsolutePath() + File.separator + packageName + PEM_EXTENSION;
 		
 		// Return the result of the download procedure (redirect here is not permitted).
 		return fileDownloader.downloadRemoteResource(certificateRemoteURL, localCertPath, false);
@@ -1234,7 +1211,7 @@ public class SecureDexClassLoader {
 			
 			// It is required to erase all the files in the application
 			// private container folder..
-			File[] containerFiles = downloadResourcesFolder.listFiles();
+			File[] containerFiles = containersFolder.listFiles();
 
             Collections.addAll(fileToEraseList, containerFiles);
 		}
@@ -1252,22 +1229,20 @@ public class SecureDexClassLoader {
 
             // Check whether the selected resource is a container (jar or apk)
             // or a certificate (pem)
-            String filePath = file.getAbsolutePath();
-            int extensionIndex = filePath.lastIndexOf(".");
-            String extension = filePath.substring(extensionIndex);
+            Optional<String> optionalExtension = extractExtensionFromFilePath(file.getAbsolutePath());
 
-            if (extension.equals(APK_EXTENSION) ||
-                    extension.equals(JAR_EXTENSION) ||
-                    extension.equals(PEM_EXTENSION)) {
+            if (optionalExtension.isPresent() &&
+                    (optionalExtension.get().equals(APK_EXTENSION) ||
+                            optionalExtension.get().equals(JAR_EXTENSION) ||
+                            optionalExtension.get().equals(PEM_EXTENSION))) {
 
                 if (file.delete())
-                    Log.i(TAG_SECURE_DEX_CLASS_LOADER, filePath + " has been erased.");
+                    Log.i(TAG_SECURE_DEX_CLASS_LOADER, file.getPath() + " has been erased.");
                 else
-                    Log.i(TAG_SECURE_DEX_CLASS_LOADER, filePath + " was NOT erased.");
+                    Log.i(TAG_SECURE_DEX_CLASS_LOADER, file.getPath() + " was NOT erased.");
             }
         }
 		
 		hasBeenWipedOut = true;
-
 	}
 }
