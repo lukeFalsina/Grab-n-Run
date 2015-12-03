@@ -14,17 +14,25 @@ public class FileHelper {
     public static final String APK_EXTENSION = DOT_SEPARATOR + "apk";
     public static final String JAR_EXTENSION = DOT_SEPARATOR + "jar";
 
+    public static String extractFilePathWithoutExtensionFromFilePath(@NonNull String filePath) {
+        checkPreconditionsOnFilePath(filePath);
+
+        return extractSubstringWithoutExtensionFromString(filePath);
+    }
+
     public static String extractFileNameWithoutExtensionFromFilePath(@NonNull String filePath) {
         checkPreconditionsOnFilePath(filePath);
 
-        String fileName = extractFileNameFromFilePath(filePath);
+        return extractSubstringWithoutExtensionFromString(extractFileNameFromFilePath(filePath));
+    }
 
-        int firstCharacterOfAnExtensionIndex = fileName.lastIndexOf(DOT_SEPARATOR);
+    private static String extractSubstringWithoutExtensionFromString(@NonNull String candidateString) {
+        int firstCharacterOfAnExtensionIndex = candidateString.lastIndexOf(DOT_SEPARATOR);
 
         if (firstCharacterOfAnExtensionIndex > 0) {
-            return fileName.substring(0, firstCharacterOfAnExtensionIndex);
+            return candidateString.substring(0, firstCharacterOfAnExtensionIndex);
         } else {
-            return fileName;
+            return candidateString;
         }
     }
 
