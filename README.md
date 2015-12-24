@@ -1,16 +1,5 @@
 # ![Logo](https://github.com/lukeFalsina/Grab-n-Run/raw/master/gnr/app/src/main/res/drawable-mdpi/logo_with_name.png)
 
-*Grab’n Run* (aka **GNR**) is a **simple** and **effective** Java Library that you can easily add to your Android projects to perform *secure dynamic class loading* operations over standard [DexClassLoader](http://developer.android.com/reference/dalvik/system/DexClassLoader.html).
-
-Previous research has shown that many applications often need to perform dynamic class loading to implement, for example, non-invasive self-update features. However, research has also shown that it is really challenging to *safely* implement these features. This is of particular importance as, in this context, **one single mistake** could open the application (and, therefore, the entire device) to **serious security vulnerabilities**, such as *remote code execution*.  
-
-The main goal of *Grab's Run* is to offer an alternative to the native Android APIs, and its design enforces that even the most inexperienced developer cannot perform well-known, serious mistakes.
-
-For a **brief presentation** of the library and some of its features you can give a look at these [slides](http://goo.gl/oiYAZB), while if you prefer a more **structured and complete description** with *set up information, tutorials, examples, tips&tricks, and a full presentation of the API* you should definitely check the [documentation](http://grab-n-run.readthedocs.org/en/latest/).
-
-Note that *Grab'n Run* is currently a work in progress: if you desire to suggest new *features, improvements, criticisms* or whatever, I would be more than glad to hear **any kind of constructive feedback** :D  
-You can contact me either by dropping an email at [lfalsina@gmail.com](mailto:lfalsina@gmail.com) or by pinging me on Twitter [@lfalsina](https://twitter.com/lfalsina).
-
 ## Research paper
 
 We present the findings of this work in a research paper:
@@ -21,12 +10,38 @@ Luca Falsina, Yanick Fratantonio, Stefano Zanero, Christopher Kruegel, Giovanni 
 [[PDF](http://cs.ucsb.edu/~yanick/publications/2015_acsac_grabandrun.pdf)]
 [[Bibtex](https://github.com/lukeFalsina/Grab-n-Run/raw/master/grabandrun.bib)]
 
+If you use *Grab'n Run* in a scientific publication, we would appreciate citations to the previous paper.  
+Please use this **Bibtex** entry:
+``` tex
+@InProceedings{falsina15:grabandrun,
+  author = {Luca Falsina and Yanick Fratantonio and Stefano Zanero and Christopher Kruegel and Giovanni Vigna and Federico Maggi},
+  title = {{Grab'n Run: Secure and Practical Dynamic Code Loading for Android Applications}},
+  booktitle = {Proceedings of the Annual Computer Security Applications Conference (ACSAC)},
+  month = {December},
+  year = {2015},
+  address = {Los Angeles, CA}
+}
+``` 
+
 ## News
 
 - *10/10/2015* - The **repackaging tool** is now **[online](http://grab-n-run.readthedocs.org/en/latest/repackaging.html)**. Use it to patch automatically your applications to use Grab'n Run APIs. 
 - *01/17/2015* - **Grab'n Run** is now **available** on [JCenter](https://bintray.com/bintray/jcenter?filterByPkgName=grab-n-run)
 - *01/16/2015* - **Grab'n Run** project migrates to [Android Studio](http://developer.android.com/tools/studio/index.html), the official *IDE* for **Android application development**. However, you can still use the library also with your *ADT* projects! (*see below the "Quick Setup" section for further details*)
 - *11/26/2014* - **Grab'n Run is on line!**
+
+## Introduction
+
+*Grab’n Run* (aka **GNR**) is a **simple** and **effective** Java Library that you can easily add to your Android projects to perform *secure dynamic class loading* operations over standard [DexClassLoader](http://developer.android.com/reference/dalvik/system/DexClassLoader.html).
+
+Previous research has shown that many applications often need to perform dynamic class loading to implement, for example, non-invasive self-update features. However, research has also shown that it is really challenging to *safely* implement these features. This is of particular importance as, in this context, **one single mistake** could open the application (and, therefore, the entire device) to **serious security vulnerabilities**, such as *remote code execution*.  
+
+The main goal of *Grab's Run* is to offer an alternative to the native Android APIs, and its design enforces that even the most inexperienced developer cannot perform well-known, serious mistakes.
+
+For a **brief presentation** of the library and some of its features you can give a look at these [slides](https://goo.gl/QrwWey), while if you prefer a more **structured and complete description** with *set up information, tutorials, examples, tips&tricks, and a full presentation of the API* you should definitely check the [documentation](http://grab-n-run.readthedocs.org/en/latest/).
+
+Note that *Grab'n Run* is currently a work in progress: if you desire to suggest new *features, improvements, criticisms* or whatever, I would be more than glad to hear **any kind of constructive feedback** :D  
+You can contact me either by dropping an email at [lfalsina@gmail.com](mailto:lfalsina@gmail.com) or by pinging me on Twitter [@lfalsina](https://twitter.com/lfalsina).
 
 ## Main features
 Securely load code dynamically into your Android application from **APK** containers or **JAR** libraries translated to be *executable by both the Dalvik Virtual Machine (DVM) and the Android Runtime (ART)* (don't worry a [section](http://grab-n-run.readthedocs.org/en/latest/complementary.html#on-library-developer-side-how-to-prepare-a-valid-library-container-compatible-with-gnr) of the docs explains step-by-step how to do it).
@@ -42,7 +57,7 @@ Securely load code dynamically into your Android application from **APK** contai
 
 ## Quick Setup
 
-This setup explains how to simply add *Grab'n Run* as a library for your Android applications.
+This section explains how to setup *Grab'n Run* as a library for your Android applications.
 
 #### 1. Include library
 
