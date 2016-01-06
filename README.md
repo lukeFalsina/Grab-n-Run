@@ -190,7 +190,7 @@ try {
 }
 ```
 
-*Et voilá..* now you have an instance of *"MyClass"* loaded in a **secure way** at **run time**!
+*Et voilà..* now you have an instance of *"MyClass"* loaded in a **secure way** at **run time**!
 
 ## Next steps :)
 
