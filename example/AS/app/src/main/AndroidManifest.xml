@@ -34,6 +34,12 @@
             android:screenOrientation="landscape"
             android:configChanges="keyboardHidden|orientation|screenSize" >
         </activity>
+        <activity
+            android:name="headfirstlab.nasadailyimage.NasaDailyImage"
+            android:label="@string/title_activity_loaded_dynamically"
+            android:parentActivityName="it.polimi.poccodeloading.MainActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize" >
+        </activity>
     </application>
 
 </manifest>

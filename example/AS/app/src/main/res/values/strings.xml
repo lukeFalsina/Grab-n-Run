@@ -14,5 +14,6 @@
     <string name="hello_world">Hello world!</string>
     <string name="btn_dex_load_jar">Click me!</string>
     <string name="switch_dex_load_jar">Switch</string>
+    <string name="title_activity_loaded_dynamically">Dynamically loaded activity</string>
 
 </resources>

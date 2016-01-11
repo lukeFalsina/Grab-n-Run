@@ -26,14 +26,13 @@ import android.widget.TextView;
  * used to modify the layout of GUI components.
  * 
  * @author Luca Falsina
- *
  */
 public interface ComponentModifier {
 	
-	public void customizeButtons(List<Button> buttonList);
+	void customizeButtons(List<Button> buttonList);
 	
-	public void customizeSwitch(Switch switchSlider);
+	void customizeSwitch(Switch switchSlider);
 
-	public void customizeTextView(TextView textView);
+	void customizeTextView(TextView textView);
 
 }

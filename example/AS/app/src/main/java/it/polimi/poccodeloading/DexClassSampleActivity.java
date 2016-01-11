@@ -51,7 +51,6 @@ import android.widget.Toast;
  * method calls are executed.
  * 
  * @author Luca Falsina
- * 
  */
 public class DexClassSampleActivity extends Activity {
 
@@ -147,10 +146,11 @@ public class DexClassSampleActivity extends Activity {
 		
 		File dexOutputDir = getDir("dex", MODE_PRIVATE);
 		
-		DexClassLoader mDexClassLoader = new DexClassLoader(	jarContainerChoicePath, 
-																dexOutputDir.getAbsolutePath(), 
-																null, 
-																getClass().getClassLoader());
+		DexClassLoader mDexClassLoader = new DexClassLoader(
+				jarContainerChoicePath,
+				dexOutputDir.getAbsolutePath(),
+				null,
+				getClass().getClassLoader());
 		
 		try {
 			
