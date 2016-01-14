@@ -27,7 +27,7 @@ Android Studio (AS)
 
 Android Development Tool (ADT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-1. Download the latest `version <https://github.com/lukeFalsina/Grab-n-Run/raw/master/downloads/1.0.3/gnr-1.0.3.jar>`_ of the *JAR* container of Grab'n Run.
+1. Download the latest `version <https://github.com/lukeFalsina/Grab-n-Run/raw/master/downloads/1.0.3/grabnrun-1.0.3.jar>`_ of the *JAR* container of Grab'n Run.
 
 2. Include the *JAR* in the **libs** subfolder of your Android project.
 

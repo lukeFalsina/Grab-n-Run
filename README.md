@@ -75,7 +75,7 @@ dependencies {
 
 ###### b. Android Development Tool (ADT)
 
-* [Download JAR](https://github.com/lukeFalsina/Grab-n-Run/raw/master/downloads/1.0.3/gnr-1.0.3.jar)
+* [Download JAR](https://github.com/lukeFalsina/Grab-n-Run/raw/master/downloads/1.0.3/grabnrun-1.0.3.jar)
 * Put the JAR in the **libs** subfolder of your Android project
 
 #### 2. Android Manifest
