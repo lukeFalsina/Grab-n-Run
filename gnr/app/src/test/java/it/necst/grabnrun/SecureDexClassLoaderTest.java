@@ -13,6 +13,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -341,6 +342,36 @@ public class SecureDexClassLoaderTest {
                 TEST_FILE_FILTER_MATCHING_FILE_NAMED_AS_THE_TEST_CONTAINER);
         verify(mockDexClassLoader).loadClass(eq(TEST_CLASS_TO_LOAD));
         assertThat(loadedClass, is(notNullValue()));
+    }
+
+    @Test
+    public void givenASecureDexClassLoaderWithAnAPKContainerAndACertificateUsedToSignThatContainerForItsPackageNameForVerification_whenLoadMultipleClassesInTheContainerWhosePackageNameHasTheVerifiedOneAsPrefix_thenReturnsMultipleNotNullClassInstances() throws Exception {
+        // GIVEN
+        // TODO(falsinal) Fix these stupid links!!!
+        final String testRemoteApkContainerUrlAsString = "http://d.pr/f/121LT/download";
+        final String testRemoteCertificateUrlAsString = "http://d.pr/f/1jwUa/download";
+
+        final String testCommonPrefixPackageName = "com.example.android";
+        final String testFirstActivityClassToLoad = "com.example.android.cardreader.MainActivity";
+        final String testSecondActivityClassToLoad = "com.example.android.common.activities.SampleActivityBase";
+
+        SecureDexClassLoader secureDexClassLoader = initializeSecureDexClassLoaderWithTestValues(
+                downloadRemoteContainerIntoTemporaryImportedContainersFolder(
+                        testRemoteApkContainerUrlAsString),
+                ImmutableMap.of(
+                        testCommonPrefixPackageName,
+                        new URL(testRemoteCertificateUrlAsString)),
+                LAZY_EVALUATION);
+
+        // WHEN
+        Class<?> firstLoadedActivityClass = secureDexClassLoader.loadClass(testFirstActivityClassToLoad);
+        Class<?> secondLoadedActivityClass = secureDexClassLoader.loadClass(testSecondActivityClassToLoad);
+
+        // THEN
+        verify(mockDexClassLoader).loadClass(eq(testFirstActivityClassToLoad));
+        assertThat(firstLoadedActivityClass, is(notNullValue()));
+        verify(mockDexClassLoader).loadClass(eq(testSecondActivityClassToLoad));
+        assertThat(secondLoadedActivityClass, is(notNullValue()));
     }
 
     @Test

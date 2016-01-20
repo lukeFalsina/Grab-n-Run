@@ -181,7 +181,7 @@ public class SecureDexClassLoader {
 				parentContext.getDir(IMPORTED_CONTAINERS_PRIVATE_DIRECTORY_NAME, MODE_PRIVATE);
 		
 		packageManager = parentContext.getPackageManager();
-		
+
 		fileDownloader = new FileDownloader(parentContext);
 		
 		hasBeenWipedOut = false;
@@ -199,7 +199,7 @@ public class SecureDexClassLoader {
         }
 
         packageNameToContainerPathMap =
-                synchronizedMap(generatePackageNameToContainerPathMap(dexPath, packageManager));
+                synchronizedMap(generatePackageNameToContainerPathMap(dexPath));
 
         packageNameToCertificateMap = ImmutableMap.copyOf(sanitizePackageNameToCertificateMap);
 
@@ -214,8 +214,7 @@ public class SecureDexClassLoader {
 	}
 
     private static Map<String, String> generatePackageNameToContainerPathMap(
-            @NonNull String dexPath,
-            @NonNull PackageManager packageManagerForAPKContainers) {
+            @NonNull String dexPath) {
         Map<String, String> packageNameToContainerPathMap = new LinkedHashMap<>();
 
         // Analyze each path in dexPath, find its package name and
@@ -228,7 +227,7 @@ public class SecureDexClassLoader {
             // In jar containers you may have classes from different package names, while in apk
             // there is usually only one of those.
             Optional<ImmutableSet<String>> optionalPackageNameSet =
-                    getPackageNamesFromContainerPath(currentPath, packageManagerForAPKContainers);
+                    getPackageNamesFromContainerPath(currentPath);
 
             if (optionalPackageNameSet.isPresent() && !optionalPackageNameSet.get().isEmpty()) {
 
@@ -254,120 +253,96 @@ public class SecureDexClassLoader {
     }
 
     private static Optional<ImmutableSet<String>> getPackageNamesFromContainerPath(
-            @NonNull String containerPath, @NonNull PackageManager packageManagerForAPKContainers) {
+			@NonNull String containerPath) {
 
 		// Filter empty or missing path input
 		if (containerPath.isEmpty() ||
-                !(new File(containerPath).exists()) ||
-                !extractExtensionFromFilePath(containerPath).isPresent()) {
+                !(new File(containerPath).exists())) {
             return Optional.absent();
         }
 
-        String extension = extractExtensionFromFilePath(containerPath).get();
+		// JAR container case (APK are simply an extension of jar files):
+		// 1. Open the jar file.
+		// 2. Look for the "classes.dex" entry inside the container.
+		// 3. If it is present, retrieve package names by parsing it as a DexFile.
 
-		if (extension.equals(APK_EXTENSION)) {
+		boolean isAValidJar = false;
+		JarFile containerJar = null;
 
-			// APK container case:
-			// Use PackageManager to retrieve the package name of the APK container
-			if (packageManagerForAPKContainers.getPackageArchiveInfo(containerPath, 0) != null) {
+		try {
 
-                return Optional.of(ImmutableSet.of(
-                        packageManagerForAPKContainers
-                                .getPackageArchiveInfo(containerPath, 0).packageName));
-			}
+			// Open the jar container..
+			containerJar = new JarFile(containerPath);
 
+			// Look for the "classes.dex" entry inside the container.
+			if (containerJar.getJarEntry(CLASSES_DEX_ENTRY_NAME) != null)
+				isAValidJar = true;
+
+		} catch (IOException e) {
 			return Optional.absent();
+		} finally {
+			if (containerJar != null)
+				try {
+					containerJar.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 		}
 
-		if (extension.equals(JAR_EXTENSION)) {
+		if (isAValidJar) {
 
-			// JAR container case:
-			// 1. Open the jar file.
-			// 2. Look for the "classes.dex" entry inside the container.
-			// 3. If it is present, retrieve package names by parsing it as a DexFile.
+			// Use a DexFile object to parse the classes inside of the jar container and retrieve package names..
+			DexFile dexFile;
 
-			boolean isAValidJar = false;
-			JarFile containerJar = null;
+			// Since in a jar there may be different package names for each class
+			// but at the same time I want to keep just one record for each package
+			// name, a set data structure fits well while processing.
+			ImmutableSet.Builder<String> packageNameSetBuilder = ImmutableSet.builder();
 
 			try {
 
-				// Open the jar container..
-				containerJar = new JarFile(containerPath);
+				// Temporary file location for the loaded classes inside of the jar container
+				String outputDexTempPath =
+						extractFilePathWithoutExtensionFromFilePath(containerPath) + ODEX_EXTENSION;
 
-				// Look for the "classes.dex" entry inside the container.
-				if (containerJar.getJarEntry(CLASSES_DEX_ENTRY_NAME) != null)
-					isAValidJar = true;
+				// Load the dex classes inside the temporary file.
+				dexFile = loadDex(containerPath, outputDexTempPath, 0);
 
-			} catch (IOException e) {
-				return Optional.absent();
-			} finally {
-				if (containerJar != null)
-					try {
-						containerJar.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-			}
+				Enumeration<String> dexEntries = dexFile.entries();
 
-			if (isAValidJar) {
+				while (dexEntries.hasMoreElements()) {
 
-				// Use a DexFile object to parse the classes inside of the jar container and retrieve package names..
-				DexFile dexFile;
+					// Full class name, used to extract a valid package name.
+					String fullClassName = dexEntries.nextElement();
+					//Log.i(TAG_SECURE_DEX_CLASS_LOADER, fullClassName);
 
-				// Since in a jar there may be different package names for each class
-				// but at the same time I want to keep just one record for each package
-				// name, a set data structure fits well while processing.
-                ImmutableSet.Builder<String> packageNameSetBuilder = ImmutableSet.builder();
+					// Cancel white spaces before processing the full class name..
+					// It may happen to find them while parsing class names..
+					while (fullClassName.startsWith(" "))
+						fullClassName = fullClassName.substring(1, fullClassName.length());
 
-                try {
+					int lastIndexPackageName = fullClassName.lastIndexOf(".");
 
-					// Temporary file location for the loaded classes inside of the jar container
-					String outputDexTempPath =
-							extractFilePathWithoutExtensionFromFilePath(containerPath) + ODEX_EXTENSION;
+					if (lastIndexPackageName != -1) {
 
-					// Load the dex classes inside the temporary file.
-					dexFile = loadDex(containerPath, outputDexTempPath, 0);
-
-					Enumeration<String> dexEntries = dexFile.entries();
-
-					while (dexEntries.hasMoreElements()) {
-
-						// Full class name, used to extract a valid package name.
-						String fullClassName = dexEntries.nextElement();
-						//Log.i(TAG_SECURE_DEX_CLASS_LOADER, fullClassName);
-
-						// Cancel white spaces before processing the full class name..
-						// It may happen to find them while parsing class names..
-						while (fullClassName.startsWith(" "))
-							fullClassName = fullClassName.substring(1, fullClassName.length());
-
-						int lastIndexPackageName = fullClassName.lastIndexOf(".");
-
-						if (lastIndexPackageName != -1) {
-
-							String packageName = fullClassName.substring(0, lastIndexPackageName);
-							packageNameSetBuilder.add(packageName);
-						}
-
+						String packageName = fullClassName.substring(0, lastIndexPackageName);
+						packageNameSetBuilder.add(packageName);
 					}
 
-					// Finally erase the .odex file since it's not necessary anymore..
-					new File(outputDexTempPath).delete();
-
-				} catch (IOException e) {
-					// Problem parsing the attached classes.dex so no valid package name
-					return Optional.absent();
 				}
 
-				return Optional.of(packageNameSetBuilder.build());
+				// Finally erase the .odex file since it's not necessary anymore..
+				new File(outputDexTempPath).delete();
+
+			} catch (IOException e) {
+				// Problem parsing the attached classes.dex so no valid package name
+				return Optional.absent();
 			}
 
-			// If classes.dex is not present in the jar, the jar container is not valid
-			return Optional.absent();
+			return Optional.of(packageNameSetBuilder.build());
 		}
 
-		// Any other file format is not supported so
-		// no package name is returned..
+		// If classes.dex is not present in the jar, the jar container is not valid
 		return Optional.absent();
 	}
 
