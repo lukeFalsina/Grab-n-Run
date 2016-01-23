@@ -13,6 +13,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
@@ -65,6 +66,7 @@ public class SecureLoaderFactoryTest {
     @Mock ConnectivityManager mockConnectivityManager = mock(ConnectivityManager.class);
     @Mock NetworkInfo mockNetworkInfo = mock(NetworkInfo.class);
     @Mock ClassLoader mockClassLoader = mock(ClassLoader.class);
+    @Mock PackageManager mockPackageManager = mock(PackageManager.class);
 
     @Mock DexFile mockDexFile = mock(DexFile.class);
 
@@ -76,6 +78,9 @@ public class SecureLoaderFactoryTest {
                 .thenReturn(mockConnectivityManager);
         when(mockConnectivityManager.getActiveNetworkInfo()).thenReturn(mockNetworkInfo);
         when(mockNetworkInfo.isConnected()).thenReturn(true);
+
+        when(mockContext.getPackageManager())
+                .thenReturn(mockPackageManager);
 
         when(mockContext.getDir(eq(IMPORTED_CONTAINERS_PRIVATE_DIRECTORY_NAME), eq(MODE_PRIVATE)))
                 .thenReturn(temporaryImportedContainersFolder.getRoot());

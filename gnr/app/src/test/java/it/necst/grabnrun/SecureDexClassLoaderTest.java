@@ -135,8 +135,6 @@ public class SecureDexClassLoaderTest {
         when(mockContext.getDir(eq(IMPORTED_CERTIFICATE_PRIVATE_DIRECTORY_NAME), eq(MODE_PRIVATE)))
                 .thenReturn(temporaryImportedCertificatesFolder.getRoot());
 
-        when(mockContext.getPackageManager()).thenReturn(mockPackageManager);
-
         DexFileShadow.setDexFileShadow(mockDexFile);
 
         // IMPORTANT: Always create a new enumeration for this set!
