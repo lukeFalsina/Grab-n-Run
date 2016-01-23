@@ -44,6 +44,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,6 +65,7 @@ public class SecureLoaderFactory {
     // Name of the folder user to store imported containers (both coming from remote, or local resources)
     static final String IMPORTED_CONTAINERS_PRIVATE_DIRECTORY_NAME = "imported_cont";
     @VisibleForTesting static final String OUTPUT_DEX_CLASSES_DIRECTORY_NAME = "dex_classes";
+    @VisibleForTesting static final String X_509_CERTIFICATE = "X.509";
 
     /**
      * When a URL for a remote container is found, this field specifies the default time interval,
@@ -278,6 +281,14 @@ public class SecureLoaderFactory {
 
 		// Til now libraryPath is left untouched..
 
+        // Initialize the certificate factory
+        CertificateFactory certificateFactory = null;
+        try {
+            certificateFactory = CertificateFactory.getInstance(X_509_CERTIFICATE);
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        }
+
 		return new SecureDexClassLoader(
                 finalDexPathString,
                 new DexClassLoader(
@@ -287,7 +298,10 @@ public class SecureLoaderFactory {
                         parent),
                 context,
                 processPackageNameToCertificateMap(packageNameToCertificateMap),
-				performLazyEvaluation);
+				performLazyEvaluation,
+                new ContainerSignatureVerifier(
+                        context.getPackageManager(), certificateFactory),
+                certificateFactory);
 	}
 
     private static void checkPreconditionsOnArgumentsForSecureDexClassLoaderCreation(

@@ -5,15 +5,18 @@ import static android.content.Context.MODE_PRIVATE;
 import static it.necst.grabnrun.FileHelper.extractFileNameFromFilePath;
 import static it.necst.grabnrun.SecureDexClassLoader.IMPORTED_CERTIFICATE_PRIVATE_DIRECTORY_NAME;
 import static it.necst.grabnrun.SecureLoaderFactory.IMPORTED_CONTAINERS_PRIVATE_DIRECTORY_NAME;
+import static it.necst.grabnrun.SecureLoaderFactory.X_509_CERTIFICATE;
+import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -36,7 +39,12 @@ import org.robolectric.annotation.Config;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.net.URL;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.Map;
 
@@ -103,11 +111,14 @@ public class SecureDexClassLoaderTest {
 
     @Rule public TemporaryFolder temporaryImportedContainersFolder = new TemporaryFolder();
     @Rule public TemporaryFolder temporaryImportedCertificatesFolder = new TemporaryFolder();
+    @Rule public TemporaryFolder temporaryTrustedCertificateFolder = new TemporaryFolder();
 
     @Mock Context mockContext = mock(Context.class);
     @Mock ConnectivityManager mockConnectivityManager = mock(ConnectivityManager.class);
     @Mock NetworkInfo mockNetworkInfo = mock(NetworkInfo.class);
     @Mock PackageManager mockPackageManager = mock(PackageManager.class);
+    @Mock ContainerSignatureVerifier mockContainerSignatureVerifier =
+            mock(ContainerSignatureVerifier.class);
 
     @Mock DexFile mockDexFile = mock(DexFile.class);
     @Mock DexClassLoader mockDexClassLoader = mock(DexClassLoader.class);
@@ -132,6 +143,21 @@ public class SecureDexClassLoaderTest {
         // Otherwise, the iterator will return all the objects only for the first test case.
         when(mockDexFile.entries()).thenReturn(
                 Collections.enumeration(TEST_SET_OF_CLASSES_IN_THE_REMOTE_CONTAINER));
+
+        when(mockContainerSignatureVerifier
+                .verifyContainerSignatureAgainstCertificate(
+                        any(String.class),
+                        any(X509Certificate.class)))
+                .thenReturn(false);
+        // IMPORTANT: Do not inline this variable!
+        // Otherwise, Mockito will complaint.
+        X509Certificate trustedCertificate =
+                retrieveAndGenerateTrustedCertificate(TEST_REMOTE_CERTIFICATE_URL_AS_STRING);
+        when(mockContainerSignatureVerifier
+                .verifyContainerSignatureAgainstCertificate(
+                        endsWith(TEST_REMOTE_CONTAINER_FILE_NAME),
+                        eq(trustedCertificate)))
+                .thenReturn(true);
 
         when(mockDexClassLoader.loadClass(eq(TEST_A_CLASS_TO_LOAD_NOT_IN_THE_CONTAINER)))
                 .thenThrow(new ClassNotFoundException());
@@ -347,13 +373,35 @@ public class SecureDexClassLoaderTest {
     @Test
     public void givenASecureDexClassLoaderWithAnAPKContainerAndACertificateUsedToSignThatContainerForItsPackageNameForVerification_whenLoadMultipleClassesInTheContainerWhosePackageNameHasTheVerifiedOneAsPrefix_thenReturnsMultipleNotNullClassInstances() throws Exception {
         // GIVEN
-        // TODO(falsinal) Fix these stupid links!!!
-        final String testRemoteApkContainerUrlAsString = "http://d.pr/f/121LT/download";
-        final String testRemoteCertificateUrlAsString = "http://d.pr/f/1jwUa/download";
+        final String testRemoteContainerName = "CardReaderApplication-release.apk";
+        final String testRemoteApkContainerUrlAsString =
+                "https://dl.dropboxusercontent.com/s/8s840gb9qhhr843/" + testRemoteContainerName;
+        final String testRemoteCertificateUrlAsString =
+                "https://dl.dropboxusercontent.com/s/ala85tq3ocimgi9/cardReaderTestCertificate.pem";
 
         final String testCommonPrefixPackageName = "com.example.android";
         final String testFirstActivityClassToLoad = "com.example.android.cardreader.MainActivity";
         final String testSecondActivityClassToLoad = "com.example.android.common.activities.SampleActivityBase";
+
+        // When reading the classes stored in the Dex file, return
+        // the set with the two classes to load
+        when(mockDexFile.entries()).thenReturn(
+                Collections.enumeration(
+                        ImmutableSet.of(testFirstActivityClassToLoad, testSecondActivityClassToLoad)));
+        when(mockDexClassLoader.loadClass(eq(testFirstActivityClassToLoad)))
+                .thenReturn((Class) "notRelevantForTheTest".getClass());
+        when(mockDexClassLoader.loadClass(eq(testSecondActivityClassToLoad)))
+                .thenReturn((Class) "notRelevantForTheTest".getClass());
+
+        // IMPORTANT: Do not inline this variable!
+        // Otherwise, Mockito will complaint.
+        X509Certificate trustedCertificate =
+                retrieveAndGenerateTrustedCertificate(testRemoteCertificateUrlAsString);
+        when(mockContainerSignatureVerifier
+                .verifyContainerSignatureAgainstCertificate(
+                        endsWith(testRemoteContainerName),
+                        eq(trustedCertificate)))
+                .thenReturn(true);
 
         SecureDexClassLoader secureDexClassLoader = initializeSecureDexClassLoaderWithTestValues(
                 downloadRemoteContainerIntoTemporaryImportedContainersFolder(
@@ -465,24 +513,49 @@ public class SecureDexClassLoaderTest {
     private SecureDexClassLoader initializeSecureDexClassLoaderWithTestValues(
             String dexPathWithLocalContainers,
             Map<String, URL> sanitizedPackageNameToCertificateURLMap,
-            boolean performLazyEvaluation) {
+            boolean performLazyEvaluation) throws CertificateException {
         return new SecureDexClassLoader(
                 dexPathWithLocalContainers,
                 mockDexClassLoader,
                 mockContext,
                 sanitizedPackageNameToCertificateURLMap,
-                performLazyEvaluation);
+                performLazyEvaluation,
+                mockContainerSignatureVerifier,
+                CertificateFactory.getInstance(X_509_CERTIFICATE));
     }
 
     private String downloadRemoteContainerIntoTemporaryImportedContainersFolder(
             String remoteContainerURLAsString) throws Exception {
-        URL remoteContainerURL = new URL(remoteContainerURLAsString);
+        return downloadRemoteResourceIntoTemporaryFolder(
+                remoteContainerURLAsString, temporaryImportedContainersFolder);
+    }
 
-        String localContainerURI = temporaryImportedContainersFolder.getRoot().toString()
-                + File.separator + extractFileNameFromFilePath(remoteContainerURL.getPath());
+    private X509Certificate retrieveAndGenerateTrustedCertificate(
+            String remoteCertificateURLAsString) throws Exception {
+        String trustedCertificatePath = downloadRemoteResourceIntoTemporaryFolder(
+                remoteCertificateURLAsString, temporaryTrustedCertificateFolder);
+
+        InputStream inStream = new FileInputStream(trustedCertificatePath);
+        X509Certificate trustedCertificate = (X509Certificate) CertificateFactory
+                .getInstance(X_509_CERTIFICATE)
+                .generateCertificate(inStream);
+
+        assertNotNull(inStream);
+        inStream.close();
+
+        return trustedCertificate;
+    }
+
+    private String downloadRemoteResourceIntoTemporaryFolder(
+            String remoteURLAsString,
+            TemporaryFolder temporaryFolder) throws Exception {
+        URL remoteURL = new URL(remoteURLAsString);
+
+        String localContainerURI = temporaryFolder.getRoot().toString()
+                + File.separator + extractFileNameFromFilePath(remoteURL.getPath());
 
         boolean isRemoteResourceSuccessful = new FileDownloader(mockContext).downloadRemoteResource(
-                remoteContainerURL,
+                remoteURL,
                 localContainerURI,
                 false);
 
