@@ -30,7 +30,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
 // TODO(falsinal): Once the code of the tested classes will be simplified, evaluate
-// whether to add extra tests for APK containers
+// whether to add extra test cases for APK containers
 
 @RunWith(MockitoJUnitRunner.class)
 public class ContainerSignatureVerifierTest {

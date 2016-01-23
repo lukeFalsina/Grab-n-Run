@@ -20,14 +20,14 @@ Android Studio (AS)
 	dependencies {
 		// Grab'n Run will be imported from JCenter.
 		// Verify that the string "jcenter()" is included in your repositories block!
-		compile 'it.necst.grabnrun:grabnrun:1.0.3'
+		compile 'it.necst.grabnrun:grabnrun:1.0.4'
 	}
 
 2. Resync your project to apply changes.
 
 Android Development Tool (ADT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-1. Download the latest `version <https://github.com/lukeFalsina/Grab-n-Run/raw/master/downloads/1.0.3/grabnrun-1.0.3.jar>`_ of the *JAR* container of Grab'n Run.
+1. Download the latest `version <https://github.com/lukeFalsina/Grab-n-Run/raw/master/downloads/1.0.4/grabnrun-1.0.4.jar>`_ of the *JAR* container of Grab'n Run.
 
 2. Include the *JAR* in the **libs** subfolder of your Android project.
 
