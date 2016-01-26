@@ -260,7 +260,13 @@ public class MainActivity extends Activity {
 
         // Aim: Retrieve NasaDailyImage apk securely
 
-        // 1st Test: Fetch the certificate by filling associative map
+        // 1st Test: Provide a null associative map as a fourth parameter when
+        // creating a SecureDexClassLoader. This test case was removed since the
+        // latest versions of GNR (>= 1.0.3) will raise a NullPointerException.
+        // For more details on this test case, see:
+        // http://grab-n-run.readthedocs.org/en/latest/example.html#setupsecuredexclassloader
+
+        // 2nd Test: Fetch the certificate by filling associative map
         // between package name and certificate --> FAIL cause the apk
         // was signed with the DEBUG ANDROID private key, and not with the trusted one.
 
@@ -278,7 +284,7 @@ public class MainActivity extends Activity {
             // 3rd Entry: reverse package name and then inexistent certificate at https://polimi.it/example3/certificate.pem
             packageNamesToCertMap.put("it.polimi.example3", null);
 
-            Log.i(TAG_MAIN, "1st Test: Evaluate container signed with the Android debug private key.");
+            Log.i(TAG_MAIN, "2nd Test: Evaluate container signed with the Android debug private key.");
             mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(
                     exampleTestAPKPath,
                     null,
@@ -302,11 +308,11 @@ public class MainActivity extends Activity {
                 Log.w(TAG_MAIN, "Class should be present in the provided path!!");
             }
 
-            // 2nd Test: Fetch the certificate by filling associative map
+            // 3rd Test: Fetch the certificate by filling associative map
             // between package name and certificate --> FAIL cause some of
             // signatures in the container failed the verification process
             // against the trusted developer certificate.
-            Log.i(TAG_MAIN, "2nd Test: Evaluate container with some tampered entries..");
+            Log.i(TAG_MAIN, "3rd Test: Evaluate container with some tampered entries..");
             mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(
                     exampleSignedChangedAPKPath,
                     null,
@@ -331,10 +337,10 @@ public class MainActivity extends Activity {
                 Log.w(TAG_MAIN, "Class should be present in the provided path!!");
             }
 
-            // 3rd Test: Fetch the certificate by filling associative map
+            // 4th Test: Fetch the certificate by filling associative map
             // between package name and certificate --> SUCCESS cause this
             // time the apk was signed and successfully verified against the correct certificate
-            Log.i(TAG_MAIN, "3rd Test: Fetch the certificate by filling associative map..");
+            Log.i(TAG_MAIN, "4th Test: Fetch the certificate by filling associative map..");
 
             // Creating the apk paths list (you can mix between remote and local URL)..
             String listAPKPaths =
