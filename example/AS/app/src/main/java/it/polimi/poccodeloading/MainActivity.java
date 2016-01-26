@@ -214,7 +214,7 @@ public class MainActivity extends Activity {
 
                 final Activity NasaDailyActivity = (Activity) loadedClass.newInstance();
 
-                Log.i(TAG_MAIN, "Found valid class: " + loadedClass.getSimpleName() + "; APK path: " + exampleSignedAPKPath.toString() + "; Success!");
+                Log.i(TAG_MAIN, "Found valid class: " + loadedClass.getSimpleName() + "; APK path: " + exampleSignedAPKPath + "; Success!");
 
                 toastHandler.post(new Runnable() {
 
@@ -259,59 +259,26 @@ public class MainActivity extends Activity {
         SecureDexClassLoader mSecureDexClassLoader;
 
         // Aim: Retrieve NasaDailyImage apk securely
-        // 1st Test: Fetch the certificate by reverting package name --> FAIL
-        // because no associative map was provided!! Even if you just want to revert package names
-        // you must provide a map with entries like ("any.package.name", null) and then for each one of
-        // those certificate location will be added by automatically reverting package names.
 
-        // Creating the apk paths list (you can freely mix between remote and local URL)..
-        String listAPKPaths = 	getExternalStorageDirectory().getAbsolutePath() + "/Download/testApp.apk:" +
-                exampleTestAPKPath;
-        // This last resource is downloaded from the web.
-        //+ ":http://jdbc.postgresql.org/download/postgresql-9.2-1002.jdbc4.jar";
-
-        Log.i(TAG_MAIN, "1st Test: Fetch the certificate by reverting package name with no associative map..");
-        mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(
-                listAPKPaths, null, ClassLoader.getSystemClassLoader(), null);
-
-        try {
-
-            Class<?> loadedClass = mSecureDexClassLoader.loadClass(classNameInAPK);
-
-            if (loadedClass != null) {
-                Log.w(TAG_MAIN, "No class should be returned in this case!!");
-            }
-            else {
-                Log.i(TAG_MAIN, "SecureDexClassLoader loads nothing since no certificate should have been found. CORRECT!");
-            }
-
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-            Log.w(TAG_MAIN, "No class should be searched in this case!!");
-        }
-
-        // Remove the cached resources before the next test..
-        // 2nd parameter may have been false as well since no certificate was fetched in this case..
-        mSecureDexClassLoader.wipeOutPrivateAppCachedData(true, true);
-
-        // 2nd Test: Fetch the certificate by filling associative map
+        // 1st Test: Fetch the certificate by filling associative map
         // between package name and certificate --> FAIL cause the apk
-        // was signed with the DEBUG ANDROID certificate
+        // was signed with the DEBUG ANDROID private key, and not with the trusted one.
 
         try {
 
             // Filling the associative map to link package names and certificates..
-            Map<String, URL> packageNamesToCertMap = new HashMap<String, URL>();
+            Map<String, URL> packageNamesToCertMap = new HashMap<>();
             // 1st Entry: valid remote certificate location
             packageNamesToCertMap.put("headfirstlab.nasadailyimage", new URL("https://dl.dropboxusercontent.com/u/28681922/test_cert.pem"));
-            // 2nd Entry: inexistent certificate -> This link will be enforced to https but still there is no certificate at the final pointed URL
+            // 2nd Entry: not existent certificate -> This link will be enforced to https,
+            // but still there is no certificate at the secure endpoint
             packageNamesToCertMap.put("it.polimi.example", new URL("http://google.com/test_cert.pem"));
             // 3rd Entry: misspelled and so invalid URL (missing a p..)
             // packageNamesToCertMap.put("it.polimi.example2", "htt://google.com/test_cert2.pem");
             // 3rd Entry: reverse package name and then inexistent certificate at https://polimi.it/example3/certificate.pem
             packageNamesToCertMap.put("it.polimi.example3", null);
 
-            Log.i(TAG_MAIN, "2nd Test: Fetch the certificate by filling associative map..");
+            Log.i(TAG_MAIN, "1st Test: Evaluate container signed with the Android debug private key.");
             mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(
                     exampleTestAPKPath,
                     null,
@@ -326,8 +293,8 @@ public class MainActivity extends Activity {
                     Log.w(TAG_MAIN, "No class should be loaded!");
                 } else {
 
-                    Log.i(TAG_MAIN, "This time the chosen class should find a certificate but it's the " +
-                            "wrong one! CORRECT!");
+                    Log.i(TAG_MAIN, "The chosen class is signed but it does not pass " +
+                            "the verification against the trusted certificate! CORRECT!");
                 }
 
             } catch (ClassNotFoundException e) {
@@ -335,11 +302,11 @@ public class MainActivity extends Activity {
                 Log.w(TAG_MAIN, "Class should be present in the provided path!!");
             }
 
-            // 3rd Test: Fetch the certificate by filling associative map
+            // 2nd Test: Fetch the certificate by filling associative map
             // between package name and certificate --> FAIL cause some of
             // signatures in the container failed the verification process
-            // against the developer certificate.
-            Log.i(TAG_MAIN, "3rd Test: Fetch the certificate by filling associative map..");
+            // against the trusted developer certificate.
+            Log.i(TAG_MAIN, "2nd Test: Evaluate container with some tampered entries..");
             mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(
                     exampleSignedChangedAPKPath,
                     null,
@@ -354,8 +321,9 @@ public class MainActivity extends Activity {
                     Log.w(TAG_MAIN, "No class should be loaded!");
                 } else {
 
-                    Log.i(TAG_MAIN, "This time the chosen class should find a certificate but the " +
-                            "apk container signatures do not match all properly and so no class loading! CORRECT!");
+                    Log.i(TAG_MAIN, "The chosen class was signed but the " +
+                            "apk container was tampered, thus not all the " +
+                            "signatures match anymore. Therefore so no class loading! CORRECT!");
                 }
 
             } catch (ClassNotFoundException e) {
@@ -363,13 +331,14 @@ public class MainActivity extends Activity {
                 Log.w(TAG_MAIN, "Class should be present in the provided path!!");
             }
 
-            // 4th Test: Fetch the certificate by filling associative map
+            // 3rd Test: Fetch the certificate by filling associative map
             // between package name and certificate --> SUCCESS cause this
-            // time the apk was signed with the correct certificate
-            Log.i(TAG_MAIN, "4th Test: Fetch the certificate by filling associative map..");
+            // time the apk was signed and successfully verified against the correct certificate
+            Log.i(TAG_MAIN, "3rd Test: Fetch the certificate by filling associative map..");
 
             // Creating the apk paths list (you can mix between remote and local URL)..
-            listAPKPaths = 	"http://google.com/testApp2.apk:" + exampleSignedAPKPath;
+            String listAPKPaths =
+                    "http://google.com/testApp2.apk:" + exampleSignedAPKPath;
 
             mSecureDexClassLoader = mSecureLoaderFactory.createDexClassLoader(
                     listAPKPaths,
@@ -399,7 +368,7 @@ public class MainActivity extends Activity {
 
                 } else {
 
-                    Log.w(TAG_MAIN, "This time the chosen class should pass the security checks!");
+                    Log.w(TAG_MAIN, "This time the chosen class should pass the security verification!");
                 }
 
             } catch (ClassNotFoundException e) {
