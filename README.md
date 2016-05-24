@@ -40,7 +40,7 @@ The main goal of *Grab's Run* is to offer an alternative to the native Android A
 
 For a **brief presentation** of the library and some of its features you can give a look at these [slides](https://goo.gl/QrwWey), while if you prefer a more **structured and complete description** with *set up information, tutorials, examples, tips&tricks, and a full presentation of the API* you should definitely check the [documentation](http://grab-n-run.readthedocs.org/en/latest/).
 
-Note that *Grab'n Run* is currently a work in progress: if you desire to suggest new *features, improvements, criticisms* or whatever, I would be more than glad to hear **any kind of constructive feedback** :D  
+If you desire to suggest new *features, improvements, criticisms* or whatever, I would be more than glad to hear **any kind of constructive feedback** :D  
 You can contact me either by dropping an email at [lfalsina@gmail.com](mailto:lfalsina@gmail.com) or by pinging me on Twitter [@lfalsina](https://twitter.com/lfalsina).
 
 ## Main features
